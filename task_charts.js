@@ -117,6 +117,7 @@ export function initTaskCharts() {
   if (tabContent) {
     const obs = new MutationObserver(() => {
       if (_isOnVerificationTab()) {
+        _logDiagnostic();
         refreshChartButtonState();
         _startPolling();
       } else {
@@ -128,8 +129,47 @@ export function initTaskCharts() {
     if (_isOnVerificationTab()) _startPolling();
   }
 
+  // Expose debug helpers on window so the user can inspect from console
+  window.__tcDebug = {
+    state: () => ({
+      collectionMode: appState.collectionMode,
+      countsKeys:     Object.keys(appState.workshopCounts || {}),
+      resultsKeys:    Object.keys(appState.workshopResults || {}),
+      ratingsKeys:    Object.keys(appState.verificationRatings || {}),
+      firstCount:     Object.values(appState.workshopCounts || {})[0],
+      firstResult:    Object.values(appState.workshopResults || {})[0],
+      firstTask:      appState.dutiesData?.[0]?.tasks?.[0],
+      taskIds:        (appState.dutiesData || []).flatMap(d => (d.tasks||[]).map(t => t.id || t.inputId)),
+      chartData:      _readChartData(),
+    }),
+    refresh: refreshChartButtonState,
+    open:    openTaskChartsModal,
+  };
+
   // Initial button state (in case data is already present at boot)
   refreshChartButtonState();
+}
+
+/** One-time diagnostic dump — runs when user enters Task Verification tab. */
+function _logDiagnostic() {
+  if (window.__tcDebugLogged) return;
+  window.__tcDebugLogged = true;
+  console.group('[TaskCharts] data diagnostic');
+  console.log('collectionMode:', appState.collectionMode);
+  console.log('workshopCounts keys:',  Object.keys(appState.workshopCounts || {}));
+  console.log('workshopResults keys:', Object.keys(appState.workshopResults || {}));
+  console.log('verificationRatings keys:', Object.keys(appState.verificationRatings || {}));
+  const firstCount  = Object.values(appState.workshopCounts || {})[0];
+  const firstResult = Object.values(appState.workshopResults || {})[0];
+  const firstTask   = appState.dutiesData?.[0]?.tasks?.[0];
+  console.log('first workshopCount:',  firstCount);
+  console.log('first workshopResult:', firstResult);
+  console.log('first dutiesData task:', firstTask);
+  console.log('all task ids in dutiesData:',
+    (appState.dutiesData || []).flatMap(d => (d.tasks||[]).map(t => t.id || t.inputId)));
+  const rows = _readChartData();
+  console.log('readChartData() returned', rows.length, 'rated tasks:', rows);
+  console.groupEnd();
 }
 
 /**

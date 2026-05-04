@@ -19,11 +19,13 @@ import { initProjectsSidebar, saveCurrentProject,
 import { startAutoSave, checkCrashRecovery } from './autosave.js';
 import { clearAiGeneratedFlag } from './refine.js';
 import { initDragDrop }        from './drag_drop.js';
-import { initTaskCharts, refreshChartButtonState } from './task_charts.js';
 
 // Expose switchTab globally (called from HTML onclick and live workshop guards)
 window.switchTab = switchTab;
 window.updateDutyLevelSummary = updateDutyLevelSummary;
+// Expose appState for runtime debugging via the browser console.
+// Read-only access pattern; do not mutate from outside.
+window.appState = appState;
 
 document.addEventListener('DOMContentLoaded', function () {
   // Initialize Skills Level Matrix
@@ -78,10 +80,6 @@ document.addEventListener('DOMContentLoaded', function () {
   // Initialize Task Verification controls
   updateCollectionMode();
   updateWorkflowMode();
-
-  // Initialize Task Charts modal (idempotent — wires once)
-  initTaskCharts();
-  refreshChartButtonState();
 
   // Check Live Workshop section visibility
   const urlParams = new URLSearchParams(window.location.search);
