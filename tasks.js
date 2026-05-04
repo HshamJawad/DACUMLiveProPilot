@@ -310,6 +310,7 @@ export function updateRating(taskKey, dimension, value) {
   }
   appState.verificationRatings[taskKey][dimension] = parseInt(value);
   updateComputedValues(taskKey);
+  _notifyRatingsChanged();
 }
 
 export function updatePerformsTask(taskKey, value) {
@@ -390,6 +391,17 @@ export function updateWorkshopCount(taskKey, dimension, value, count) {
   }
   appState.workshopCounts[taskKey][`${dimension}Counts`][value] = parseInt(count) || 0;
   validateAndComputeTask(taskKey);
+  _notifyRatingsChanged();
+}
+
+// Loose-coupled notification for the Task Charts module.  Debounced so a
+// burst of changes (e.g. live-workshop bulk-fetch) only fires one event.
+let _ratingsNotifyT = null;
+function _notifyRatingsChanged() {
+  clearTimeout(_ratingsNotifyT);
+  _ratingsNotifyT = setTimeout(() => {
+    document.dispatchEvent(new CustomEvent('dacum:ratings-changed'));
+  }, 120);
 }
 
 // ── Validation & Computation ──────────────────────────────────

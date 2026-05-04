@@ -19,6 +19,7 @@ import { initProjectsSidebar, saveCurrentProject,
 import { startAutoSave, checkCrashRecovery } from './autosave.js';
 import { clearAiGeneratedFlag } from './refine.js';
 import { initDragDrop }        from './drag_drop.js';
+import { initTaskCharts, refreshChartButtonState } from './task_charts.js';
 
 // Expose switchTab globally (called from HTML onclick and live workshop guards)
 window.switchTab = switchTab;
@@ -77,6 +78,10 @@ document.addEventListener('DOMContentLoaded', function () {
   // Initialize Task Verification controls
   updateCollectionMode();
   updateWorkflowMode();
+
+  // Initialize Task Charts modal (idempotent — wires once)
+  initTaskCharts();
+  refreshChartButtonState();
 
   // Check Live Workshop section visibility
   const urlParams = new URLSearchParams(window.location.search);

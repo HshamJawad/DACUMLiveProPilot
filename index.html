@@ -738,6 +738,214 @@
           }
         }
       }
+      /* ══════════════════════════════════════════════════════════
+         TASK CHARTS — modal + chart launcher button
+         ══════════════════════════════════════════════════════════ */
+
+      .btn-view-charts {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 0.95em;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(102, 126, 234, 0.25);
+        transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+      }
+      .btn-view-charts:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(102, 126, 234, 0.30);
+      }
+      .btn-view-charts:disabled {
+        background: #cbd5e1;
+        color: #64748b;
+        cursor: not-allowed;
+        opacity: 0.85;
+        box-shadow: none;
+      }
+
+      /* Modal backdrop + box */
+      .tc-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        z-index: 9000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+      .tc-modal.is-open { display: flex; }
+      .tc-modal-box {
+        background: #ffffff;
+        border-radius: 14px;
+        width: 100%;
+        max-width: 1100px;
+        max-height: 92vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.30);
+        overflow: hidden;
+      }
+
+      /* Header */
+      .tc-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: #ffffff;
+        font-size: 1.1em;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .tc-close {
+        background: rgba(255, 255, 255, 0.18);
+        border: none;
+        color: #ffffff;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        font-size: 1.05em;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .tc-close:hover { background: rgba(255, 255, 255, 0.32); }
+
+      /* Type tabs */
+      .tc-modal-tabs {
+        display: flex;
+        gap: 4px;
+        padding: 12px 20px 0 20px;
+        flex-wrap: wrap;
+      }
+      .tc-tab {
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        padding: 8px 16px;
+        border-radius: 8px 8px 0 0;
+        font-size: 0.9em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+      }
+      .tc-tab:hover { background: #eef2ff; color: #4338ca; }
+      .tc-tab.is-active {
+        background: #ffffff;
+        color: #4338ca;
+        border-bottom-color: #ffffff;
+      }
+
+      /* Filters */
+      .tc-modal-filters {
+        display: flex;
+        gap: 16px;
+        padding: 12px 20px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+        flex-wrap: wrap;
+      }
+      .tc-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.88em;
+        color: #475569;
+        font-weight: 600;
+      }
+      .tc-field select {
+        padding: 6px 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        font-size: 0.88em;
+        background: #ffffff;
+        color: #1e293b;
+        cursor: pointer;
+        font-weight: 500;
+        min-width: 160px;
+      }
+      .tc-field select:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+      }
+
+      /* Body */
+      .tc-modal-body {
+        flex: 1;
+        padding: 16px 20px;
+        overflow: auto;
+        min-height: 380px;
+        max-height: 60vh;
+      }
+      .tc-chart-wrap {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-height: 360px;
+      }
+      #tcCanvas { max-width: 100%; }
+      .tc-empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+      }
+      .tc-empty-state .tc-empty-icon { font-size: 3em; opacity: 0.55; margin-bottom: 8px; }
+      .tc-empty-state h3 { margin: 6px 0; color: #334155; font-size: 1.2em; }
+      .tc-empty-state p  { margin: 0; font-size: 0.92em; }
+
+      /* Footer */
+      .tc-modal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        gap: 12px;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+      }
+      .tc-info-bar {
+        font-size: 0.85em;
+        color: #64748b;
+      }
+      .tc-footer-actions { display: flex; gap: 8px; }
+      .tc-btn {
+        padding: 8px 16px;
+        border-radius: 7px;
+        font-size: 0.88em;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #475569;
+        transition: background 0.14s, border-color 0.14s, color 0.14s;
+      }
+      .tc-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+      .tc-btn-primary {
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        color: #ffffff;
+        border-color: transparent;
+      }
+      .tc-btn-primary:hover {
+        opacity: 0.92;
+        background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+        color: #ffffff;
+        border-color: transparent;
+      }
+
+      @media (max-width: 720px) {
+        .tc-modal-box { max-height: 96vh; }
+        .tc-modal-filters { flex-direction: column; gap: 8px; }
+        .tc-field { width: 100%; justify-content: space-between; }
+      }
     </style>
 </head>
 <body>
@@ -1162,7 +1370,17 @@
         
         <div class="tab-content" id="verification-tab">
             <h2>🎯 Task Verification & Training Priority</h2>
-            
+
+            <!-- Charts launcher (disabled until at least one task is rated) -->
+            <div style="display:flex; justify-content:flex-end; margin: -8px 0 14px 0;">
+                <button id="btnViewTaskCharts" type="button"
+                        class="btn-view-charts"
+                        title="Rate at least one task to enable charts"
+                        disabled>
+                    📊 View Charts
+                </button>
+            </div>
+
             <!-- Instructions -->
             <div class="verification-instructions">
                 <h4>📋 Instructions:</h4>
@@ -1853,6 +2071,59 @@
 
         </div>
 
+      </div>
+    </div>
+
+    <!-- ── Task Charts Modal ───────────────────────────────── -->
+    <div id="taskChartsModal" class="tc-modal" role="dialog" aria-modal="true" aria-labelledby="taskChartsTitle">
+      <div class="tc-modal-box">
+        <div class="tc-modal-header">
+          <span id="taskChartsTitle">📊 Task Analysis Charts</span>
+          <button class="tc-close" data-tc-close aria-label="Close">✕</button>
+        </div>
+
+        <div class="tc-modal-tabs" role="tablist" aria-label="Chart type">
+          <button class="tc-tab is-active" data-tc-type="bar"     role="tab">📊 Bar Chart</button>
+          <button class="tc-tab"           data-tc-type="scatter" role="tab">⚪ Scatter / Priority</button>
+        </div>
+
+        <div class="tc-modal-filters">
+          <label class="tc-field">
+            <span>Duty:</span>
+            <select id="tcDutyFilter">
+              <option value="__all__">All duties</option>
+            </select>
+          </label>
+          <label class="tc-field">
+            <span>Sort by:</span>
+            <select id="tcSortFilter">
+              <option value="order">Original order</option>
+              <option value="score">Total score</option>
+              <option value="importance">Importance</option>
+              <option value="frequency">Frequency</option>
+              <option value="difficulty">Difficulty</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="tc-modal-body">
+          <div id="tcChartWrap" class="tc-chart-wrap">
+            <canvas id="tcCanvas" aria-label="Task analysis chart"></canvas>
+          </div>
+          <div id="tcEmptyState" class="tc-empty-state" style="display:none;">
+            <div class="tc-empty-icon">📊</div>
+            <h3>No data yet</h3>
+            <p>Rate at least one task in the Task Verification tab to see charts.</p>
+          </div>
+        </div>
+
+        <div class="tc-modal-footer">
+          <span id="tcInfoBar" class="tc-info-bar"></span>
+          <div class="tc-footer-actions">
+            <button id="btnTCExportPNG" class="tc-btn tc-btn-primary">📷 Export PNG</button>
+            <button class="tc-btn" data-tc-close>Close</button>
+          </div>
+        </div>
       </div>
     </div>
 
