@@ -310,7 +310,6 @@ export function updateRating(taskKey, dimension, value) {
   }
   appState.verificationRatings[taskKey][dimension] = parseInt(value);
   updateComputedValues(taskKey);
-  _notifyRatingsChanged();
 }
 
 export function updatePerformsTask(taskKey, value) {
@@ -391,17 +390,6 @@ export function updateWorkshopCount(taskKey, dimension, value, count) {
   }
   appState.workshopCounts[taskKey][`${dimension}Counts`][value] = parseInt(count) || 0;
   validateAndComputeTask(taskKey);
-  _notifyRatingsChanged();
-}
-
-// Loose-coupled notification for the Task Charts module.  Debounced so a
-// burst of changes (e.g. live-workshop bulk-fetch) only fires one event.
-let _ratingsNotifyT = null;
-function _notifyRatingsChanged() {
-  clearTimeout(_ratingsNotifyT);
-  _ratingsNotifyT = setTimeout(() => {
-    document.dispatchEvent(new CustomEvent('dacum:ratings-changed'));
-  }, 120);
 }
 
 // ── Validation & Computation ──────────────────────────────────
@@ -410,6 +398,17 @@ export function validateAndComputeTask(taskKey) {
   if (!appState.workshopCounts[taskKey]) return;
   const counts      = appState.workshopCounts[taskKey];
   const isExtended  = appState.workflowMode === 'extended';
+
+  // Defensive: counts entries written by Live Workshop ingest may use a
+  // different shape (numeric importance/frequency/difficulty rather than
+  // *Counts: {0,1,2,3} maps).  If we don't see the expected per-value map,
+  // skip validation/UI-update — the dashboard renders these rows from a
+  // separate path and validation messages aren't applicable.
+  if (!counts.importanceCounts || typeof counts.importanceCounts !== 'object') return;
+  if (!counts.frequencyCounts  || typeof counts.frequencyCounts  !== 'object') return;
+  if (!counts.difficultyCounts || typeof counts.difficultyCounts !== 'object') return;
+  if (isExtended &&
+      (!counts.criticalityCounts || typeof counts.criticalityCounts !== 'object')) return;
 
   const iSum = Object.values(counts.importanceCounts).reduce((a,b) => a+b, 0);
   const fSum = Object.values(counts.frequencyCounts).reduce((a,b) => a+b, 0);

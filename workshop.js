@@ -293,12 +293,26 @@ export function lwApplyVotingResultsToDataModel() {
         const wsKey = `${dutyId}_task_${task.id}`;
         const voteCount = voteData.voteCount || appState.lwAggregatedResults.totalVotes || 0;
 
-        // Reconstruct workshopCounts from vote averages × participant count
+        // Reconstruct workshopCounts in the {0,1,2,3} per-value bucket
+        // shape that tasks.js / validateAndComputeTask() expects.
+        // We don't have the original per-vote breakdown here (only the
+        // averages), so we approximate by placing the entire vote count
+        // into the bucket nearest to the average.  This keeps validation
+        // logic happy and lets count-based tools read the data without
+        // crashing.  Aggregated dashboards continue to read the means
+        // directly from the task object (task.meanImportance etc.) which
+        // is the authoritative source.
+        const _bucketize = (avg, n) => {
+          const b = Math.max(0, Math.min(3, Math.round(avg)));
+          const out = { 0: 0, 1: 0, 2: 0, 3: 0 };
+          out[b] = n;
+          return out;
+        };
         appState.workshopCounts[wsKey] = {
-          importance: Math.round(voteData.avgImportance * voteCount),
-          frequency:  Math.round(voteData.avgFrequency  * voteCount),
-          difficulty: Math.round(voteData.avgDifficulty * voteCount),
-          count: voteCount
+          importanceCounts:  _bucketize(voteData.avgImportance,  voteCount),
+          frequencyCounts:   _bucketize(voteData.avgFrequency,   voteCount),
+          difficultyCounts:  _bucketize(voteData.avgDifficulty,  voteCount),
+          criticalityCounts: { 0: 0, 1: 0, 2: 0, 3: 0 },
         };
 
         appState.workshopResults[wsKey] = {
