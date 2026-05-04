@@ -89,6 +89,45 @@ export function initTaskCharts() {
     }
   });
 
+  // ── Robustness layer: tab entry + light polling ─────────────
+  // The button's "rated state" depends on data that can arrive through
+  // many paths we don't fully control (Live Workshop fetch, JSON import,
+  // project switch, manual count entry, …).  Rather than instrumenting
+  // every entry point, we run a cheap check whenever the user is on the
+  // Task Verification tab.  Cost is one Object.keys length read per
+  // second — effectively free.
+
+  let _pollTimer = null;
+  function _isOnVerificationTab() {
+    const tab = document.getElementById('verification-tab');
+    return tab && tab.classList.contains('active');
+  }
+  function _startPolling() {
+    if (_pollTimer) return;
+    _pollTimer = setInterval(refreshChartButtonState, 1000);
+  }
+  function _stopPolling() {
+    if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  }
+
+  // Watch for tab activations: when verification-tab becomes active,
+  // immediately refresh and start polling; when it becomes inactive,
+  // stop polling to save cycles.
+  const tabContent = document.getElementById('verification-tab');
+  if (tabContent) {
+    const obs = new MutationObserver(() => {
+      if (_isOnVerificationTab()) {
+        refreshChartButtonState();
+        _startPolling();
+      } else {
+        _stopPolling();
+      }
+    });
+    obs.observe(tabContent, { attributes: true, attributeFilter: ['class'] });
+    // Initial state in case the user lands directly on this tab
+    if (_isOnVerificationTab()) _startPolling();
+  }
+
   // Initial button state (in case data is already present at boot)
   refreshChartButtonState();
 }
@@ -186,9 +225,23 @@ function _readChartData() {
       const taskId = task.id || task.inputId;
       if (!taskId) return;
 
-      const i = _readDimension(taskId, 'importance', isWorkshop);
-      const f = _readDimension(taskId, 'frequency',  isWorkshop);
-      const d = _readDimension(taskId, 'difficulty', isWorkshop);
+      // Try in order: individual rating → workshop counts → Live Workshop means
+      // stored directly on the task object (workshop.js writes these after
+      // a successful results fetch).  This last source is the one the
+      // dashboard already reads, so it covers all live-workshop scenarios.
+      let i = _readDimension(taskId, 'importance', isWorkshop);
+      let f = _readDimension(taskId, 'frequency',  isWorkshop);
+      let d = _readDimension(taskId, 'difficulty', isWorkshop);
+
+      if (i === null && task.meanImportance !== undefined && task.meanImportance !== null) {
+        i = +Number(task.meanImportance).toFixed(2);
+      }
+      if (f === null && task.meanFrequency !== undefined && task.meanFrequency !== null) {
+        f = +Number(task.meanFrequency).toFixed(2);
+      }
+      if (d === null && task.meanDifficulty !== undefined && task.meanDifficulty !== null) {
+        d = +Number(task.meanDifficulty).toFixed(2);
+      }
 
       // Skip tasks where ALL three dimensions are unrated
       if (i === null && f === null && d === null) return;
@@ -218,27 +271,50 @@ function _readChartData() {
 }
 
 /**
- * Read one dimension's value for a task.  Returns:
- *   - workshop mode → weighted average across counts (or null if no votes)
- *   - individual mode → the explicit rating (or null if not rated)
+ * Read one dimension's value for a task.  Tries 3 data shapes in order:
+ *   1. appState.verificationRatings[taskKey][dim]
+ *        → individual mode (single rater)
+ *   2. appState.workshopResults[taskKey].mean{Importance|Frequency|Difficulty}
+ *        → Live Workshop ingest (workshop.js writes this after fetch).
+ *          Already a normalized average — no re-computation needed.
+ *   3. appState.workshopCounts[taskKey][`${dim}Counts`][value]
+ *        → Manual workshop count entry (tasks.js, per-cell vote counts)
+ *          Computed as weighted average:  Σ(value × count) / Σ(count)
+ *
+ * Returns null when no rating data exists for this task in this dimension.
  */
 function _readDimension(taskKey, dim, isWorkshop) {
-  if (isWorkshop) {
-    const counts = appState.workshopCounts?.[taskKey];
-    if (!counts) return null;
-    const c = counts[`${dim}Counts`];
-    if (!c) return null;
-    let total = 0, weighted = 0;
-    for (const v of [0, 1, 2, 3]) {
-      const n = c[v] || 0;
-      total    += n;
-      weighted += v * n;
-    }
-    return total > 0 ? +(weighted / total).toFixed(2) : null;
+  // (1) Individual rating — wins if explicitly set
+  const ind = appState.verificationRatings?.[taskKey];
+  if (ind && ind[dim] !== null && ind[dim] !== undefined) {
+    return Number(ind[dim]);
   }
-  const r = appState.verificationRatings?.[taskKey];
-  if (!r) return null;
-  return (r[dim] === null || r[dim] === undefined) ? null : Number(r[dim]);
+
+  // (2) Live Workshop normalized result
+  const wr = appState.workshopResults?.[taskKey];
+  if (wr) {
+    const key = 'mean' + dim.charAt(0).toUpperCase() + dim.slice(1);
+    if (wr[key] !== null && wr[key] !== undefined && !isNaN(wr[key])) {
+      return +Number(wr[key]).toFixed(2);
+    }
+  }
+
+  // (3) Manual workshop count entry — weighted average across {0,1,2,3}
+  const counts = appState.workshopCounts?.[taskKey];
+  if (counts) {
+    const c = counts[`${dim}Counts`];
+    if (c && typeof c === 'object') {
+      let total = 0, weighted = 0;
+      for (const v of [0, 1, 2, 3]) {
+        const n = c[v] || 0;
+        total    += n;
+        weighted += v * n;
+      }
+      if (total > 0) return +(weighted / total).toFixed(2);
+    }
+  }
+
+  return null;
 }
 
 /** True if any task in the project has at least one dimension rated. */
