@@ -35,8 +35,13 @@ let _wired       = false;
 
 // ── Public API ──────────────────────────────────────────────
 
+// Boot log — runs at module import time, before any function call.
+// If you don't see this in the console, the module never loaded.
+console.log('[TaskCharts] module loaded at', new Date().toISOString());
+
 /** One-time wiring of modal controls.  Safe to call multiple times. */
 export function initTaskCharts() {
+  console.log('[TaskCharts] initTaskCharts() called, _wired =', _wired);
   if (_wired) return;
   _wired = true;
 
@@ -117,7 +122,6 @@ export function initTaskCharts() {
   if (tabContent) {
     const obs = new MutationObserver(() => {
       if (_isOnVerificationTab()) {
-        _logDiagnostic();
         refreshChartButtonState();
         _startPolling();
       } else {
@@ -144,17 +148,31 @@ export function initTaskCharts() {
     }),
     refresh: refreshChartButtonState,
     open:    openTaskChartsModal,
+    log:     _logDiagnostic,
   };
+
+  // Run diagnostic right away — don't wait for tab activation, since that
+  // signal might never arrive in some environments.  Also run it every 3
+  // seconds for the first 30 seconds after boot, so we capture the moment
+  // when Live Workshop ingest fires.
+  _logDiagnostic();
+  let _bootRuns = 0;
+  const _bootTimer = setInterval(() => {
+    _bootRuns++;
+    _logDiagnostic();
+    refreshChartButtonState();
+    if (_bootRuns >= 10) clearInterval(_bootTimer);
+  }, 3000);
 
   // Initial button state (in case data is already present at boot)
   refreshChartButtonState();
 }
 
-/** One-time diagnostic dump — runs when user enters Task Verification tab. */
+/** Diagnostic dump — runs at boot, then periodically for 30 seconds, so
+ *  we capture before/after Live Workshop ingest.  Each run is timestamped. */
 function _logDiagnostic() {
-  if (window.__tcDebugLogged) return;
-  window.__tcDebugLogged = true;
-  console.group('[TaskCharts] data diagnostic');
+  const stamp = new Date().toISOString().slice(11, 19);
+  console.group(`[TaskCharts ${stamp}] diagnostic`);
   console.log('collectionMode:', appState.collectionMode);
   console.log('workshopCounts keys:',  Object.keys(appState.workshopCounts || {}));
   console.log('workshopResults keys:', Object.keys(appState.workshopResults || {}));
@@ -169,6 +187,8 @@ function _logDiagnostic() {
     (appState.dutiesData || []).flatMap(d => (d.tasks||[]).map(t => t.id || t.inputId)));
   const rows = _readChartData();
   console.log('readChartData() returned', rows.length, 'rated tasks:', rows);
+  const btn = document.getElementById('btnViewTaskCharts');
+  console.log('button found:', !!btn, '| disabled:', btn?.disabled);
   console.groupEnd();
 }
 
