@@ -23,9 +23,6 @@ import { initDragDrop }        from './drag_drop.js';
 // Expose switchTab globally (called from HTML onclick and live workshop guards)
 window.switchTab = switchTab;
 window.updateDutyLevelSummary = updateDutyLevelSummary;
-// Expose appState for runtime debugging via the browser console.
-// Read-only access pattern; do not mutate from outside.
-window.appState = appState;
 
 document.addEventListener('DOMContentLoaded', function () {
   // Initialize Skills Level Matrix

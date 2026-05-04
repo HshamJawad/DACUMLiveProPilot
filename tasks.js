@@ -399,17 +399,6 @@ export function validateAndComputeTask(taskKey) {
   const counts      = appState.workshopCounts[taskKey];
   const isExtended  = appState.workflowMode === 'extended';
 
-  // Defensive: counts entries written by Live Workshop ingest may use a
-  // different shape (numeric importance/frequency/difficulty rather than
-  // *Counts: {0,1,2,3} maps).  If we don't see the expected per-value map,
-  // skip validation/UI-update — the dashboard renders these rows from a
-  // separate path and validation messages aren't applicable.
-  if (!counts.importanceCounts || typeof counts.importanceCounts !== 'object') return;
-  if (!counts.frequencyCounts  || typeof counts.frequencyCounts  !== 'object') return;
-  if (!counts.difficultyCounts || typeof counts.difficultyCounts !== 'object') return;
-  if (isExtended &&
-      (!counts.criticalityCounts || typeof counts.criticalityCounts !== 'object')) return;
-
   const iSum = Object.values(counts.importanceCounts).reduce((a,b) => a+b, 0);
   const fSum = Object.values(counts.frequencyCounts).reduce((a,b) => a+b, 0);
   const dSum = Object.values(counts.difficultyCounts).reduce((a,b) => a+b, 0);

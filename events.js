@@ -51,7 +51,6 @@ import { lwFinalizeAndCreateSession, lwCopyLink, lwShowQRCode,
   lwCloseVoting, lwExportVerifiedPDF, lwExportVerifiedDOCX }  from './workshop.js';
 import { markAiGenerated, refineResults,
          clearAiGeneratedFlag }                               from './refine.js';
-import { openTaskChartsModal }                               from './task_charts.js';
 
 // ── Delegation helper ─────────────────────────────────────────
 
@@ -174,7 +173,6 @@ export function setupEvents() {
   _on('btnExportDashboard',    'click', () => exportDashboard());
   _on('btnExportTVPDF',        'click', () => exportTaskVerificationPDF());
   _on('btnExportTVWord',       'click', () => exportTaskVerificationWord());
-  _on('btnViewTaskCharts',     'click', () => openTaskChartsModal());
 
   // Clustering
   _on('btnBypassToClustering',      'click', () => bypassToClusteringTab());
