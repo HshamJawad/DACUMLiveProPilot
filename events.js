@@ -5,6 +5,7 @@
 // ============================================================
 
 import { appState }             from './state.js';
+import { generateAdditionalInfoAI } from './additional_info_ai.js';
 import { addDuty, addTask, removeDuty, removeTask, clearDuty,
          syncAllFromDOM, syncDutyTitle, syncTaskText,
          toggleViewMode, switchToViewMode }            from './duties.js';
@@ -133,6 +134,21 @@ export function setupEvents() {
         renderProjectsSidebar();
         // Reveal the Refine Results card only if generation actually ran
         if (ok) markAiGenerated();
+      })
+      .catch(() => {});
+  });
+
+  // ── Additional Information tab: AI supporting-info generation ──
+  // No markAiGenerated() here — the Refine Results card operates on
+  // duties/tasks only, so surfacing it after this run would be wrong.
+  // The generated text lives in plain textareas that saveCurrentProject()
+  // already reads straight from the DOM, so a save is all that's needed.
+  _on('aiGenerateInfoBtn', 'click', () => {
+    generateAdditionalInfoAI()
+      .then((ok) => {
+        if (!ok) return;
+        saveCurrentProject();
+        renderProjectsSidebar();
       })
       .catch(() => {});
   });

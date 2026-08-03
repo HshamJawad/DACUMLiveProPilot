@@ -1,10 +1,10 @@
 // ============================================================
-// sw.js — DACUM Live Pro Service Worker  v8
+// sw.js — DACUM Live Pro Service Worker  v9
 // Path-agnostic: BASE is derived dynamically from scope.
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v9';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -14,13 +14,21 @@ const OFFLINE_URL   = BASE + 'index.html';
 // Images/icons are still cache-first since they rarely change.
 const NETWORK_FIRST_EXT = /\.(html|js|css|json)(\?.*)?$/i;
 
+// Keep this list in sync with:
+//   • every <script src> and <link rel="stylesheet"> in index.html
+//   • every ES module reachable from app.js's import graph
+// A module missing here still works online (network-first), but the
+// app breaks offline at the point it is first imported.
 const PRECACHE_URLS = [
   BASE + 'index.html',
+
+  // ── Stylesheets ──────────────────────────────────────────
   BASE + 'dacum-styles.css',
   BASE + 'dacum-responsive.css',
   BASE + 'dacum-fixes.css',
   BASE + 'dacum-typography.css',
-  BASE + 'tv-refactor.css',
+
+  // ── ES modules (app.js import graph) ─────────────────────
   BASE + 'app.js',
   BASE + 'state.js',
   BASE + 'renderer.js',
@@ -30,20 +38,27 @@ const PRECACHE_URLS = [
   BASE + 'storage.js',
   BASE + 'tabs.js',
   BASE + 'tasks.js',
+  BASE + 'codes.js',
   BASE + 'modules.js',
   BASE + 'projects.js',
+  BASE + 'exports.js',
   BASE + 'snapshots.js',
   BASE + 'workshop.js',
   BASE + 'workshop_snapshots.js',
   BASE + 'dacum_projects.js',
+  BASE + 'refine.js',
+  BASE + 'drag_drop.js',
+  BASE + 'additional_info_ai.js',
+  BASE + 'autosave.js',
+  BASE + 'error-handler.js',
+
+  // ── Classic scripts loaded directly by index.html ────────
   BASE + 'dacum-ui.js',
   BASE + 'dacum-mobile.js',
   BASE + 'dacum-fixes.js',
-  BASE + 'tv-refactor.js',
-  BASE + 'refine.js',
-  BASE + 'error-handler.js',
-  BASE + 'autosave.js',
   BASE + 'qrcode.min.js',
+
+  // ── PWA assets ───────────────────────────────────────────
   BASE + 'manifest.json',
   BASE + 'icon-192.png',
   BASE + 'icon-512.png',
