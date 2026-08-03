@@ -246,6 +246,11 @@ export function setupEvents() {
       if (target.matches('[data-action="add-task"]')) {
         syncAllFromDOM(); pushHistoryState();
         addTask(target.getAttribute('data-duty-id'));
+      } else if (target.matches('[data-action="add-duty"]')) {
+        // Wall View duty cards carry their own ＋ button that adds a
+        // whole new duty row (task cards' ＋ adds a task instead).
+        syncAllFromDOM(); pushHistoryState();
+        addDuty();
       } else if (target.matches('[data-action="remove-duty"]')) {
         pushHistoryState();           // syncAllFromDOM called inside removeDuty
         removeDuty(target.getAttribute('data-duty-id'));

@@ -532,17 +532,24 @@
       }
 
       /* Drag handles — dot-grid SVG, inline in the header (not
-         absolutely positioned like Card View's duty handle). */
+         absolutely positioned like Card View's duty handle).
+         `position: static !important` is essential: dacum-styles.css /
+         the Card View block above position these absolutely at
+         top:6px;left:8px, which would stack the dots ON TOP of the
+         "Duty A" / "Task A1" label instead of beside it. */
       .wall-view-mode .dcv-duty-drag-handle,
       .wall-view-mode .dcv-task-drag-handle {
-        display: inline-flex;
-        position: static;
+        display: inline-flex !important;
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
         align-items: center;
         justify-content: center;
         width: 14px;
+        height: auto;
         flex-shrink: 0;
         padding: 0;
-        background: none;
+        background: none !important;
         border-radius: 0;
         cursor: grab;
         transition: color 0.15s, opacity 0.15s;
@@ -557,6 +564,10 @@
       .wall-view-mode .dcv-duty-label,
       .wall-view-mode .dcv-task-label {
         margin: 0;
+        /* dacum-styles.css reserves padding-right:20px on these labels
+           to clear the old floating ✕ — no longer needed now that the
+           buttons live in their own header column. */
+        padding-right: 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -565,25 +576,31 @@
         letter-spacing: 0.02em;
       }
 
-      /* Small square icon buttons — replace Card View's absolute
-         floating circular ✕ entirely within Wall View. */
+      /* Small square icon buttons — these fully replace Card View's
+         absolutely-positioned floating circular ✕ inside Wall View.
+         The !important flags neutralise dacum-styles.css's
+         `.dcv-close-btn { position:absolute; top:-8px; right:-8px;
+         border-radius:50% }`, which otherwise keeps rendering the old
+         red circle hanging off the card corner. */
       .wall-view-mode .dcv-add-btn,
       .wall-view-mode .dcv-close-btn {
-        display: flex;
-        position: static;
+        display: flex !important;
+        position: static !important;
+        top: auto !important;
+        right: auto !important;
         align-items: center;
         justify-content: center;
         width: calc(var(--wv-font) * 1.7);
         height: calc(var(--wv-font) * 1.7);
         min-width: 22px;
         min-height: 22px;
-        border: none;
-        border-radius: 8px;
+        border: none !important;
+        border-radius: 8px !important;
         font-size: calc(var(--wv-font) * 0.9);
         font-weight: 800;
         line-height: 1;
         cursor: pointer;
-        box-shadow: none;
+        box-shadow: none !important;
         transition: filter 0.15s, transform 0.1s;
       }
       .wall-view-mode .dcv-add-btn:hover,
@@ -601,8 +618,12 @@
 
       /* ── Duty card — solid indigo gradient (matches the reference) ── */
       .wall-view-mode .dcv-duty-card {
-        width: var(--wv-duty-w);
-        min-width: var(--wv-duty-w);
+        /* !important on width: dacum-responsive.css forces fixed
+           widths on .dcv-duty-card / .dcv-task-card at tablet & phone
+           breakpoints, which would override the --wv-* auto-zoom
+           sizing and break the wall layout on those screens. */
+        width: var(--wv-duty-w) !important;
+        min-width: var(--wv-duty-w) !important;
         min-height: calc(var(--wv-font) * 6);
         background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
         border: none;
@@ -635,8 +656,8 @@
 
       /* ── Task card — pale cream sticky note (matches the reference) ── */
       .wall-view-mode .dcv-task-card {
-        width: var(--wv-card-w);
-        min-width: var(--wv-card-w);
+        width: var(--wv-card-w) !important;
+        min-width: var(--wv-card-w) !important;
         min-height: calc(var(--wv-font) * 3.8);
         background: #fffdf0;
         border: 1px solid #fde68a;

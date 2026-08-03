@@ -311,11 +311,27 @@ export function addDuty() {
   if (appState.dutyCount === 0) appState.dutiesData = [];
   appState.dutyCount++;
   const dutyId = `duty_${appState.dutyCount}`;
+
+  // Every duty is born with one empty task card.
+  // Rationale: a duty with zero tasks has no task card to click "＋"
+  // on, and in Wall View an empty duty row collapses to a bare strip
+  // with nothing to drag or type into. Seeding one task keeps every
+  // duty immediately usable in all three views. Uses the exact same
+  // id scheme + taskCounts bookkeeping as addTask() so the two stay
+  // interchangeable (no duplicate ids, correct numbering afterwards).
+  appState.taskCounts[dutyId] = 1;
+  const firstTask = {
+    divId:   `task_${dutyId}_1`,
+    inputId: `${dutyId}_1`,
+    num:     1,
+    text:    '',
+  };
+
   appState.dutiesData.push({
     id:    dutyId,
     num:   appState.dutyCount,
     title: '',
-    tasks: [],
+    tasks: [firstTask],
   });
   renderDutiesFromState();
 }
@@ -540,6 +556,10 @@ function _renderWallView(container) {
 // .wall-view-mode in index.html, so Card View's own cards, which
 // share the same class names, are completely untouched.
 //
+// ＋ button semantics differ by card type, matching what's directly
+// under the cursor: on a DUTY card it adds a new duty (a whole new
+// row); on a TASK card it adds another task to that same duty.
+//
 // The drag handle uses an inline SVG dot-grid (not a text glyph) so
 // it renders identically across browsers/fonts instead of depending
 // on Braille/dot-glyph support.
@@ -562,8 +582,8 @@ function _makeWallDutyCard(duty, dutyLetter) {
         <span class="dcv-duty-label">Duty ${_esc(dutyLetter)}</span>
       </div>
       <div class="wall-card-header-right">
-        <button class="dcv-add-btn" data-action="add-task" data-duty-id="${duty.id}"
-                title="Add task to this duty" aria-label="Add task to this duty">＋</button>
+        <button class="dcv-add-btn" data-action="add-duty"
+                title="Add a new duty" aria-label="Add a new duty">＋</button>
         <button class="dcv-close-btn" data-action="remove-duty" data-duty-id="${duty.id}"
                 title="Remove duty" aria-label="Remove duty">✕</button>
       </div>

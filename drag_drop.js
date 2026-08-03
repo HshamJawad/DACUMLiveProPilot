@@ -100,7 +100,17 @@ function _initDutiesContainer() {
   // original (non-draggable) behaviour.
   if (!_dragEnabled()) return;
 
-  const container = document.getElementById('dutiesContainer');
+  // Pick the element that DIRECTLY parents the `.duty-row` nodes —
+  // Sortable only sorts a container's immediate children.
+  //   • Card View:  #dutiesContainer > .duty-row
+  //   • Wall View:  #dutiesContainer > .wall-rows-scroll > .wall-rows > .duty-row
+  // Attaching to #dutiesContainer in Wall View silently did nothing
+  // (no direct `.duty-row` children), which is why duty cards were
+  // undraggable there. `.wall-rows` is rebuilt on every wall render,
+  // so it's a fresh node each time and the init flag below naturally
+  // re-wires it without needing an explicit destroy.
+  const container = document.querySelector('#dutiesContainer .wall-rows')
+                 || document.getElementById('dutiesContainer');
   if (!container) return;
 
   // MutationObserver fires for every innerHTML re-render, which
@@ -144,8 +154,13 @@ function _onDutyDragEnd(evt) {
   // 2 · History anchor
   pushHistoryState();
 
-  // 3 · Re-order appState.dutiesData from new DOM order
-  const container = document.getElementById('dutiesContainer');
+  // 3 · Re-order appState.dutiesData from new DOM order.
+  //     Read from evt.to — the container the row was actually dropped
+  //     into — since that's `.wall-rows` in Wall View and
+  //     `#dutiesContainer` in Card View (see _initDutiesContainer).
+  const container = evt.to
+                 || document.querySelector('#dutiesContainer .wall-rows')
+                 || document.getElementById('dutiesContainer');
   if (!container) return;
 
   const byId = {};
