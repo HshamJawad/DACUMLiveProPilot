@@ -649,8 +649,15 @@ function _computeWallAutoZoom(duties) {
   // Base card width target when there are up to 10 tasks per duty and
   // 8 duties, on a 1400px viewport: ~130px card width, ~13px font.
   // Scale down gracefully as density grows.
+  //
+  // FLOOR = 132px, not 80px: each task card's header row now carries a
+  // drag handle + "Task A1" label + ＋ and ✕ buttons (~56px of fixed
+  // chrome). Below ~130px the header ran out of room and squeezed the
+  // task text out of sight behind the buttons. Very dense charts now
+  // shrink the FONT further and wrap onto more rows instead of
+  // shrinking the card past the point of readability.
   const densityFactor = Math.max(1, (maxTasks * totalDuties) / 60);
-  const cardWidth = Math.max(80, Math.min(160, 140 / Math.sqrt(densityFactor) * (vw / 1400)));
+  const cardWidth = Math.max(132, Math.min(180, 150 / Math.sqrt(densityFactor) * (vw / 1400)));
   const fontSize  = Math.max(9,  Math.min(14, 13 / Math.sqrt(densityFactor) * (vw / 1400)));
 
   return { cardWidth, fontSize };
