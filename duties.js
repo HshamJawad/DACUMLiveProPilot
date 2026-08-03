@@ -529,29 +529,48 @@ function _renderWallView(container) {
 
 // ── Wall View card builders ───────────────────────────────────
 //
-// Visually identical to Card View's dcv-duty-card / dcv-task-card
-// (same base CSS in dacum-styles.css), but each card additionally
-// carries its own ＋ button (adds a task to this duty, sticky-note
-// style — see the reference screenshot) alongside the existing ✕
-// remove button and drag handle, matching Card View's interaction
-// model. Kept as separate builders (rather than reusing
-// _makeTaskCard / the Card View duty markup) so Card View's own
-// layout is completely untouched by this change.
+// Reuses the SAME class names as Card View (.dcv-duty-card,
+// .dcv-task-card, .dcv-duty-drag-handle, .dcv-close-btn, .dcv-*-input,
+// data-action attributes …) so events.js delegation and drag_drop.js's
+// SortableJS wiring keep working unchanged — but the markup itself
+// and its visual skin are Wall-View-specific (indigo/cream sticky
+// notes with an inline header bar: drag-dots + title on the left,
+// small square ＋ / ✕ icon buttons on the right — see the reference
+// "after" screenshot). All of the visual skin is scoped under
+// .wall-view-mode in index.html, so Card View's own cards, which
+// share the same class names, are completely untouched.
+//
+// The drag handle uses an inline SVG dot-grid (not a text glyph) so
+// it renders identically across browsers/fonts instead of depending
+// on Braille/dot-glyph support.
+
+const _DRAG_DOTS_SVG = `
+  <svg width="12" height="18" viewBox="0 0 12 18" fill="currentColor" aria-hidden="true">
+    <circle cx="3" cy="3" r="1.6"/><circle cx="9" cy="3" r="1.6"/>
+    <circle cx="3" cy="9" r="1.6"/><circle cx="9" cy="9" r="1.6"/>
+    <circle cx="3" cy="15" r="1.6"/><circle cx="9" cy="15" r="1.6"/>
+  </svg>`;
 
 function _makeWallDutyCard(duty, dutyLetter) {
   const card = document.createElement('div');
   card.className = 'dcv-duty-card';
   card.setAttribute('data-duty-card-id', duty.id);
   card.innerHTML = `
-    <span class="dcv-duty-drag-handle" title="Drag to reorder duty" aria-label="Drag to reorder duty">≡</span>
-    <button class="dcv-add-btn" data-action="add-task" data-duty-id="${duty.id}"
-            title="Add task to this duty" aria-label="Add task to this duty">＋</button>
-    <button class="dcv-close-btn" data-action="remove-duty" data-duty-id="${duty.id}"
-            title="Remove duty">✕</button>
-    <span class="dcv-duty-label">Duty ${_esc(dutyLetter)}</span>
+    <div class="wall-card-header">
+      <div class="wall-card-header-left">
+        <span class="dcv-duty-drag-handle" title="Drag to reorder duty" aria-label="Drag to reorder duty">${_DRAG_DOTS_SVG}</span>
+        <span class="dcv-duty-label">Duty ${_esc(dutyLetter)}</span>
+      </div>
+      <div class="wall-card-header-right">
+        <button class="dcv-add-btn" data-action="add-task" data-duty-id="${duty.id}"
+                title="Add task to this duty" aria-label="Add task to this duty">＋</button>
+        <button class="dcv-close-btn" data-action="remove-duty" data-duty-id="${duty.id}"
+                title="Remove duty" aria-label="Remove duty">✕</button>
+      </div>
+    </div>
     <textarea class="dcv-duty-input"
               data-duty-id="${duty.id}"
-              placeholder="Enter duty"
+              placeholder="Enter duty..."
               rows="2">${_esc(duty.title)}</textarea>
   `;
   return card;
@@ -562,15 +581,21 @@ function _makeWallTaskCard(task, displayCode, dutyId) {
   card.className = 'dcv-task-card';
   card.id = task.divId;
   card.innerHTML = `
-    <span class="dcv-task-drag-handle" title="Drag to reorder task" aria-label="Drag to reorder task">⋮⋮</span>
-    <button class="dcv-add-btn" data-action="add-task" data-duty-id="${dutyId}"
-            title="Add another task" aria-label="Add another task">＋</button>
-    <button class="dcv-close-btn" data-action="remove-task" data-task-div-id="${task.divId}"
-            title="Remove task">✕</button>
-    <span class="dcv-task-label">Task ${displayCode}</span>
+    <div class="wall-card-header">
+      <div class="wall-card-header-left">
+        <span class="dcv-task-drag-handle" title="Drag to reorder task" aria-label="Drag to reorder task">${_DRAG_DOTS_SVG}</span>
+        <span class="dcv-task-label">Task ${displayCode}</span>
+      </div>
+      <div class="wall-card-header-right">
+        <button class="dcv-add-btn" data-action="add-task" data-duty-id="${dutyId}"
+                title="Add another task" aria-label="Add another task">＋</button>
+        <button class="dcv-close-btn" data-action="remove-task" data-task-div-id="${task.divId}"
+                title="Remove task" aria-label="Remove task">✕</button>
+      </div>
+    </div>
     <textarea class="dcv-task-input"
               data-task-id="${task.inputId}"
-              placeholder="Enter task"
+              placeholder="Enter task..."
               rows="2">${_esc(task.text)}</textarea>
   `;
   return card;

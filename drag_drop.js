@@ -120,7 +120,7 @@ function _initDutiesContainer() {
     handle:          '.dcv-duty-drag-handle',
     // Prevent drag from starting when user clicks on inputs, buttons,
     // or the task-scroll area (which has its own Sortable)
-    filter:          '.dcv-duty-input, .dcv-close-btn, .dcv-task-card, '
+    filter:          '.dcv-duty-input, .dcv-close-btn, .dcv-add-btn, .dcv-task-card, '
                    + '.dcv-task-input, .dcv-add-task-btn, .dcv-tasks-scroll',
     preventOnFilter: false,
     ghostClass:      'duty-drag-ghost',
@@ -205,7 +205,7 @@ function _initAllScrolls() {
       group:            GROUP_NAME,          // allow cross-duty moves
       animation:        150,
       draggable:        '.dcv-task-card',    // only task cards
-      filter:           '.dcv-task-input, .dcv-close-btn, .dcv-add-task-btn',
+      filter:           '.dcv-task-input, .dcv-close-btn, .dcv-add-btn, .dcv-add-task-btn',
       preventOnFilter:  false,                // keep textarea focus + button clicks
       ghostClass:       'drag-ghost',
       chosenClass:      'drag-chosen',
