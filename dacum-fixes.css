@@ -1,6 +1,6 @@
 /* ============================================================
    dacum-fixes.css  — v3.1 regression fixes
-   Load LAST (after dacum-responsive.css and tv-refactor.css)
+   Load LAST (after dacum-responsive.css)
    ============================================================ */
 
 /* ── FIX 2: Button hover clipping ─────────────────────────────
@@ -39,10 +39,6 @@ button:active {
 #dacumTopToolbar .dtb-btn:active {
   transform: scale(0.97) !important;
 }
-
-/* TV-refactor action buttons */
-.tv-action-btn:hover { transform: none !important; filter: brightness(1.06); }
-.tv-action-btn:active { transform: scale(0.97) !important; filter: none; }
 
 /* Ensure parent containers in the toolbar never clip */
 #dacumTopToolbar,

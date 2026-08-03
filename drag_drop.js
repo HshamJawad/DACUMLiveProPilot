@@ -1,6 +1,9 @@
 // ============================================================
 // /drag_drop.js
-// Drag & Drop for TASK CARDS + DUTY CARDS — Card View ONLY.
+// Drag & Drop for TASK CARDS + DUTY CARDS — Card View AND Wall View.
+// (Wall View reuses the identical .dcv-duty-card / .dcv-task-card
+// markup at a scaled-down size — see duties.js _makeWallDutyCard /
+// _makeWallTaskCard — so the exact same Sortable wiring applies.)
 //
 // Uses SortableJS (loaded globally via CDN in index.html).
 //
@@ -34,6 +37,22 @@ import { saveCurrentProject }    from './dacum_projects.js';
 const INIT_FLAG       = '_dacumDragInit';
 const DUTY_INIT_FLAG  = '_dacumDutyDragInit';
 const GROUP_NAME      = 'dacum-tasks';
+
+// ── Which modes get drag & drop? ────────────────────────────────
+//
+// Wall View is its own overlay (toggled via the `wall-view-active`
+// body class) rather than a persisted `getViewMode()` value — when
+// it's active, the persisted mode underneath is still whatever the
+// user had before ('card' or 'table'), by design (see duties.js).
+// Since the sticky-note redesign, Wall View reuses the exact same
+// .duty-row / .dcv-tasks-scroll / .dcv-task-card markup as Card View
+// (see duties.js _makeWallDutyCard / _makeWallTaskCard), so the same
+// Sortable wiring below applies to it unchanged — it just needs its
+// own explicit allow here instead of the earlier hard "always skip
+// Wall View" guard.
+function _dragEnabled() {
+  return document.body.classList.contains('wall-view-active') || getViewMode() === 'card';
+}
 
 let _observer  = null;
 let _initTimer = null;
@@ -77,9 +96,9 @@ function _scheduleInit() {
 // ── Duty-level sortable ──────────────────────────────────────
 
 function _initDutiesContainer() {
-  // Only in Card View — Table View and Wall View keep their original behaviour
-  if (document.body.classList.contains('wall-view-active')) return;
-  if (getViewMode() !== 'card') return;
+  // Card View and Wall View get drag & drop — Table View keeps its
+  // original (non-draggable) behaviour.
+  if (!_dragEnabled()) return;
 
   const container = document.getElementById('dutiesContainer');
   if (!container) return;
@@ -168,9 +187,9 @@ function _onDutyDragEnd(evt) {
 // ── Task-level sortable (existing, unchanged) ────────────────
 
 function _initAllScrolls() {
-  // Only active in Card View — Table View and Wall View keep their own behaviour
-  if (document.body.classList.contains('wall-view-active')) return;
-  if (getViewMode() !== 'card') return;
+  // Card View and Wall View get drag & drop — Table View keeps its
+  // original (non-draggable) behaviour.
+  if (!_dragEnabled()) return;
 
   document.querySelectorAll('.dcv-tasks-scroll').forEach(scrollEl => {
     if (scrollEl[INIT_FLAG]) return;      // already wired

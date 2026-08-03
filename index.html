@@ -152,7 +152,6 @@
     <link rel="stylesheet" href="dacum-responsive.css">
     <link rel="stylesheet" href="dacum-fixes.css">
     <link rel="stylesheet" href="dacum-typography.css">
-    <link rel="stylesheet" href="tv-refactor.css">
     <style>
       /* ── Top-toolbar sidebar toggle: hidden on desktop,
             shown on mobile via dacum-mobile.js injected CSS  ── */
@@ -269,6 +268,71 @@
         box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
       }
 
+      /* ── ＋ "add" button — sits beside the ✕ close button ─────
+         Used by Wall View's sticky-note cards (both duty and task)
+         so each card carries its own add-task affordance, matching
+         the reference screenshot. Reuses the same round-badge shape
+         as .dcv-close-btn, just green and offset further in. ──── */
+      .dcv-add-btn {
+        position: absolute;
+        top: -8px;
+        right: 18px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #10b981;
+        color: #fff;
+        border: 2px solid #fff;
+        font-size: 0.75em;
+        font-weight: 900;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        transition: background 0.15s, transform 0.12s;
+        padding: 0;
+        z-index: 20;
+      }
+      .dcv-add-btn:hover { background: #059669; transform: scale(1.15); }
+
+      /* ── Task drag handle (Wall View sticky-note cards) ───────
+         Card View's task cards have no dedicated handle (the whole
+         card is draggable, filtered on inputs/buttons); Wall View's
+         cards add a small visible dots handle to match the reference
+         screenshot. Purely additive — Card View's task markup is
+         untouched. */
+      .dcv-task-drag-handle {
+        position: absolute;
+        top: 6px;
+        left: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        font-size: 0.95em;
+        font-weight: 700;
+        line-height: 1;
+        color: rgba(133, 77, 14, 0.55);
+        background: rgba(255, 255, 255, 0.28);
+        border-radius: 5px;
+        cursor: grab;
+        user-select: none;
+        transition: background 0.15s, color 0.15s, transform 0.12s;
+        z-index: 2;
+      }
+      .dcv-task-drag-handle:hover {
+        background: rgba(255, 255, 255, 0.55);
+        color: #78350f;
+        transform: scale(1.08);
+      }
+      .dcv-task-drag-handle:active {
+        cursor: grabbing;
+        background: rgba(255, 255, 255, 0.65);
+      }
+
       /* ── Duty drag handle (Card View only) ─────────────────── */
       .dcv-duty-drag-handle {
         position: absolute;
@@ -303,6 +367,13 @@
          handle anchors to it, and a little left padding so the label
          doesn't sit under the handle. */
       .card-view-mode .dcv-duty-card { position: relative; padding-left: 34px; }
+
+      /* Wall View: same left padding for the duty handle, plus the
+         new task drag handle needs the same treatment on task cards
+         (Card View task cards have no handle, so this is scoped only
+         to .wall-view-mode and never affects Card View). */
+      .wall-view-mode .dcv-duty-card,
+      .wall-view-mode .dcv-task-card { padding-left: 30px; }
 
       /* Duty-level drag visual feedback (blue tone, matches task drag) */
       .duty-drag-ghost    { opacity: 0.35; outline: 2px dashed #667eea; background: #eef2ff !important; border-radius: 12px; }
@@ -380,7 +451,11 @@
       }
 
       /* Hide non-Duties chrome inside the duties tab so the wall is clean,
-         but leave the sidebar + top toolbar alone for navigation. */
+         but leave the sidebar + top toolbar alone for navigation.
+         NOTE: #btnAddDutyCard is intentionally NOT hidden here — Wall
+         View is interactive now (sticky-note redesign), so the floating
+         "＋ Add Duty" button stays visible, same as Card View. The
+         legacy table-view #btnAddDuty stays hidden either way. */
       body.wall-view-active .tab-buttons,
       body.wall-view-active .tab-content:not(#duties-tab),
       body.wall-view-active #refineResultsSection,
@@ -390,7 +465,6 @@
       body.wall-view-active #duties-tab > div:has([data-action="clear-tab"]),
       body.wall-view-active #duties-tab > div:has(> #aiGenerateBtn),
       body.wall-view-active #btnAddDuty,
-      body.wall-view-active #btnAddDutyCard,
       body.wall-view-active #duties-tab > div:last-child {
         display: none !important;
       }
@@ -467,86 +541,89 @@
         min-width: min-content;   /* ensures horizontal scroll when rows are wider than viewport */
       }
 
-      /* A single row: blue Duty card on the left + yellow task stickies on the right */
-      .wall-row {
-        display: flex;
-        align-items: stretch;
+      /* ── Wall View sticky-note cards ───────────────────────────
+         Wall View now renders the SAME .dcv-row / .dcv-duty-card /
+         .dcv-tasks-area / .dcv-tasks-scroll / .dcv-task-card markup
+         Card View uses (see duties.js _renderWallView), so it gets
+         Card View's full look-and-feel (gradient cards, ✕ / ＋
+         buttons, drag handles) automatically. The rules below only
+         RESCALE that shared markup to the --wv-* zoom variables and
+         restore the original "wrap, don't scroll" wall layout —
+         everything else (color, borders, shadows, button styles)
+         comes from dacum-styles.css unchanged. All scoped under
+         .wall-view-mode so Card View itself is never affected. */
+
+      .wall-view-mode .dcv-row {
+        padding: 0;
+        border-bottom: none;
         gap: var(--wv-task-gap);
         min-height: 56px;
       }
 
-      .wall-duty-card {
-        flex-shrink: 0;
+      .wall-view-mode .dcv-duty-card {
         width: var(--wv-duty-w);
-        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-        color: #ffffff;
+        min-width: var(--wv-duty-w);
+        min-height: calc(var(--wv-font) * 6);
         border-radius: 9px;
-        padding: 10px 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        justify-content: center;
-        box-shadow: 0 2px 6px rgba(79,70,229,0.25);
+        padding: 8px 10px 10px;
       }
-      .wall-duty-letter {
-        font-size: calc(var(--wv-font) * 0.95);
-        font-weight: 800;
-        letter-spacing: 0.3px;
-        opacity: 0.95;
+      .wall-view-mode .dcv-duty-label {
+        font-size: calc(var(--wv-font) * 0.78);
+        margin-bottom: 3px;
       }
-      .wall-duty-title {
+      .wall-view-mode .dcv-duty-input {
         font-size: var(--wv-font);
-        font-weight: 600;
-        line-height: 1.35;
-        word-break: break-word;
+        min-height: calc(var(--wv-font) * 3.6);
+        padding: 4px 6px;
       }
 
-      .wall-tasks {
-        flex: 1;
-        display: flex;
+      /* Tasks wrap onto multiple lines within the row instead of
+         horizontally scrolling — keeps the "see the whole chart at
+         once" wall spirit while staying the same draggable strip
+         drag_drop.js already wires (Sortable works fine wrapped). */
+      .wall-view-mode .dcv-tasks-area  { overflow: visible; margin-left: var(--wv-task-gap); }
+      .wall-view-mode .dcv-tasks-scroll {
         flex-wrap: wrap;
-        gap: var(--wv-task-gap);
+        overflow: visible;
         align-items: flex-start;
+        padding: 2px 2px 2px 0;
+        gap: var(--wv-task-gap);
       }
 
-      /* Sticky-note style task cards */
-      .wall-task-card {
+      .wall-view-mode .dcv-task-card {
         width: var(--wv-card-w);
+        min-width: var(--wv-card-w);
         min-height: calc(var(--wv-font) * 3.4);
-        background: #fef9c3;
-        border: 1px solid #fde68a;
         border-radius: 6px;
-        padding: 6px 8px;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
+        padding: 5px 7px 6px;
         box-shadow:
           0 1px 2px rgba(161,98,7,0.10),
           0 4px 8px rgba(161,98,7,0.06);
-        position: relative;
         transition: transform 0.12s, box-shadow 0.12s;
       }
-      .wall-task-card:hover {
+      .wall-view-mode .dcv-task-card:hover {
         transform: translateY(-2px) rotate(-0.3deg);
         box-shadow:
           0 2px 4px rgba(161,98,7,0.18),
           0 10px 18px rgba(161,98,7,0.14);
         z-index: 1;
       }
-      .wall-task-code {
+      .wall-view-mode .dcv-task-label {
         font-size: calc(var(--wv-font) * 0.78);
-        font-weight: 800;
-        color: #78350f;
-        letter-spacing: 0.25px;
-        opacity: 0.85;
+        margin-bottom: 3px;
       }
-      .wall-task-text {
+      .wall-view-mode .dcv-task-input {
         font-size: var(--wv-font);
-        color: #422006;
-        line-height: 1.35;
-        word-break: break-word;
-        overflow: hidden;
+        min-height: calc(var(--wv-font) * 2.6);
+        padding: 3px 5px;
       }
+
+      /* Cursor affordances, matching Card View's drag feel */
+      .wall-view-mode .dcv-task-card              { cursor: grab; }
+      .wall-view-mode .dcv-task-card:active        { cursor: grabbing; }
+      .wall-view-mode .dcv-task-card .dcv-task-input { cursor: text; }
+      .wall-view-mode .dcv-task-card .dcv-close-btn,
+      .wall-view-mode .dcv-task-card .dcv-add-btn  { cursor: pointer; }
 
       /* Empty-state */
       .wall-empty-state {
@@ -576,8 +653,8 @@
       /* ─── Responsive: stack duty card above tasks on narrow viewports ─── */
       @media (max-width: 720px) {
         .wall-view-mode { --wv-duty-w: 100%; }
-        .wall-row { flex-direction: column; }
-        .wall-duty-card { width: 100%; }
+        .wall-view-mode .dcv-row { flex-direction: column; }
+        .wall-view-mode .dcv-duty-card { width: 100%; min-width: 0; }
       }
 
       /* ══════════════════════════════════════════════════════════
@@ -717,17 +794,35 @@
           overflow: visible !important;
           max-height: none !important;
         }
-        .wall-row { page-break-inside: avoid; break-inside: avoid; }
-        .wall-task-card { box-shadow: none !important; border: 1px solid #d6d3d1; }
-        .wall-duty-card {
-          background: #4f46e5 !important;
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-        }
-        .wall-task-card {
+        body.wall-view-active .duty-row { page-break-inside: avoid; break-inside: avoid; }
+        body.wall-view-active .dcv-task-card {
+          box-shadow: none !important;
+          border: 1px solid #d6d3d1;
           background: #fef9c3 !important;
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
+        }
+        body.wall-view-active .dcv-duty-card {
+          box-shadow: none !important;
+          background: linear-gradient(145deg, #bfdbfe, #93c5fd) !important;
+          border-color: #60a5fa !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        /* Interactive controls have no place on a printed chart —
+           the wall's editing affordances (✕ remove, ＋ add, drag
+           handles) are screen-only. */
+        body.wall-view-active .dcv-close-btn,
+        body.wall-view-active .dcv-add-btn,
+        body.wall-view-active .dcv-duty-drag-handle,
+        body.wall-view-active .dcv-task-drag-handle,
+        body.wall-view-active #btnAddDutyCard {
+          display: none !important;
+        }
+        /* Textareas should read as plain printed text, not form fields */
+        body.wall-view-active .dcv-duty-input,
+        body.wall-view-active .dcv-task-input {
+          pointer-events: none;
         }
         /* Page number footer via @page counters (supported by Chrome/Edge) */
         @page {
@@ -1860,7 +1955,6 @@
     <script type="module" src="app.js"></script>
     <script src="dacum-ui.js"></script>
     <script src="dacum-mobile.js"></script>
-    <script src="tv-refactor.js"></script>
     <script src="dacum-fixes.js"></script>
 
     <!-- ── Fixed Top Toolbar ──────────────────────────────────── -->

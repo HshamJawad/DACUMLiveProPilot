@@ -21,7 +21,10 @@ import { getDutyLetter, getTaskCode as _codesTaskCode } from './codes.js';
 // Three modes:
 //   'card'  → default editable card view (with drag & drop)
 //   'table' → compact table view (editable, no drag)
-//   'wall'  → read-only DACUM wall display (full-width, auto-zoom)
+//   'wall'  → full-width, auto-zoom DACUM wall display — interactive
+//             sticky-note-style duty/task cards (add / remove / edit /
+//             drag & drop), same as Card View, just scaled to fit
+//             the whole chart on screen for live workshop sessions.
 //
 // Wall View is NOT persisted across sessions — it's a presentation
 // mode, not a work mode.  If the persisted mode is 'wall' on load,
@@ -239,7 +242,12 @@ function _setAddDutyVisibility(mode) {
   const orig   = document.getElementById('btnAddDuty');
   let   cardBtn = document.getElementById('btnAddDutyCard');
 
-  if (mode === 'card') {
+  // Card View AND Wall View both need the floating "＋ Add Duty"
+  // button — Wall View is no longer read-only (see _renderWallView):
+  // its duty/task cards carry the same add/remove/drag affordances
+  // as Card View, so the trainer can build the chart directly on
+  // the wall during a live session.
+  if (mode === 'card' || mode === 'wall') {
     if (orig) orig.style.display = 'none';
     if (!cardBtn) {
       cardBtn           = document.createElement('button');
@@ -255,12 +263,6 @@ function _setAddDutyVisibility(mode) {
       cardBtn.onclick = () => addDuty();
     }
     cardBtn.style.display = 'inline-flex';
-  } else if (mode === 'wall') {
-    // Wall View is read-only: hide both add-duty buttons so the
-    // presentation surface stays clean.  They return when the user
-    // switches back to Card or Table view.
-    if (orig)    orig.style.display    = 'none';
-    if (cardBtn) cardBtn.style.display = 'none';
   } else {
     if (orig)    orig.style.display    = '';
     if (cardBtn) cardBtn.style.display = 'none';
@@ -389,7 +391,7 @@ function _esc(str) {
     .replace(/>/g, '&gt;');
 }
 
-// ── WALL VIEW (read-only, full-width, auto-zoom) ─────────────
+// ── WALL VIEW (interactive, full-width, auto-zoom) ────────────
 //
 // Horizontal layout per duty: blue duty card on the left, yellow
 // sticky-note-style task cards flowing to the right.  Tasks wrap
@@ -401,11 +403,15 @@ function _esc(str) {
 // multiplier lets the user override via 🔍+ / 🔍− buttons; it does
 // NOT cross sessions.
 //
-// All editing is disabled: text is rendered as plain content, no
-// inputs, no buttons for add/remove.  Drag-and-drop's MutationObserver
-// will see the new .wall-view-mode class and simply skip re-init
-// (drag_drop.js checks getViewMode() which we've mapped to non-card
-// when wall is active).
+// Editing is fully enabled (as of the sticky-note redesign): each
+// duty/task card is the SAME .dcv-duty-card / .dcv-task-card markup
+// Card View uses (see _makeWallDutyCard / _makeWallTaskCard below),
+// just visually scaled down via the --wv-* CSS custom properties.
+// Because events.js's click/input delegation and drag_drop.js's
+// SortableJS wiring both key off those class names + data-action
+// attributes rather than the active view mode, add / remove / edit /
+// drag-and-drop all work here automatically — see drag_drop.js's
+// `_dragEnabled()` guard, which now also allows Wall View.
 
 const SS_WALL_ZOOM = 'dacum_wall_zoom';
 
@@ -433,17 +439,21 @@ function _renderWallView(container) {
   // Toolbar (always visible — outside scroll area)
   container.appendChild(_makeWallToolbar());
 
-  // Empty-state
+  // Empty-state — Wall View is interactive now, so let the trainer
+  // start building the chart right here instead of bouncing to Card View.
   if (duties.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'wall-empty-state';
     empty.innerHTML = `
       <div class="wall-empty-icon">🧱</div>
       <h3>No duties yet</h3>
-      <p>Switch to Card View to add some duties and tasks, then come back.</p>
-      <button class="wall-btn-primary" data-view-switch="card">🃏 Go to Card View</button>
+      <p>Add your first duty to start building the chart right here on the wall.</p>
+      <button class="wall-btn-primary" data-wall-empty-action="add-duty">＋ Add First Duty</button>
     `;
-    empty.querySelector('[data-view-switch]').addEventListener('click', () => switchToViewMode('card'));
+    // Matches the floating "＋ Add Duty" button's own onclick (see
+    // _setAddDutyVisibility) — neither pushes history before adding,
+    // consistent with existing Card View behaviour.
+    empty.querySelector('[data-wall-empty-action="add-duty"]').addEventListener('click', () => addDuty());
     container.appendChild(empty);
     return;
   }
@@ -466,6 +476,18 @@ function _renderWallView(container) {
 
   // Rows (inside a scroll wrapper so fullscreen can constrain height
   // and show horizontal/vertical scrollbars when zoomed content overflows)
+  //
+  // NOTE: Wall View rows now reuse the SAME .duty-row / .dcv-row /
+  // .dcv-duty-card / .dcv-tasks-scroll / .dcv-task-card structure as
+  // Card View (see _renderCardView above + _makeWallDutyCard /
+  // _makeWallTaskCard below). This is intentional: events.js's click /
+  // input delegation and drag_drop.js's SortableJS wiring are both
+  // generic over these class names + data-action attributes — they are
+  // NOT gated to Card View — so editing, add/remove buttons, and drag
+  // & drop all work here for free, with zero changes to events.js.
+  // Sizing is scaled via the --wv-font / --wv-card-w / --wv-duty-w /
+  // --wv-task-gap custom properties set below (see the CSS rules
+  // scoped under .wall-view-mode in index.html).
   const scrollWrap = document.createElement('div');
   scrollWrap.className = 'wall-rows-scroll';
 
@@ -473,36 +495,85 @@ function _renderWallView(container) {
   rows.className = 'wall-rows';
   duties.forEach((duty, dutyIndex) => {
     const letter = getDutyLetter(dutyIndex);
+
+    // Outer wrapper keeps the same id as Card View so drag_drop.js's
+    // ':scope > .duty-row' re-order lookup and events.js delegation
+    // both work unchanged.
+    const dutyDiv = document.createElement('div');
+    dutyDiv.className = 'duty-row';
+    dutyDiv.id = duty.id;
+
     const row = document.createElement('div');
-    row.className = 'wall-row';
-    row.id = `wall_${duty.id}`;
+    row.className = 'dcv-row';
+    row.appendChild(_makeWallDutyCard(duty, letter));
 
-    const dutyCard = document.createElement('div');
-    dutyCard.className = 'wall-duty-card';
-    dutyCard.innerHTML = `
-      <span class="wall-duty-letter">Duty ${_esc(letter)}</span>
-      <span class="wall-duty-title">${_esc(duty.title) || '<em style="opacity:0.6">Untitled</em>'}</span>
-    `;
+    const tasksArea = document.createElement('div');
+    tasksArea.className = 'dcv-tasks-area';
 
-    const tasksWrap = document.createElement('div');
-    tasksWrap.className = 'wall-tasks';
+    const tasksScroll = document.createElement('div');
+    tasksScroll.className = 'dcv-tasks-scroll';
+    tasksScroll.id = `tasks_${duty.id}`;
 
     (duty.tasks || []).forEach((task, taskIndex) => {
-      const note = document.createElement('div');
-      note.className = 'wall-task-card';
-      note.innerHTML = `
-        <span class="wall-task-code">Task ${_esc(letter)}${taskIndex + 1}</span>
-        <span class="wall-task-text">${_esc(task.text) || '<em style="opacity:0.5">—</em>'}</span>
-      `;
-      tasksWrap.appendChild(note);
+      tasksScroll.appendChild(_makeWallTaskCard(task, `${letter}${taskIndex + 1}`, duty.id));
     });
 
-    row.appendChild(dutyCard);
-    row.appendChild(tasksWrap);
-    rows.appendChild(row);
+    tasksArea.appendChild(tasksScroll);
+    row.appendChild(tasksArea);
+    dutyDiv.appendChild(row);
+    rows.appendChild(dutyDiv);
   });
   scrollWrap.appendChild(rows);
   container.appendChild(scrollWrap);
+}
+
+// ── Wall View card builders ───────────────────────────────────
+//
+// Visually identical to Card View's dcv-duty-card / dcv-task-card
+// (same base CSS in dacum-styles.css), but each card additionally
+// carries its own ＋ button (adds a task to this duty, sticky-note
+// style — see the reference screenshot) alongside the existing ✕
+// remove button and drag handle, matching Card View's interaction
+// model. Kept as separate builders (rather than reusing
+// _makeTaskCard / the Card View duty markup) so Card View's own
+// layout is completely untouched by this change.
+
+function _makeWallDutyCard(duty, dutyLetter) {
+  const card = document.createElement('div');
+  card.className = 'dcv-duty-card';
+  card.setAttribute('data-duty-card-id', duty.id);
+  card.innerHTML = `
+    <span class="dcv-duty-drag-handle" title="Drag to reorder duty" aria-label="Drag to reorder duty">≡</span>
+    <button class="dcv-add-btn" data-action="add-task" data-duty-id="${duty.id}"
+            title="Add task to this duty" aria-label="Add task to this duty">＋</button>
+    <button class="dcv-close-btn" data-action="remove-duty" data-duty-id="${duty.id}"
+            title="Remove duty">✕</button>
+    <span class="dcv-duty-label">Duty ${_esc(dutyLetter)}</span>
+    <textarea class="dcv-duty-input"
+              data-duty-id="${duty.id}"
+              placeholder="Enter duty"
+              rows="2">${_esc(duty.title)}</textarea>
+  `;
+  return card;
+}
+
+function _makeWallTaskCard(task, displayCode, dutyId) {
+  const card = document.createElement('div');
+  card.className = 'dcv-task-card';
+  card.id = task.divId;
+  card.innerHTML = `
+    <span class="dcv-task-drag-handle" title="Drag to reorder task" aria-label="Drag to reorder task">⋮⋮</span>
+    <button class="dcv-add-btn" data-action="add-task" data-duty-id="${dutyId}"
+            title="Add another task" aria-label="Add another task">＋</button>
+    <button class="dcv-close-btn" data-action="remove-task" data-task-div-id="${task.divId}"
+            title="Remove task">✕</button>
+    <span class="dcv-task-label">Task ${displayCode}</span>
+    <textarea class="dcv-task-input"
+              data-task-id="${task.inputId}"
+              placeholder="Enter task"
+              rows="2">${_esc(task.text)}</textarea>
+  `;
+  return card;
 }
 
 function _computeWallAutoZoom(duties) {
