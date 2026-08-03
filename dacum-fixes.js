@@ -20,40 +20,13 @@
     if (badge) badge.style.display = 'none';
   }
 
-  /* ── PWA Install button CSS (injected once) ─────────────── */
-  function _injectInstallCSS() {
-    if (document.getElementById('dacum-install-styles')) return;
-    var s = document.createElement('style');
-    s.id = 'dacum-install-styles';
-    s.textContent =
-      /* Hidden by default — only shown when beforeinstallprompt fires */
-      '#dacumInstallBtn { display: none !important; }' +
-      '#dacumInstallBtn.dacum-install-visible {' +
-        'display:inline-flex!important;' +
-        'align-items:center;' +
-        'gap:6px;' +
-        'background:linear-gradient(135deg,#cba6f7,#89b4fa);' +
-        'color:#1e1e2e;' +
-        'border:none;' +
-        'border-radius:8px;' +
-        'padding:6px 13px;' +
-        'font-size:0.82em;' +
-        'font-weight:700;' +
-        'cursor:pointer;' +
-        'white-space:nowrap;' +
-        'letter-spacing:0.01em;' +
-        'box-shadow:0 2px 10px rgba(203,166,247,0.3);' +
-        'transition:opacity 0.15s,transform 0.1s;' +
-        'flex-shrink:0;' +
-      '}' +
-      '#dacumInstallBtn.dacum-install-visible:hover{opacity:0.88;}' +
-      '#dacumInstallBtn.dacum-install-visible:active{transform:scale(0.96);}' +
-      /* On very small screens only show icon, not text */
-      '@media (max-width:480px){' +
-        '#dacumInstallBtn.dacum-install-visible span.install-label{display:none!important;}' +
-      '}';
-    document.head.appendChild(s);
-  }
+  /* ── PWA Install button styling ──────────────────────────
+     Deliberately NOT injected here any more. These rules used to be
+     written into a runtime <style> block with !important, which
+     silently overrode the identical block in dacum-fixes.css and made
+     that file's rules dead code. The styling now lives ONLY in
+     dacum-fixes.css (same visual result); this file just toggles the
+     .dacum-install-visible class. */
 
   /* ── FIX 3: PWA Install prompt ──────────────────────────── */
   var _deferredPrompt = null;
@@ -92,7 +65,6 @@
   }
 
   function _showInstallButton() {
-    _injectInstallCSS();        /* ensure CSS exists before showing */
     _injectInstallButton();
     var btn = document.getElementById('dacumInstallBtn');
     if (btn) btn.classList.add('dacum-install-visible');
@@ -116,26 +88,65 @@
   /* ── SW Version Guardian ───────────────────────────────── */
   // Immediately trigger a SW update check on every page load.
   // This catches cases where the old SW is serving stale files.
+  //
+  // Previously this only asked the waiting worker to skip waiting —
+  // but the page you were already looking at kept being served by the
+  // OLD worker, so fresh CSS/JS appeared only on the NEXT manual
+  // reload. Now a `controllerchange` listener reloads once, the
+  // moment the new worker takes over, so a single refresh is enough
+  // after every deploy.
+  var _swReloading = false;
+
+  function _watchForControllerChange() {
+    if (!('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      // Guard against a reload loop: fire at most once per page load.
+      if (_swReloading) return;
+      _swReloading = true;
+      console.log('[DACUM] New SW took control — reloading for fresh assets.');
+      window.location.reload();
+    });
+  }
+
+  function _activateWaiting(reg) {
+    if (reg && reg.waiting) {
+      console.log('[DACUM] SW waiting found — activating');
+      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    }
+  }
+
   function _forceSWUpdate() {
     if (!('serviceWorker' in navigator)) return;
+
+    // Only auto-reload when a controller already exists. On a very
+    // first visit the SW installs and takes control with nothing
+    // stale on screen — reloading there would be a pointless flash.
+    if (navigator.serviceWorker.controller) _watchForControllerChange();
+
     navigator.serviceWorker.getRegistration().then(function (reg) {
-      if (reg) {
-        reg.update().then(function () {
-          console.log('[DACUM] SW update check complete');
-          // If a SW is already waiting, activate it immediately
-          if (reg.waiting) {
-            console.log('[DACUM] SW waiting found — activating');
-            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-          }
-        }).catch(function () {});
-      }
+      if (!reg) return;
+
+      // A new worker may finish installing slightly after update()
+      // resolves — catch that case too.
+      reg.addEventListener('updatefound', function () {
+        var incoming = reg.installing;
+        if (!incoming) return;
+        incoming.addEventListener('statechange', function () {
+          if (incoming.state === 'installed') _activateWaiting(reg);
+        });
+      });
+
+      reg.update().then(function () {
+        console.log('[DACUM] SW update check complete');
+        _activateWaiting(reg);
+      }).catch(function () {});
     }).catch(function () {});
   }
 
   /* ── Bootstrap ─────────────────────────────────────────── */
   function _init() {
     _hideOldBadge();
-    _injectInstallCSS();
     _forceSWUpdate();
     /* Sidebar/hamburger handled entirely by dacum-mobile.js */
   }

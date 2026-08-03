@@ -25,6 +25,13 @@
       // Must match CACHE_VERSION in sw.js
       var EXPECTED_SW = 'v8';
 
+      // ── Human-readable build identity (shown in the toolbar) ──
+      // Bump these together with EXPECTED_SW / CACHE_VERSION on every
+      // release, so a trainer can read the running build off the
+      // screen instead of digging through DevTools.
+      var APP_VERSION = '3.2';
+      var APP_RELEASED = '2026-08-03';
+
       // Per-version reload guard — prevents infinite refresh loops
       var _reloadPrefix = 'dacum_sw_v_';
       var _minInterval  = 20000;
@@ -39,42 +46,102 @@
         try { sessionStorage.setItem(_reloadPrefix + v, String(Date.now())); } catch (e) {}
       }
 
-      // Update toast UI
-      function _showToast() {
+      // ── Version badge in the toolbar ─────────────────────────
+      function _paintVersionBadge() {
+        var badge = document.getElementById('dacumVersionBadge');
+        var text  = document.getElementById('dacumVersionText');
+        if (!badge || !text) return;
+        text.textContent = 'v' + APP_VERSION;
+        badge.title = 'DACUM Live Pro v' + APP_VERSION +
+                      '  ·  released ' + APP_RELEASED +
+                      '  ·  cache ' + EXPECTED_SW;
+      }
+
+      // Flip the badge into an actionable "update available" chip.
+      function _markBadgeUpdatable(version, onApply) {
+        var badge = document.getElementById('dacumVersionBadge');
+        var text  = document.getElementById('dacumVersionText');
+        if (!badge || !text) return;
+        badge.classList.add('dacum-version-update');
+        text.textContent = 'Update';
+        badge.title = 'A newer version is ready — click to update now.' +
+                      '  (currently running v' + APP_VERSION + ')';
+        badge.onclick = onApply;
+      }
+
+      // ── Update prompt ────────────────────────────────────────
+      // NOTE: this deliberately does NOT reload on its own.
+      // In a live DACUM workshop the facilitator is often mid-typing
+      // with participants watching; a surprise refresh at that moment
+      // is far more costly than running one build behind for another
+      // few minutes. So the new worker is already installed and
+      // waiting — we just offer the switch and let the user pick the
+      // moment. Dismissing leaves the "Update" chip in the toolbar,
+      // so the offer is never actually lost.
+      function _showUpdatePrompt(version) {
         if (document.getElementById('_dacumSwToast')) return;
+
         var s = document.createElement('style');
-        s.textContent = '@keyframes _swtin{from{opacity:0;transform:translateX(-50%) translateY(18px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+        s.textContent =
+          '@keyframes _swtin{from{opacity:0;transform:translateX(-50%) translateY(18px)}' +
+          'to{opacity:1;transform:translateX(-50%) translateY(0)}}';
         document.head.appendChild(s);
+
         var t = document.createElement('div');
         t.id = '_dacumSwToast';
         t.style.cssText =
           'position:fixed;bottom:18px;left:50%;transform:translateX(-50%);' +
           'background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;' +
-          'padding:10px 20px;border-radius:12px;font-size:0.84em;font-weight:600;' +
+          'padding:11px 14px 11px 18px;border-radius:12px;font-size:0.84em;font-weight:600;' +
           'font-family:inherit;box-shadow:0 4px 20px rgba(102,126,234,0.55);' +
-          'z-index:2147483647;display:flex;align-items:center;gap:8px;' +
+          'z-index:2147483647;display:flex;align-items:center;gap:12px;' +
           'white-space:nowrap;animation:_swtin 0.3s cubic-bezier(.16,1,.3,1);';
-        t.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.07-8.4"/></svg><span>Updating…</span>';
+
+        t.innerHTML =
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+          ' stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<polyline points="23 4 23 10 17 10"/>' +
+          '<path d="M20.49 15a9 9 0 1 1-.07-8.4"/></svg>' +
+          '<span>A new version is available.</span>' +
+          '<button id="_dacumSwApply" style="background:#fff;color:#4338ca;border:none;' +
+          'border-radius:8px;padding:6px 13px;font-size:0.95em;font-weight:700;' +
+          'cursor:pointer;font-family:inherit;">Update now</button>' +
+          '<button id="_dacumSwLater" style="background:transparent;color:rgba(255,255,255,0.85);' +
+          'border:none;padding:6px 4px;font-size:0.95em;font-weight:600;' +
+          'cursor:pointer;font-family:inherit;text-decoration:underline;">Later</button>';
+
         document.body.appendChild(t);
+
+        function _apply() {
+          if (!_canReload(version)) { console.log('[PWA] reload suppressed', version); return; }
+          _markReload(version);
+          var btn = document.getElementById('_dacumSwApply');
+          if (btn) { btn.textContent = 'Updating…'; btn.disabled = true; }
+          setTimeout(function () { window.location.reload(true); }, 400);
+        }
+
+        document.getElementById('_dacumSwApply').addEventListener('click', _apply);
+        document.getElementById('_dacumSwLater').addEventListener('click', function () {
+          t.remove();
+        });
+
+        // Keep the offer reachable from the toolbar after dismissal.
+        _markBadgeUpdatable(version, _apply);
       }
 
-      // One-shot reload per SW version
-      function _reload(v) {
-        if (!_canReload(v)) { console.log('[PWA] reload suppressed', v); return; }
-        _markReload(v);
-        _showToast();
-        setTimeout(function () { window.location.reload(true); }, 1500);
+      _paintVersionBadge();
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _paintVersionBadge);
       }
 
       // SW sends SW_UPDATED after activate
       navigator.serviceWorker.addEventListener('message', function (e) {
         if (!e.data) return;
 
-        // ── TASK 1: SW_UPDATED — force reload immediately ────────
+        // ── SW_UPDATED — offer the switch, don't force it ────────
         if (e.data.type === 'SW_UPDATED') {
           console.log('[APP] New version detected:', e.data.version);
-          // Use existing guarded reload (shows toast, prevents loops)
-          _reload(e.data.version);
+          _showUpdatePrompt(e.data.version);
         }
 
         // Version query response — if controller is stale, force update
@@ -86,11 +153,14 @@
         }
       });
 
-      // controllerchange fallback (fires when new SW takes control)
+      // controllerchange fallback (fires when new SW takes control).
+      // Also non-forcing now: if the user already clicked "Update now"
+      // we're mid-reload anyway; otherwise this is the only signal we
+      // get on some browsers, so surface the offer here too.
       var _ctrl = false;
       navigator.serviceWorker.addEventListener('controllerchange', function () {
         if (_ctrl) return; _ctrl = true;
-        _reload('ctrl-' + EXPECTED_SW);
+        _showUpdatePrompt('ctrl-' + EXPECTED_SW);
       });
 
       // Register
@@ -260,6 +330,56 @@
         color: #065f46;
         margin: 0 1px;
       }
+
+      /* ── Version badge (toolbar, far right) ────────────────────
+         Quiet by default — it's reference information, not an action.
+         Gains an amber pulse only when a new build is waiting, at
+         which point clicking it applies the update. */
+      #dacumVersionBadge {
+        display: inline-flex;
+        align-items: center;
+        height: 26px;
+        padding: 0 9px;
+        margin-right: 4px;
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        border-radius: 99px;
+        font-size: 0.72em;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        font-family: inherit;
+        cursor: default;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+      }
+      #dacumVersionBadge:hover { background: #e2e8f0; color: #475569; }
+
+      #dacumVersionBadge.dacum-version-update {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #ffffff;
+        border-color: #d97706;
+        cursor: pointer;
+        animation: dacum-version-pulse 2s ease-in-out infinite;
+      }
+      #dacumVersionBadge.dacum-version-update:hover {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: #ffffff;
+      }
+      @keyframes dacum-version-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.55); }
+        50%      { box-shadow: 0 0 0 5px rgba(245,158,11,0); }
+      }
+
+      /* Phones: the toolbar is tight — keep the badge only when it
+         actually needs attention. */
+      @media (max-width: 700px) {
+        #dacumVersionBadge:not(.dacum-version-update) { display: none; }
+      }
+
+      /* The wall is a presentation surface — no build chrome on it. */
+      body.wall-view-active #dacumVersionBadge { display: none !important; }
 
       /* Post-refine flash on changed duties/tasks (2.5s) */
       .refined-highlight {
@@ -2262,6 +2382,17 @@
         </button>
       </div>
       <div class="dtb-right">
+        <!-- ── Version badge ──────────────────────────────────
+             Shows which build is running (kept in sync by the SW
+             block at the top of this file). Turns into a clickable
+             "Update now" chip when a newer Service Worker is ready.
+             Title attribute carries the full version + release date
+             for anyone reporting a bug. -->
+        <button id="dacumVersionBadge" type="button"
+                title="Loading version…"
+                aria-label="Application version">
+          <span id="dacumVersionText">—</span>
+        </button>
         <button class="dtb-undo" id="btnUndo" disabled title="Undo  (Ctrl+Z)">
           <svg viewBox="0 0 16 16" width="13" height="13" fill="none"><path d="M3 8a5 5 0 1 0 1.5-3.5L3 6V3H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Undo
