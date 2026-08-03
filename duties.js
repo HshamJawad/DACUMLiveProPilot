@@ -177,14 +177,23 @@ function _renderCardView(container) {
     row.className = 'dcv-row';
 
     // ─── Blue Duty Card ───────────────────────────────────
+    // Header row (drag handle + label + ✕) mirrors DACUM Lite's
+    // .cv-duty-card-top: keeping the delete button INSIDE the card
+    // instead of floating it off the corner means it can never be
+    // clipped by an overflow:hidden ancestor, and it removes the
+    // need for the old top-padding / padding-left spacing hacks.
     const dutyCard = document.createElement('div');
     dutyCard.className = 'dcv-duty-card';
     dutyCard.setAttribute('data-duty-card-id', duty.id);
     dutyCard.innerHTML = `
-      <span class="dcv-duty-drag-handle" title="Drag to reorder duty" aria-label="Drag to reorder duty">≡</span>
-      <button class="dcv-close-btn" data-action="remove-duty" data-duty-id="${duty.id}"
-              title="Remove duty">✕</button>
-      <span class="dcv-duty-label">Duty ${dutyLetter}</span>
+      <div class="dcv-card-top">
+        <div class="dcv-card-top-left">
+          <span class="dcv-duty-drag-handle" title="Drag to reorder duty" aria-label="Drag to reorder duty">${_DRAG_DOTS_SVG}</span>
+          <span class="dcv-duty-label">Duty ${dutyLetter}</span>
+        </div>
+        <button class="dcv-close-btn" data-action="remove-duty" data-duty-id="${duty.id}"
+                title="Remove duty" aria-label="Remove duty">✕</button>
+      </div>
       <textarea class="dcv-duty-input"
                 data-duty-id="${duty.id}"
                 placeholder="Enter duty"
@@ -225,9 +234,14 @@ function _makeTaskCard(task, displayCode) {
   card.className = 'dcv-task-card';
   card.id = task.divId;
   card.innerHTML = `
-    <button class="dcv-close-btn" data-action="remove-task" data-task-div-id="${task.divId}"
-            title="Remove task">✕</button>
-    <span class="dcv-task-label">Task ${displayCode}</span>
+    <div class="dcv-card-top">
+      <div class="dcv-card-top-left">
+        <span class="dcv-task-drag-handle" title="Drag to reorder task" aria-label="Drag to reorder task">${_DRAG_DOTS_SVG}</span>
+        <span class="dcv-task-label">Task ${displayCode}</span>
+      </div>
+      <button class="dcv-close-btn" data-action="remove-task" data-task-div-id="${task.divId}"
+              title="Remove task" aria-label="Remove task">✕</button>
+    </div>
     <textarea class="dcv-task-input"
               data-task-id="${task.inputId}"
               placeholder="Enter task"
@@ -576,12 +590,12 @@ function _makeWallDutyCard(duty, dutyLetter) {
   card.className = 'dcv-duty-card';
   card.setAttribute('data-duty-card-id', duty.id);
   card.innerHTML = `
-    <div class="wall-card-header">
-      <div class="wall-card-header-left">
+    <div class="dcv-card-top">
+      <div class="dcv-card-top-left">
         <span class="dcv-duty-drag-handle" title="Drag to reorder duty" aria-label="Drag to reorder duty">${_DRAG_DOTS_SVG}</span>
         <span class="dcv-duty-label">Duty ${_esc(dutyLetter)}</span>
       </div>
-      <div class="wall-card-header-right">
+      <div class="dcv-card-top-right">
         <button class="dcv-add-btn" data-action="add-duty"
                 title="Add a new duty" aria-label="Add a new duty">＋</button>
         <button class="dcv-close-btn" data-action="remove-duty" data-duty-id="${duty.id}"
@@ -601,12 +615,12 @@ function _makeWallTaskCard(task, displayCode, dutyId) {
   card.className = 'dcv-task-card';
   card.id = task.divId;
   card.innerHTML = `
-    <div class="wall-card-header">
-      <div class="wall-card-header-left">
+    <div class="dcv-card-top">
+      <div class="dcv-card-top-left">
         <span class="dcv-task-drag-handle" title="Drag to reorder task" aria-label="Drag to reorder task">${_DRAG_DOTS_SVG}</span>
         <span class="dcv-task-label">Task ${displayCode}</span>
       </div>
-      <div class="wall-card-header-right">
+      <div class="dcv-card-top-right">
         <button class="dcv-add-btn" data-action="add-task" data-duty-id="${dutyId}"
                 title="Add another task" aria-label="Add another task">＋</button>
         <button class="dcv-close-btn" data-action="remove-task" data-task-div-id="${task.divId}"

@@ -268,59 +268,229 @@
         box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
       }
 
-      /* ── ＋ "add" button & task drag handle — base/reset only ──
-         These two classes are used exclusively by Wall View's
-         sticky-note cards (Card View has no ＋ button and no task
-         handle — its whole task card is the drag surface). The full
-         visual design (small square icon buttons + dot-grid handle
-         inside an inline header row, matching the reference "after"
-         screenshot) lives in the .wall-view-mode-scoped block further
-         below, right next to the rest of the Wall View card skin —
-         kept together there instead of split across two locations. */
-      .dcv-add-btn,
-      .dcv-task-drag-handle {
-        display: none;
+      /* ══════════════════════════════════════════════════════════
+         SHARED CARD HEADER  (Card View + Wall View)
+         Adapted from DACUM Lite's .cv-duty-card-top /
+         .cv-task-card-top: drag handle + label on the left, action
+         buttons on the right, all INSIDE the card. Replaces the old
+         approach of absolutely positioning the handle over the label
+         and hanging the ✕ off the card corner — that needed
+         padding-left / padding-top spacing hacks and still got
+         clipped inside overflow:hidden ancestors.
+         ══════════════════════════════════════════════════════════ */
+      .dcv-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+        flex-shrink: 0;
+      }
+      .dcv-card-top-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        overflow: hidden;
+      }
+      .dcv-card-top-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
       }
 
-      /* ── Duty drag handle (Card View only) ─────────────────── */
-      .dcv-duty-drag-handle {
-        position: absolute;
-        top: 6px;
-        left: 8px;
+      /* Labels sit inline in the header now, so the padding-right
+         dacum-styles.css reserves for the old floating ✕ is dead
+         space — and the bottom margin is owned by .dcv-card-top. */
+      .dcv-card-top .dcv-duty-label,
+      .dcv-card-top .dcv-task-label {
+        margin: 0;
+        padding-right: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* ── Drag handles — inline dot-grid, both views ─────────── */
+      .dcv-duty-drag-handle,
+      .dcv-task-drag-handle {
+        display: inline-flex;
+        position: static;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        flex-shrink: 0;
+        padding: 0;
+        background: none;
+        cursor: grab;
+        user-select: none;
+        transition: color 0.15s;
+      }
+      .dcv-duty-drag-handle:active,
+      .dcv-task-drag-handle:active { cursor: grabbing; }
+
+      /* Card View tones (blue duty card / yellow task card) */
+      .card-view-mode .dcv-duty-drag-handle       { color: rgba(30,64,175,0.40); }
+      .card-view-mode .dcv-duty-drag-handle:hover { color: rgba(30,64,175,0.75); }
+      .card-view-mode .dcv-task-drag-handle       { color: rgba(133,77,14,0.40); }
+      .card-view-mode .dcv-task-drag-handle:hover { color: rgba(133,77,14,0.75); }
+
+      /* ── ✕ close button — inline, not floating ─────────────────
+         Neutralises dacum-styles.css's
+         `.dcv-close-btn { position:absolute; top:-8px; right:-8px }`
+         for both views. Stays a small red circle (Lite keeps the
+         circular delete too) — it just lives in the header row. */
+      .card-view-mode .dcv-close-btn,
+      .wall-view-mode .dcv-close-btn {
+        position: static !important;
+        top: auto !important;
+        right: auto !important;
+        flex-shrink: 0;
+      }
+      .card-view-mode .dcv-close-btn {
+        width: 20px;
+        height: 20px;
+        min-width: 20px;
+        border: none;
+        font-size: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+      }
+
+      /* ── ＋ add button — Wall View only (Card View uses the
+         inline "＋ Task" pill at the end of the strip instead) ── */
+      .dcv-add-btn { display: none; }
+
+      /* ══════════════════════════════════════════════════════════
+         CARD VIEW LAYOUT — DACUM Lite structure, Pro colours
+         ──────────────────────────────────────────────────────────
+         Three changes adapted from Lite's .cv-duty-row model:
+           1. The ROW is the single horizontal scroller (was: the
+              task strip scrolled on its own inside a static row).
+           2. The duty card is `position:sticky; left:0`, so it stays
+              pinned in view while the tasks scroll past it — you
+              never lose track of which duty you're reading. This
+              only works because the duty card is a direct child of
+              the scrolling element, which the existing DOM already
+              satisfies.
+           3. The row reads as one continuous surface: soft grey bed,
+              rounded outer corners, duty card squared off on its
+              right edge so it merges into the strip.
+         Colours deliberately unchanged — same blue/yellow gradients
+         from dacum-styles.css. Structure only.
+         The .dcv-tasks-scroll element is kept (with overflow now
+         visible) rather than removed, because drag_drop.js wires its
+         task-level Sortable to that exact selector.
+         ══════════════════════════════════════════════════════════ */
+
+      #dutiesContainer.card-view-mode {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .card-view-mode .dcv-row {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        padding: 0;
+        border-bottom: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+        background: #f8fafc;
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        scrollbar-width: thin;
+        scrollbar-color: #93c5fd #e0f2fe;
+      }
+      .card-view-mode .dcv-row::-webkit-scrollbar       { height: 6px; }
+      .card-view-mode .dcv-row::-webkit-scrollbar-track { background: #e0f2fe; border-radius: 4px; }
+      .card-view-mode .dcv-row::-webkit-scrollbar-thumb { background: #60a5fa; border-radius: 4px; }
+
+      /* Duty card pinned to the left edge while tasks scroll */
+      .card-view-mode .dcv-duty-card {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+        padding: 10px 12px 12px;
+        border-radius: 14px 0 0 14px;
+        border-right-width: 2px;
+      }
+
+      /* The strip: parent row owns the scrolling now */
+      .card-view-mode .dcv-tasks-area {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        overflow: visible;
+        margin-left: 0;
+      }
+      .card-view-mode .dcv-tasks-scroll {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px 12px;
+        flex: 1;
+        min-width: 0;
+        overflow: visible;
+      }
+
+      /* "＋ Task" — inline green pill at the end of the strip
+         (Lite's .cv-add-task), vertically centred beside the cards */
+      .card-view-mode .dcv-add-task-btn {
+        align-self: center;
+        flex-shrink: 0;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 22px;
-        height: 22px;
-        font-size: 1.05em;
-        font-weight: 700;
-        line-height: 1;
-        color: rgba(255, 255, 255, 0.55);
-        background: rgba(255, 255, 255, 0.10);
-        border-radius: 5px;
-        cursor: grab;
-        user-select: none;
-        transition: background 0.15s, color 0.15s, transform 0.12s;
-        z-index: 2;
-      }
-      .dcv-duty-drag-handle:hover {
-        background: rgba(255, 255, 255, 0.28);
+        gap: 4px;
+        background: #10b981;
         color: #ffffff;
-        transform: scale(1.08);
+        border: none;
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 0.85em;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(16,185,129,0.22);
+        transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
       }
-      .dcv-duty-drag-handle:active {
-        cursor: grabbing;
-        background: rgba(255, 255, 255, 0.35);
+      .card-view-mode .dcv-add-task-btn:hover {
+        background: #059669;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16,185,129,0.32);
       }
-      /* The duty card needs relative positioning so the absolute
-         handle anchors to it, and a little left padding so the label
-         doesn't sit under the handle. */
-      .card-view-mode .dcv-duty-card { position: relative; padding-left: 34px; }
 
-      /* Wall View's duty/task cards do NOT need this hack — their
-         drag handle sits inline inside a normal header row (see the
-         .wall-view-mode card-skin block below), not absolutely
-         positioned over the content. */
+      /* ── Mobile (≤768px) ──────────────────────────────────────
+         dacum-responsive.css stacks .dcv-row vertically with
+         !important at this breakpoint (duty card on top, tasks
+         below). A vertical row can't be a horizontal scroller and
+         sticky-left is meaningless there, so hand scrolling back to
+         the task strip — i.e. the original pre-Lite behaviour, which
+         is the right shape for a stacked phone layout. */
+      @media (max-width: 768px) {
+        .card-view-mode .dcv-row {
+          overflow-x: hidden;
+          background: transparent;
+          box-shadow: none;
+          border-radius: 0;
+        }
+        .card-view-mode .dcv-duty-card {
+          position: static;
+          border-radius: 14px;
+        }
+        .card-view-mode .dcv-tasks-scroll {
+          overflow-x: auto;
+          padding: 10px 2px;
+          scrollbar-width: thin;
+          scrollbar-color: #93c5fd #e0f2fe;
+        }
+      }
 
       /* Duty-level drag visual feedback (blue tone, matches task drag) */
       .duty-drag-ghost    { opacity: 0.35; outline: 2px dashed #667eea; background: #eef2ff !important; border-radius: 12px; }
@@ -510,21 +680,21 @@
       }
 
       /* ── Header row: drag handle + title (left) ── ＋ / ✕ (right) ── */
-      .wall-view-mode .wall-card-header {
+      .wall-view-mode .dcv-card-top {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 8px;
         margin-bottom: calc(var(--wv-font) * 0.4);
       }
-      .wall-view-mode .wall-card-header-left {
+      .wall-view-mode .dcv-card-top-left {
         display: flex;
         align-items: center;
         gap: 7px;
         min-width: 0;
         overflow: hidden;
       }
-      .wall-view-mode .wall-card-header-right {
+      .wall-view-mode .dcv-card-top-right {
         display: flex;
         align-items: center;
         gap: 6px;
