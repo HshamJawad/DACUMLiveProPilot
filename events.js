@@ -389,6 +389,7 @@ export function setupEvents() {
       const action = target.getAttribute('data-action');
       if (action === 'rename-cluster')          renameCluster(target.getAttribute('data-cluster-id'));
       else if (action === 'delete-cluster')     deleteCluster(target.getAttribute('data-cluster-id'));
+      else if (action === 'show-pc-range-help') _showPCRangeHelp();
       else if (action === 'remove-task-from-cluster') {
         removeTaskFromCluster(target.getAttribute('data-cluster-id'), parseInt(target.getAttribute('data-task-index')));
       }
@@ -647,7 +648,7 @@ function _onStaticInfoButtons() {
 // _showHelpModal is generic so each tab only supplies its content;
 // the chrome, animations, and close behaviour are defined once.
 
-function _showHelpModal({ id, icon, title, intro, items, note }) {
+function _showHelpModal({ id, icon, title, intro, items, note, bodyHtml, maxWidth }) {
   const existing = document.getElementById(id);
   if (existing) { existing.remove(); return; }   // second click closes it
 
@@ -662,7 +663,7 @@ function _showHelpModal({ id, icon, title, intro, items, note }) {
     'backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);' +
     'animation:aiErrFadeIn 0.2s ease;';
 
-  const rows = items.map(([bullet, strong, rest]) =>
+  const rows = (items || []).map(([bullet, strong, rest]) =>
     '<li style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;' +
     'border-bottom:1px solid #f1f5f9;">' +
       '<span style="font-size:1.05em;line-height:1.4;flex-shrink:0;">' + bullet + '</span>' +
@@ -680,7 +681,7 @@ function _showHelpModal({ id, icon, title, intro, items, note }) {
     : '';
 
   overlay.innerHTML =
-    '<div style="background:#fff;border-radius:16px;max-width:480px;width:100%;' +
+    '<div style="background:#fff;border-radius:16px;max-width:' + (maxWidth || '480px') + ';width:100%;' +
     'box-shadow:0 24px 60px rgba(0,0,0,0.35);overflow:hidden;' +
     'font-family:\'Segoe UI\',system-ui,sans-serif;animation:aiErrSlideIn 0.22s ease;' +
     'max-height:86vh;display:flex;flex-direction:column;">' +
@@ -695,7 +696,8 @@ function _showHelpModal({ id, icon, title, intro, items, note }) {
           ? '<p style="margin:0 0 8px;font-size:0.88em;color:#475569;line-height:1.6;">' +
             intro + '</p>'
           : '') +
-        '<ul style="list-style:none;margin:0 0 18px;padding:0;">' + rows + '</ul>' +
+        (rows ? '<ul style="list-style:none;margin:0 0 18px;padding:0;">' + rows + '</ul>' : '') +
+        (bodyHtml || '') +
         noteHtml +
         '<div style="display:flex;justify-content:flex-end;">' +
           '<button data-help-close style="padding:9px 22px;background:#667eea;' +
@@ -776,5 +778,73 @@ function _showClusterNamingHelp() {
           'or standards that guide performance. Keep the standard (<em>"according to…", ' +
           '"within ±0.5 mm"</em>) and leave out the purpose (<em>"to ensure…"</em>) — ' +
           'the standard is what can be assessed.',
+  });
+}
+
+// Performance Criteria + Range guidance.
+// One modal, opened from BOTH section headings inside every cluster
+// card — the two concepts are defined in relation to each other
+// (criteria = the standard, range = the conditions the standard
+// applies across), so splitting them into two modals would force the
+// facilitator to open both to understand either.
+function _showPCRangeHelp() {
+  const P  = 'margin:0 0 8px;font-size:0.88em;color:#475569;line-height:1.6;';
+  const LI = 'font-size:0.87em;line-height:1.7;color:#334155;';
+
+  const component = (label, colour, desc) =>
+    '<div style="flex:1 1 150px;min-width:0;background:#fff;border:1px solid #e2e8f0;' +
+    'border-radius:8px;padding:10px 12px;">' +
+      '<p style="margin:0 0 3px;font-size:0.84em;font-weight:800;color:' + colour + ';">' +
+        label + '</p>' +
+      '<p style="margin:0;font-size:0.79em;color:#64748b;line-height:1.5;">' + desc + '</p>' +
+    '</div>';
+
+  const chip = (text, bg, fg) =>
+    '<span style="display:inline-block;background:' + bg + ';color:' + fg + ';' +
+    'border-radius:5px;padding:1px 7px;font-size:0.88em;font-weight:700;' +
+    'font-style:italic;white-space:nowrap;">(' + text + ')</span>';
+
+  const bodyHtml =
+    '<p style="' + P + '"><strong style="color:#1e293b;">Performance Criteria</strong> ' +
+      'define the standards to which a competency must be performed. They should be:</p>' +
+    '<ol style="margin:0 0 16px;padding-left:20px;">' +
+      '<li style="' + LI + '"><strong>Observable</strong> — can be seen or detected during assessment</li>' +
+      '<li style="' + LI + '"><strong>Measurable</strong> — can be evaluated against a standard</li>' +
+      '<li style="' + LI + '"><strong>Learner-focused</strong> — describes what the learner must demonstrate</li>' +
+    '</ol>' +
+
+    '<p style="' + P + '"><strong style="color:#1e293b;">Range</strong> defines the scope ' +
+      'and context in which the competency is applied, including:</p>' +
+    '<ul style="margin:0 0 16px;padding-left:20px;">' +
+      '<li style="' + LI + '">Different situations, environments, or conditions</li>' +
+      '<li style="' + LI + '">Types of equipment, tools, or materials used</li>' +
+      '<li style="' + LI + '">Variable contexts that may affect performance</li>' +
+    '</ul>' +
+
+    '<p style="margin:0 0 10px;font-size:0.88em;font-weight:700;color:#1e293b;">' +
+      'Components of an effective performance criterion:</p>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;">' +
+      component('What (Object)',  '#2563eb', 'The thing being acted upon') +
+      component('Action (Verb)',  '#16a34a', 'The precise action being performed') +
+      component('Qualifier',      '#9333ea', 'Specific conditions, standards, or requirements') +
+    '</div>' +
+
+    '<div style="background:linear-gradient(135deg,#3b82f6,#2563eb);border-radius:10px;' +
+    'padding:14px 16px;margin-bottom:4px;">' +
+      '<p style="margin:0 0 8px;font-size:0.86em;font-weight:800;color:#fff;">Example Structure:</p>' +
+      '<p style="margin:0;font-size:0.87em;color:#fff;line-height:2;">' +
+        '"Equipment calibration ' + chip('What', '#bfdbfe', '#1e3a8a') +
+        ' is verified ' + chip('Action', '#bbf7d0', '#14532d') +
+        ' to be within manufacturer\'s tolerance ranges ' + chip('Qualifier', '#e9d5ff', '#581c87') +
+        '"' +
+      '</p>' +
+    '</div>';
+
+  _showHelpModal({
+    id:       'pcRangeHelpModal',
+    icon:     '📐',
+    title:    'What are Performance Criteria and Range?',
+    maxWidth: '620px',
+    bodyHtml,
   });
 }

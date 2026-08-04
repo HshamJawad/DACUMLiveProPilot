@@ -190,13 +190,19 @@ export function renderClusters() {
         </div>
 
         <div class="cluster-section">
-          <h4>🎯 Range</h4>
+          <div class="cluster-section-header">
+            <h4>🎯 Range</h4>
+            <button type="button" class="tab-help-btn" data-action="show-pc-range-help" title="What are Performance Criteria and Range?" aria-label="What are Performance Criteria and Range?" aria-haspopup="dialog">?</button>
+          </div>
           <div class="cluster-helper-text">Define the range of situations, contexts, or conditions for this competency.</div>
           <textarea id="range_${cluster.id}" data-action="update-cluster-range" data-cluster-id="${cluster.id}">${cluster.range || ''}</textarea>
         </div>
 
         <div class="cluster-section">
-          <h4>✅ Performance Criteria</h4>
+          <div class="cluster-section-header">
+            <h4>✅ Performance Criteria</h4>
+            <button type="button" class="tab-help-btn" data-action="show-pc-range-help" title="What are Performance Criteria and Range?" aria-label="What are Performance Criteria and Range?" aria-haspopup="dialog">?</button>
+          </div>
           <div class="cluster-helper-text">Press Enter to add new criterion. Numbers are auto-generated.</div>
           <textarea id="criteria_${cluster.id}"
             data-cluster-number="${clusterNumber}"
