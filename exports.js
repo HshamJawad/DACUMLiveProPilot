@@ -2827,136 +2827,123 @@ export function exportToPDF() {
         pdf.text('DUTIES AND TASKS', pageWidth / 2, yPos + 5.5, { align: 'center' });
         yPos += 8;
         
-        // Calculate columns (max 4 duties per row)
-        const maxCols = 4;
+        // ── DUTIES AND TASKS grid — horizontal (Word-style) layout ──
+        //
+        // Each duty gets its OWN full-width table: a shaded title bar
+        // spanning the page, with that duty's tasks flowing left-to-
+        // right in rows of four beneath it (A1 A2 A3 A4 / A5 A6 A7 A8 …).
+        //
+        // This replaces the previous layout, which placed four DUTIES
+        // side by side as columns and ran their tasks vertically down
+        // each column. The horizontal arrangement is the conventional
+        // DACUM chart form and matches the Word master document, so the
+        // two exports of the same chart no longer disagree on structure.
+        // Colours are unchanged: 220-grey duty bars, outlined task cells.
+        const TASK_COLS  = 4;
         const chartWidth = pageWidth - (margin * 2);
-        const colWidth = chartWidth / maxCols;
+        const colWidth   = chartWidth / TASK_COLS;
 
         // ── Cell metrics ───────────────────────────────────────────
         // jsPDF renders multi-line text at fontSize x lineHeightFactor
         // (1.15 by default): 12pt -> 4.87mm per line, 14pt -> 5.68mm.
-        // The old code assumed 4.0mm and 4.5mm, so every wrapped cell
-        // was measured shorter than it actually drew — text crept past
-        // the bottom border and the whole grid ran tight.
         const LINE_H_TASK = 4.9;   // 12pt
         const LINE_H_DUTY = 5.7;   // 14pt
         const CELL_PAD_X  = 2.5;   // left/right inset
-        const CELL_PAD_T  = 4.6;   // top inset to the FIRST BASELINE —
-                                   // text sits on its baseline, so a
-                                   // smaller value pushes the glyphs up
-                                   // against the top border (the cause
-                                   // of the cramped "Task A1:" labels)
+        const CELL_PAD_T  = 4.6;   // top inset to the FIRST BASELINE
         const CELL_PAD_B  = 2.5;   // breathing room under the last line
-        
-        let dutyIndex = 0;
-        
-        while (dutyIndex < duties.length) {
-            const dutiesThisRow = Math.min(maxCols, duties.length - dutyIndex);
-            
-            // Draw duty headers
-            let maxHeaderHeight = 10;
+        const DUTY_GAP    = 5;     // vertical space between duty tables
+
+        const bottomEdge = pageHeight - margin;
+
+        // Repeat the section banner after every page break so a reader
+        // landing mid-chart still knows what they are looking at.
+        const drawSectionBanner = (text) => {
+            pdf.setFillColor(200, 200, 200);
+            pdf.rect(margin, yPos, chartWidth, 8, 'FD');
+            pdf.setFontSize(14);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(text, pageWidth / 2, yPos + 5.5, { align: 'center' });
+            yPos += 8;
+        };
+
+        const newChartPage = () => {
+            pdf.addPage('a4', 'landscape');
+            yPos = margin + 5;
+            drawSectionBanner('DUTIES AND TASKS (continued)');
+        };
+
+        duties.forEach((duty, dutyIdx) => {
+            const letter = String.fromCharCode(65 + dutyIdx);
+
+            // ── Duty title bar (full width) ───────────────────────
+            pdf.setFontSize(14);
+            pdf.setFont(undefined, 'bold');
+            const headerText  = `DUTY ${letter}: ${duty.duty}`;
+            const headerLines = pdf.splitTextToSize(headerText, chartWidth - (CELL_PAD_X * 2));
+            const headerH     = Math.max(
+                10,
+                headerLines.length * LINE_H_DUTY + CELL_PAD_T + CELL_PAD_B
+            );
+
+            // Keep the bar with at least one task row — a title stranded
+            // alone at the foot of a page reads as an error.
+            if (yPos + headerH + 15 > bottomEdge) newChartPage();
+
             pdf.setFillColor(220, 220, 220);
-            
-            for (let col = 0; col < dutiesThisRow; col++) {
-                const duty = duties[dutyIndex + col];
-                const x = margin + (col * colWidth);
-                const letter = String.fromCharCode(65 + dutyIndex + col);
-                
-                pdf.rect(x, yPos, colWidth, 10, 'S');
-                pdf.setFontSize(14); // 14pt for duty headers
-                pdf.setFont(undefined, 'bold');
-                
-                const headerText = `DUTY ${letter}: ${duty.duty}`;
-                const lines = pdf.splitTextToSize(headerText, colWidth - (CELL_PAD_X * 2));
-                const textHeight = lines.length * LINE_H_DUTY + CELL_PAD_T + CELL_PAD_B;
-                maxHeaderHeight = Math.max(maxHeaderHeight, textHeight);
-            }
-            
-            // Redraw with correct height
-            for (let col = 0; col < dutiesThisRow; col++) {
-                const duty = duties[dutyIndex + col];
-                const x = margin + (col * colWidth);
-                const letter = String.fromCharCode(65 + dutyIndex + col);
-                
-                pdf.setFillColor(220, 220, 220);
-                pdf.rect(x, yPos, colWidth, maxHeaderHeight, 'FD');
-                
-                pdf.setFontSize(14); // 14pt for duty headers
-                const headerText = `DUTY ${letter}: ${duty.duty}`;
-                const lines = pdf.splitTextToSize(headerText, colWidth - (CELL_PAD_X * 2));
-                pdf.text(lines, x + CELL_PAD_X, yPos + CELL_PAD_T + 0.6);
-            }
-            
-            yPos += maxHeaderHeight;
-            
-            // Draw tasks
-            const maxTasks = Math.max(...duties.slice(dutyIndex, dutyIndex + dutiesThisRow).map(d => d.tasks.length));
-            
-            for (let taskRow = 0; taskRow < maxTasks; taskRow++) {
+            pdf.rect(margin, yPos, chartWidth, headerH, 'FD');
+            pdf.text(headerLines, margin + CELL_PAD_X, yPos + CELL_PAD_T + 0.6);
+            yPos += headerH;
+
+            // ── Task rows, four per row ───────────────────────────
+            const tasks = duty.tasks || [];
+            for (let i = 0; i < tasks.length; i += TASK_COLS) {
+                const rowTasks = tasks.slice(i, i + TASK_COLS);
+
+                // Row height = tallest cell in the row
+                pdf.setFontSize(12);
+                pdf.setFont(undefined, 'normal');
                 let rowHeight = 15;
-                
-                // Calculate row height
-                for (let col = 0; col < dutiesThisRow; col++) {
-                    const duty = duties[dutyIndex + col];
-                    if (duty.tasks[taskRow]) {
-                        pdf.setFontSize(12); // 12pt for task text
-                        const letter = String.fromCharCode(65 + dutyIndex + col);
-                        const taskText = `Task ${letter}${taskRow + 1}:\n${duty.tasks[taskRow]}`;
-                        const lines = pdf.splitTextToSize(taskText, colWidth - (CELL_PAD_X * 2));
-                        const textHeight = lines.length * LINE_H_TASK + CELL_PAD_T + CELL_PAD_B;
-                        rowHeight = Math.max(rowHeight, textHeight);
-                    }
-                }
-                
-                // Check page break
-                if (yPos + rowHeight > pageHeight - margin - 5) {
-                    pdf.addPage('a4', 'landscape');
-                    yPos = margin + 5;
-                    
-                    // Repeat header
-                    pdf.setFillColor(200, 200, 200);
-                    pdf.rect(margin, yPos, pageWidth - (margin * 2), 8, 'FD');
-                    pdf.setFontSize(14); // 14pt for heading
+                const cellLines = rowTasks.map((taskText, c) => {
+                    const label = `Task ${letter}${i + c + 1}:`;
+                    const lines = pdf.splitTextToSize(
+                        `${label}\n${taskText}`, colWidth - (CELL_PAD_X * 2)
+                    );
+                    rowHeight = Math.max(
+                        rowHeight,
+                        lines.length * LINE_H_TASK + CELL_PAD_T + CELL_PAD_B
+                    );
+                    return lines;
+                });
+
+                if (yPos + rowHeight > bottomEdge) {
+                    newChartPage();
+                    // Restate which duty these rows belong to
+                    pdf.setFillColor(220, 220, 220);
+                    pdf.rect(margin, yPos, chartWidth, 8, 'FD');
+                    pdf.setFontSize(12);
                     pdf.setFont(undefined, 'bold');
-                    pdf.text('DUTIES AND TASKS (continued)', pageWidth / 2, yPos + 5.5, { align: 'center' });
+                    pdf.text(`DUTY ${letter} (continued)`, margin + CELL_PAD_X, yPos + 5.5);
                     yPos += 8;
                 }
-                
-                // Draw task cells
+
+                // Draw all four cells — empty trailing cells are still
+                // outlined so the table keeps a clean rectangular edge,
+                // exactly as in the Word master.
+                pdf.setFontSize(12);
                 pdf.setFont(undefined, 'normal');
-                pdf.setFontSize(12); // 12pt for task text
-                
-                for (let col = 0; col < dutiesThisRow; col++) {
-                    const duty = duties[dutyIndex + col];
-                    const x = margin + (col * colWidth);
-                    
+                for (let c = 0; c < TASK_COLS; c++) {
+                    const x = margin + (c * colWidth);
                     pdf.rect(x, yPos, colWidth, rowHeight, 'S');
-                    
-                    if (duty.tasks[taskRow]) {
-                        const letter = String.fromCharCode(65 + dutyIndex + col);
-                        const taskText = `Task ${letter}${taskRow + 1}:\n${duty.tasks[taskRow]}`;
-                        const lines = pdf.splitTextToSize(taskText, colWidth - (CELL_PAD_X * 2));
-                        pdf.text(lines, x + CELL_PAD_X, yPos + CELL_PAD_T);
+                    if (cellLines[c]) {
+                        pdf.text(cellLines[c], x + CELL_PAD_X, yPos + CELL_PAD_T);
                     }
                 }
-                
+
                 yPos += rowHeight;
             }
-            
-            dutyIndex += dutiesThisRow;
-            
-            if (dutyIndex < duties.length) {
-                pdf.addPage('a4', 'landscape');
-                yPos = margin + 5;
-                
-                pdf.setFillColor(200, 200, 200);
-                pdf.rect(margin, yPos, pageWidth - (margin * 2), 8, 'FD');
-                pdf.setFontSize(14); // 14pt for heading
-                pdf.setFont(undefined, 'bold');
-                pdf.text('DUTIES AND TASKS (continued)', pageWidth / 2, yPos + 5.5, { align: 'center' });
-                yPos += 8;
-            }
-        }
+
+            yPos += DUTY_GAP;
+        });
         
         // ============ KNOWLEDGE, SKILLS, BEHAVIORS ============
         const knowledgeText = document.getElementById('knowledgeInput').value.trim();
