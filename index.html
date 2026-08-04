@@ -539,6 +539,18 @@
       }
       .tab-help-btn:active { transform: scale(0.95); }
 
+      /* Section-level (h3) header row — same title-left / action-right
+         arrangement as .tab-header-row, but scoped to a card inside a
+         tab rather than the tab heading itself. */
+      .section-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 15px;
+      }
+      .section-header-row h3 { margin: 0; }
+
       /* Post-refine flash on changed duties/tasks (2.5s) */
       .refined-highlight {
         background-color: rgba(16, 185, 129, 0.15) !important;
@@ -2198,7 +2210,13 @@
 
             <!-- Created Clusters Section -->
             <div class="clustering-section">
-                <h3>📦 Created Clusters</h3>
+                <div class="section-header-row">
+                    <h3>📦 Created Clusters</h3>
+                    <button type="button" id="clusterNamingHelpBtn" class="tab-help-btn"
+                            title="How should I name a cluster?"
+                            aria-label="How should I name a cluster?"
+                            aria-haspopup="dialog">?</button>
+                </div>
                 <div class="clusters-container" id="clustersContainer">
                     <div class="no-clusters-message">No clusters created yet.</div>
                 </div>

@@ -140,7 +140,8 @@ export function setupEvents() {
 
   // ── Tab "?" help modals ─────────────────────────────────────
   _on('addInfoHelpBtn',    'click', () => _showAdditionalInfoHelp());
-  _on('clusteringHelpBtn', 'click', () => _showClusteringHelp());
+  _on('clusteringHelpBtn',    'click', () => _showClusteringHelp());
+  _on('clusterNamingHelpBtn', 'click', () => _showClusterNamingHelp());
 
   // ── Additional Information tab: AI supporting-info generation ──
   // No markAiGenerated() here — the Refine Results card operates on
@@ -754,5 +755,26 @@ function _showClusteringHelp() {
     ],
     note: '<strong>Important:</strong> Tasks from different duties can be grouped ' +
           'together if they are related by purpose, process, or required skills!',
+  });
+}
+
+function _showClusterNamingHelp() {
+  _showHelpModal({
+    id:    'clusterNamingHelpModal',
+    icon:  '✍️',
+    title: 'Competence Statement Format',
+    intro: 'Clusters are created as "Cluster 1", "Cluster 2"… Rename each one to a ' +
+           'competence statement so the cluster says what the worker can DO, not just ' +
+           'which group it is.',
+    items: [
+      ['🧩', 'Structure',
+       'Action Verb + Task/Activity (What) + Context (Where/How/Why if relevant)'],
+      ['💬', 'Example',
+       '"Calibrate testing equipment according to manufacturer specifications"'],
+    ],
+    note: 'Good competence statements are clear, measurable, and include the context ' +
+          'or standards that guide performance. Keep the standard (<em>"according to…", ' +
+          '"within ±0.5 mm"</em>) and leave out the purpose (<em>"to ensure…"</em>) — ' +
+          'the standard is what can be assessed.',
   });
 }
