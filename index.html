@@ -17,6 +17,81 @@
     <meta name="apple-mobile-web-app-title" content="DACUM Pro">
     <link rel="apple-touch-icon" href="icon-192.png">
 
+    <!-- ── PWA install-prompt early capture ──────────────────────
+         `beforeinstallprompt` fires ONCE and is not replayed. It can
+         fire before dacum-fixes.js (loaded at the end of <body>) has
+         had a chance to attach its listener — in which case the event
+         is lost forever and the Install button never appears.
+         This stub runs in <head>, before anything else, and parks the
+         event on window.__dacumInstallPrompt. dacum-fixes.js picks it
+         up from there, so the timing race can no longer lose it. -->
+    <script>
+      (function () {
+        window.__dacumInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', function (e) {
+          e.preventDefault();
+          window.__dacumInstallPrompt = e;
+          console.log('[PWA] beforeinstallprompt captured early.');
+          // Let the late-loading handler know, whenever it arrives.
+          window.dispatchEvent(new CustomEvent('dacum-install-available'));
+        });
+
+        window.addEventListener('appinstalled', function () {
+          window.__dacumInstallPrompt = null;
+        });
+
+        // ── Diagnostics: why is there no install button? ──────────
+        // Chrome only fires beforeinstallprompt when EVERY installability
+        // criterion is met. When it doesn't fire, the cause is almost
+        // always the manifest, not the page code — so surface it.
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            if (window.__dacumInstallPrompt) return;
+
+            var standalone = window.matchMedia('(display-mode: standalone)').matches ||
+                             window.navigator.standalone === true;
+            if (standalone) {
+              console.log('[PWA] Already installed — no install prompt expected.');
+              return;
+            }
+
+            console.log('[PWA] No install prompt yet. Checking criteria…');
+            console.log('[PWA] • HTTPS/localhost:', location.protocol === 'https:' ||
+                        location.hostname === 'localhost');
+            console.log('[PWA] • Service worker controlling:',
+                        !!(navigator.serviceWorker && navigator.serviceWorker.controller));
+
+            fetch('manifest.json', { cache: 'no-store' })
+              .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+              })
+              .then(function (m) {
+                var icons = m.icons || [];
+                var sizes = icons.map(function (i) { return i.sizes; }).join(', ');
+                var has192 = icons.some(function (i) { return /(^|\s)192x192(\s|$)/.test(i.sizes || ''); });
+                var has512 = icons.some(function (i) { return /(^|\s)512x512(\s|$)/.test(i.sizes || ''); });
+                console.log('[PWA] • manifest.json loaded OK');
+                console.log('[PWA]   – name:', m.name || '(MISSING)');
+                console.log('[PWA]   – short_name:', m.short_name || '(MISSING)');
+                console.log('[PWA]   – start_url:', m.start_url || '(MISSING)');
+                console.log('[PWA]   – display:', m.display || '(MISSING — needs standalone/fullscreen/minimal-ui)');
+                console.log('[PWA]   – icons:', sizes || '(NONE)');
+                if (!has192) console.warn('[PWA]   ⚠ missing a 192x192 icon');
+                if (!has512) console.warn('[PWA]   ⚠ missing a 512x512 icon');
+                if (!m.display || ['standalone','fullscreen','minimal-ui'].indexOf(m.display) === -1) {
+                  console.warn('[PWA]   ⚠ display must be standalone, fullscreen or minimal-ui');
+                }
+              })
+              .catch(function (err) {
+                console.warn('[PWA] ⚠ manifest.json could not be loaded:', err.message,
+                             '— this alone prevents installation.');
+              });
+          }, 3000);
+        });
+      })();
+    </script>
+
     <!-- Service Worker v9 -->
     <script>
     (function () {

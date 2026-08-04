@@ -2,8 +2,8 @@
   "name": "DACUM Live Pro",
   "short_name": "DACUM Pro",
   "description": "Professional DACUM Analysis & Competency-Based Curriculum Design Tool",
-  "start_url": "/DACUM-Live-Pro-V3.1/index.html",
-  "scope": "/DACUM-Live-Pro-V3.1/",
+  "start_url": "index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#667eea",
@@ -13,25 +13,25 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/DACUM-Live-Pro-V3.1/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/DACUM-Live-Pro-V3.1/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/DACUM-Live-Pro-V3.1/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/DACUM-Live-Pro-V3.1/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -42,8 +42,8 @@
       "name": "Open DACUM Live Pro",
       "short_name": "Open",
       "description": "Open DACUM Live Pro",
-      "url": "/DACUM-Live-Pro-V3.1/index.html",
-      "icons": [{ "src": "/DACUM-Live-Pro-V3.1/icon-192.png", "sizes": "192x192" }]
+      "url": "index.html",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

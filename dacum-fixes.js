@@ -10,7 +10,7 @@
   'use strict';
 
   /* ── FIX 5: Version tag ─────────────────────────────────── */
-  console.log('%c[DACUM] Running version 3.2', 'color:#667eea;font-weight:700;');
+  console.log('%c[DACUM] Running version 3.3', 'color:#667eea;font-weight:700;');
 
   /* ── FIX 1: AI card guard ───────────────────────────────── */
   window.__USE_NEW_AI_CARD__ = true;
@@ -28,8 +28,14 @@
      dacum-fixes.css (same visual result); this file just toggles the
      .dacum-install-visible class. */
 
-  /* ── FIX 3: PWA Install prompt ──────────────────────────── */
-  var _deferredPrompt = null;
+  /* ── FIX 3: PWA Install prompt ────────────────────────────
+     The event itself is captured by the early stub in index.html's
+     <head> (beforeinstallprompt fires once and is never replayed, and
+     this file loads at the very end of <body> — too late to be sure of
+     catching it). We read it from window.__dacumInstallPrompt and also
+     listen for the stub's 'dacum-install-available' relay, so it works
+     whichever order the two run in. */
+  function _deferred() { return window.__dacumInstallPrompt || null; }
 
   function _injectInstallButton() {
     if (document.getElementById('dacumInstallBtn')) return;
@@ -55,99 +61,57 @@
     console.log('[PWA] Install button injected into:', target.id || target.className || 'body');
 
     btn.addEventListener('click', async function () {
-      if (!_deferredPrompt) return;
-      _deferredPrompt.prompt();
-      var result = await _deferredPrompt.userChoice;
+      var evt = _deferred();
+      if (!evt) return;
+      evt.prompt();
+      var result = await evt.userChoice;
       console.log('[PWA] Install choice:', result.outcome);
-      _deferredPrompt = null;
+      window.__dacumInstallPrompt = null;
       btn.classList.remove('dacum-install-visible');
     });
   }
 
   function _showInstallButton() {
+    if (!_deferred()) return;                 /* nothing to prompt with */
     _injectInstallButton();
     var btn = document.getElementById('dacumInstallBtn');
     if (btn) btn.classList.add('dacum-install-visible');
   }
 
-  window.addEventListener('beforeinstallprompt', function (e) {
-    e.preventDefault();
-    _deferredPrompt = e;
-    /* Button may not exist yet if DOM is still loading — defer slightly */
+  /* Case A: the stub already captured it before this file ran. */
+  if (_deferred()) setTimeout(_showInstallButton, 0);
+
+  /* Case B: it arrives later — the stub relays this custom event. */
+  window.addEventListener('dacum-install-available', function () {
     setTimeout(_showInstallButton, 0);
-    console.log('[PWA] Install prompt captured.');
   });
 
   window.addEventListener('appinstalled', function () {
-    _deferredPrompt = null;
+    window.__dacumInstallPrompt = null;
     var btn = document.getElementById('dacumInstallBtn');
     if (btn) btn.classList.remove('dacum-install-visible');
     console.log('[PWA] App installed.');
   });
 
-  /* ── SW Version Guardian ───────────────────────────────── */
-  // Immediately trigger a SW update check on every page load.
-  // This catches cases where the old SW is serving stale files.
-  //
-  // Previously this only asked the waiting worker to skip waiting —
-  // but the page you were already looking at kept being served by the
-  // OLD worker, so fresh CSS/JS appeared only on the NEXT manual
-  // reload. Now a `controllerchange` listener reloads once, the
-  // moment the new worker takes over, so a single refresh is enough
-  // after every deploy.
-  var _swReloading = false;
-
-  function _watchForControllerChange() {
-    if (!('serviceWorker' in navigator)) return;
-
-    navigator.serviceWorker.addEventListener('controllerchange', function () {
-      // Guard against a reload loop: fire at most once per page load.
-      if (_swReloading) return;
-      _swReloading = true;
-      console.log('[DACUM] New SW took control — reloading for fresh assets.');
-      window.location.reload();
-    });
-  }
-
-  function _activateWaiting(reg) {
-    if (reg && reg.waiting) {
-      console.log('[DACUM] SW waiting found — activating');
-      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-    }
-  }
-
-  function _forceSWUpdate() {
-    if (!('serviceWorker' in navigator)) return;
-
-    // Only auto-reload when a controller already exists. On a very
-    // first visit the SW installs and takes control with nothing
-    // stale on screen — reloading there would be a pointless flash.
-    if (navigator.serviceWorker.controller) _watchForControllerChange();
-
-    navigator.serviceWorker.getRegistration().then(function (reg) {
-      if (!reg) return;
-
-      // A new worker may finish installing slightly after update()
-      // resolves — catch that case too.
-      reg.addEventListener('updatefound', function () {
-        var incoming = reg.installing;
-        if (!incoming) return;
-        incoming.addEventListener('statechange', function () {
-          if (incoming.state === 'installed') _activateWaiting(reg);
-        });
-      });
-
-      reg.update().then(function () {
-        console.log('[DACUM] SW update check complete');
-        _activateWaiting(reg);
-      }).catch(function () {});
-    }).catch(function () {});
-  }
+  /* ── SW Version Guardian — INTENTIONALLY NOT HERE ────────
+     Service-Worker update handling is owned entirely by the
+     registration block inline at the top of index.html, which already
+     does all of this and more:
+       • reg.update() on load, then every 30 s
+       • SKIP_WAITING on both reg.waiting and updatefound→installed
+       • GET_VERSION / VERSION_REPLY check against EXPECTED_SW
+       • SW_UPDATED + controllerchange → "Updating…" toast, then reload
+       • a per-version sessionStorage throttle that prevents reload loops
+     A second copy of that logic in this file (added briefly in an
+     earlier revision) duplicated the skip-waiting calls and, worse,
+     ran its own controllerchange→reload that bypassed the loop guard
+     and the toast. Removed. Do not re-add it here — extend the block
+     in index.html instead, and keep EXPECTED_SW in sync with
+     CACHE_VERSION in sw.js. */
 
   /* ── Bootstrap ─────────────────────────────────────────── */
   function _init() {
     _hideOldBadge();
-    _forceSWUpdate();
     /* Sidebar/hamburger handled entirely by dacum-mobile.js */
   }
 
