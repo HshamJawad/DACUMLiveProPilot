@@ -35,15 +35,29 @@ const BACKEND_URL = 'https://dacum-ai-backend-production.up.railway.app';
 
 // Maps the JSON keys the model returns → the textarea that receives
 // them. Order here is also the order used in the overwrite warning.
+//
+// `max` is a HARD cap enforced in code, not just in the prompt.
+// Language models routinely overshoot soft counts, and this output is
+// only ever a first draft for the facilitator — an over-long list
+// costs review time in the workshop and buries the items that
+// actually matter. The prompt asks for min–max; this backstop
+// guarantees the ceiling. `min` is prompt-side only (you cannot
+// invent missing items in code).
 const _FIELD_MAP = [
-  { key: 'knowledge',  inputId: 'knowledgeInput',  label: 'Knowledge Requirements' },
-  { key: 'skills',     inputId: 'skillsInput',     label: 'Skills Requirements' },
-  { key: 'behaviors',  inputId: 'behaviorsInput',  label: 'Worker Behaviors/Traits' },
-  { key: 'tools',      inputId: 'toolsInput',      label: 'Tools, Equipment, Supplies and Materials' },
-  { key: 'trends',     inputId: 'trendsInput',     label: 'Future Trends and Concerns' },
-  { key: 'acronyms',   inputId: 'acronymsInput',   label: 'Acronyms' },
-  { key: 'careerPath', inputId: 'careerPathInput', label: 'Career Path' },
+  { key: 'knowledge',  inputId: 'knowledgeInput',  label: 'Knowledge Requirements',                 min: 10, max: 15 },
+  { key: 'skills',     inputId: 'skillsInput',     label: 'Skills Requirements',                    min: 10, max: 15 },
+  { key: 'behaviors',  inputId: 'behaviorsInput',  label: 'Worker Behaviors/Traits',                min:  8, max: 12 },
+  { key: 'tools',      inputId: 'toolsInput',      label: 'Tools, Equipment, Supplies and Materials', min: 12, max: 18 },
+  { key: 'trends',     inputId: 'trendsInput',     label: 'Future Trends and Concerns',             min:  6, max: 10 },
+  { key: 'acronyms',   inputId: 'acronymsInput',   label: 'Acronyms',                               min:  6, max: 12 },
+  { key: 'careerPath', inputId: 'careerPathInput', label: 'Career Path',                            min:  4, max:  6 },
 ];
+
+/** Look up the configured range for a field key. */
+function _range(key) {
+  const f = _FIELD_MAP.find(x => x.key === key);
+  return f ? { min: f.min, max: f.max } : { min: 5, max: 15 };
+}
 
 // ── Input readers ─────────────────────────────────────────────
 
@@ -129,44 +143,56 @@ Generate the following seven sections.
    - WHAT THE WORKER MUST KNOW (cognitive, theoretical, regulatory)
    - Noun phrases, e.g. "Principles of hydraulic pressure", "Local electrical code"
    - NOT actions, NOT tasks
-   - Typically 10–20 items
+   - COUNT: minimum ${_range('knowledge').min}, maximum ${_range('knowledge').max} items
 
 2. skills — Skills Requirements
    - TRANSFERABLE ABILITIES the work demands (technical + employability)
    - Short ability statements, e.g. "Interpret technical drawings"
    - Distinct from tasks: a skill is an underlying capability, a task is a
      discrete unit of work. Do NOT simply restate the chart's tasks here.
-   - Typically 10–20 items
+   - COUNT: minimum ${_range('skills').min}, maximum ${_range('skills').max} items
 
 3. behaviors — Worker Behaviors/Traits
    - Personal attributes and work habits expected on the job
    - Short trait phrases, e.g. "Attention to detail", "Punctuality"
-   - Typically 8–15 items
+   - COUNT: minimum ${_range('behaviors').min}, maximum ${_range('behaviors').max} items
 
 4. tools — Tools, Equipment, Supplies and Materials
-   - Concrete, nameable items used to perform the tasks
+   - MAIN CATEGORIES AND KEY ITEMS ONLY — this is a facilitator's draft,
+     NOT a procurement inventory. A real workplace may use hundreds of
+     items; list only what is characteristic of this occupation.
+   - Group related consumables rather than listing them one by one
+     (e.g. "Fasteners: screws, bolts, anchors" as ONE item, not three)
+   - Prefer items that appear in, or are clearly implied by, the tasks
    - Include category when useful, e.g. "Digital multimeter", "PPE: safety goggles"
-   - Typically 12–25 items
+   - COUNT: minimum ${_range('tools').min}, maximum ${_range('tools').max} items
 
 5. trends — Future Trends and Concerns
    - Realistic developments affecting this occupation in the next 3–7 years
    - Technology, regulation, market, workforce, sustainability
    - Reflect the Country/Context and Sector when given
-   - Typically 8–15 items
+   - COUNT: minimum ${_range('trends').min}, maximum ${_range('trends').max} items
 
 6. acronyms — Acronyms
    - Abbreviations that genuinely appear in this occupation
    - STRICT FORMAT: "ABC - Full Expansion" (one per item)
    - Only include acronyms you are confident are real and in use
-   - Typically 6–15 items
+   - COUNT: minimum ${_range('acronyms').min}, maximum ${_range('acronyms').max} items
 
 7. careerPath — Career Path
    - Realistic progression for this occupation, entry level upward
    - STRICT FORMAT: "Level: Role title" e.g. "Entry Level: Apprentice Technician"
    - Order from entry to most senior
-   - Typically 4–7 items
+   - COUNT: minimum ${_range('careerPath').min}, maximum ${_range('careerPath').max} items
 
 GENERAL RULES:
+- COUNT LIMITS ARE MANDATORY, not suggestions. Never exceed a maximum.
+  This output is a STARTING DRAFT for a DACUM facilitator to review with
+  an expert panel — not an exhaustive reference. A shorter, sharper list
+  of the items that genuinely characterise the occupation is far more
+  useful than a long list padded with generic or marginal entries.
+- If you cannot reach a minimum with genuinely relevant items, return
+  fewer rather than padding with filler.
 - Every item is a SINGLE LINE of plain text.
 - Do NOT prefix items with bullets, dashes, or numbers — the UI applies
   its own formatting.
@@ -265,16 +291,35 @@ export async function generateAdditionalInfoAI() {
     // is left untouched rather than being blanked out.
     let filledCount = 0;
     let itemCount   = 0;
+    let trimmedAny  = false;
 
-    _FIELD_MAP.forEach(({ key, inputId }) => {
+    _FIELD_MAP.forEach(({ key, inputId, max }) => {
       const items = info[key];
       if (!Array.isArray(items) || items.length === 0) return;
 
-      const lines = items
+      let lines = items
         .map(v => String(v == null ? '' : v).trim())
         // Strip any bullet/number the model added despite instructions
         .map(v => v.replace(/^[\s]*[•\-\*○●]\s*/, '').replace(/^[\s]*\d+[.)]\s*/, '').trim())
         .filter(Boolean);
+
+      // Drop case-insensitive duplicates before applying the cap, so a
+      // repeated item never consumes one of the allotted slots.
+      const seen = new Set();
+      lines = lines.filter(v => {
+        const k = v.toLowerCase();
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+
+      // HARD CAP — the prompt states the maximum, this enforces it.
+      // Items are kept in the model's own order, which puts the most
+      // characteristic entries first.
+      if (max && lines.length > max) {
+        lines = lines.slice(0, max);
+        trimmedAny = true;
+      }
 
       if (!lines.length) return;
 
@@ -296,8 +341,11 @@ export async function generateAdditionalInfoAI() {
     const basis = chartSummary
       ? 'derived from your duties & tasks'
       : 'based on the occupation details';
+    const trimNote = trimmedAny
+      ? ' Long lists were trimmed to the top items — expand them with your panel.'
+      : '';
     showStatus(
-      `✓ Supporting information generated (${basis}) — ${filledCount} sections, ${itemCount} items.`,
+      `✓ Draft supporting information generated (${basis}) — ${filledCount} sections, ${itemCount} items.${trimNote}`,
       'success'
     );
     return true;
@@ -311,46 +359,104 @@ export async function generateAdditionalInfoAI() {
   }
 }
 
-// ── Error modal (self-contained, same look as the duties one) ──
+// ── Error modal ───────────────────────────────────────────────
+// Same structure, colours and animations as the duties-tab modal in
+// projects.js (_showAIErrorModal), so both generators fail in a way
+// the user already recognises. Only the copy differs: the offline
+// fallback advice points at the Additional Information workflow
+// instead of "add duties and tasks manually".
 
 function _showAIErrorModal(errorMessage) {
   const existing = document.getElementById('aiInfoErrorModal');
   if (existing) existing.remove();
 
-  const overlay = document.createElement('div');
-  overlay.id = 'aiInfoErrorModal';
-  overlay.style.cssText =
-    'position:fixed;inset:0;background:rgba(15,23,42,0.55);z-index:2147483000;' +
-    'display:flex;align-items:center;justify-content:center;padding:20px;';
+  const isOffline = /Failed to fetch|NetworkError|network|ECONNREFUSED|ERR_CONNECTION|ERR_NAME_NOT_RESOLVED|503|502/i.test(errorMessage);
 
-  const box = document.createElement('div');
-  box.style.cssText =
-    'background:#fff;border-radius:14px;max-width:520px;width:100%;padding:24px;' +
-    'box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:inherit;';
-  box.innerHTML = `
-    <h3 style="margin:0 0 10px;color:#b91c1c;font-size:1.15em;">⚠️ AI generation failed</h3>
-    <p style="margin:0 0 12px;color:#334155;font-size:0.92em;line-height:1.6;">
-      The supporting information could not be generated. Your existing content
-      has not been changed.
-    </p>
-    <pre style="margin:0 0 16px;padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;
-                border-radius:8px;font-size:0.8em;color:#475569;white-space:pre-wrap;
-                word-break:break-word;max-height:160px;overflow:auto;">${
-      String(errorMessage).replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    }</pre>
-    <div style="text-align:right;">
-      <button id="aiInfoErrorClose"
-              style="background:#667eea;color:#fff;border:none;border-radius:8px;
-                     padding:9px 20px;font-weight:600;cursor:pointer;font-family:inherit;">
-        Close
-      </button>
-    </div>
-  `;
+  const modal = document.createElement('div');
+  modal.id = 'aiInfoErrorModal';
+  modal.setAttribute('role', 'alertdialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.style.cssText =
+    'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;' +
+    'justify-content:center;padding:20px;background:rgba(0,0,0,0.55);' +
+    'backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);' +
+    'animation:aiErrFadeIn 0.2s ease';
 
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
+  const icon   = isOffline ? '\uD83D\uDD0C' : '\u26A0\uFE0F';
+  const title  = isOffline ? 'AI Service Unavailable' : 'AI Generation Failed';
+  const sub    = isOffline ? 'Backend server unreachable' : 'Check connection and try again';
+  const hdrBg  = isOffline
+    ? 'linear-gradient(135deg,#fff7ed,#ffedd5)'
+    : 'linear-gradient(135deg,#fef2f2,#fee2e2)';
+  const hdrBdr = isOffline ? '#fed7aa' : '#fecaca';
+  const hdrClr = isOffline ? '#9a3412' : '#991b1b';
+  const subClr = isOffline ? '#c2410c' : '#b91c1c';
 
-  const close = () => overlay.remove();
-  box.querySelector('#aiInfoErrorClose').addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  const bodyText = isOffline
+    ? 'The AI backend server is currently offline or unreachable.<br><br>' +
+      'The AI generation service requires an active Railway backend. ' +
+      'You can still fill in the supporting information manually \u2014 ' +
+      'your existing content has not been changed.'
+    : 'An error occurred while generating the supporting information:<br><br>' +
+      '<code style="font-size:0.82em;background:#f1f5f9;padding:4px 8px;' +
+      'border-radius:4px;word-break:break-all;">' +
+      (errorMessage || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code>' +
+      '<br><br>Your existing content has not been changed.';
+
+  const offlineTips = isOffline
+    ? '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;' +
+      'padding:12px 14px;margin-bottom:16px;">' +
+      '<p style="margin:0;font-size:0.82em;color:#15803d;font-weight:600;">' +
+      '\u2705 What you can do instead:</p>' +
+      '<ul style="margin:6px 0 0;padding-left:18px;font-size:0.82em;color:#166534;line-height:1.8;">' +
+      '<li>Type each section manually, one item per line</li>' +
+      '<li>Use the \uD83D\uDD22 Number / \u2022 Bullet buttons to format lists</li>' +
+      '<li>Import a saved JSON project file</li></ul></div>'
+    : '';
+
+  modal.innerHTML =
+    '<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;' +
+    'box-shadow:0 24px 60px rgba(0,0,0,0.35);overflow:hidden;' +
+    'font-family:\'Segoe UI\',system-ui,sans-serif;animation:aiErrSlideIn 0.22s ease;">' +
+      '<div style="padding:20px 22px 16px;display:flex;align-items:center;gap:12px;' +
+      'background:' + hdrBg + ';border-bottom:1px solid ' + hdrBdr + ';">' +
+        '<span style="font-size:1.8em;line-height:1;">' + icon + '</span>' +
+        '<div>' +
+          '<p style="margin:0;font-size:1em;font-weight:800;color:' + hdrClr + ';">' + title + '</p>' +
+          '<p style="margin:2px 0 0;font-size:0.78em;color:' + subClr + ';">' + sub + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div style="padding:18px 22px 20px;">' +
+        '<p style="margin:0 0 16px;font-size:0.88em;color:#374151;line-height:1.6;">' + bodyText + '</p>' +
+        offlineTips +
+        '<div style="display:flex;justify-content:flex-end;">' +
+          '<button id="aiInfoErrorModalClose" style="padding:9px 22px;background:#667eea;' +
+          'color:#fff;border:none;border-radius:8px;font-size:0.9em;font-weight:700;' +
+          'cursor:pointer;transition:background 0.15s;"' +
+          ' onmouseover="this.style.background=\'#5a67d8\'"' +
+          ' onmouseout="this.style.background=\'#667eea\'">Got it</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  // Reuses the keyframes injected by either generator — whichever
+  // runs first creates them; the id guard prevents duplicates.
+  if (!document.getElementById('aiErrStyles')) {
+    const s = document.createElement('style');
+    s.id = 'aiErrStyles';
+    s.textContent =
+      '@keyframes aiErrFadeIn  { from{opacity:0} to{opacity:1} }' +
+      '@keyframes aiErrSlideIn { from{transform:translateY(-14px);opacity:0}' +
+      ' to{transform:translateY(0);opacity:1} }';
+    document.head.appendChild(s);
+  }
+
+  document.body.appendChild(modal);
+
+  function _close() { modal.remove(); }
+  document.getElementById('aiInfoErrorModalClose').addEventListener('click', _close);
+  modal.addEventListener('click', function (e) { if (e.target === modal) _close(); });
+  document.addEventListener('keydown', function _esc(e) {
+    if (e.key === 'Escape') { _close(); document.removeEventListener('keydown', _esc); }
+  });
 }
