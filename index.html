@@ -47,7 +47,13 @@
       }
 
       // ── Version badge in the toolbar ─────────────────────────
+      // Also fills the Help-tab footer from the SAME constant, so the
+      // two can never drift apart again — bumping APP_VERSION alone
+      // now updates both places.
       function _paintVersionBadge() {
+        var foot = document.getElementById('dacumFooterVersion');
+        if (foot) foot.textContent = APP_VERSION;
+
         var badge = document.getElementById('dacumVersionBadge');
         var text  = document.getElementById('dacumVersionText');
         if (!badge || !text) return;
@@ -2275,7 +2281,7 @@
                  working tabs stay clean while the legal text remains
                  reachable in the Help Center. -->
             <div class="copyright">
-                <p style="margin-bottom: 8px; font-size: 1em;">© 2026 DACUM Live Pro | by Husham Jawad Kadhim | Version 3.0 | All Rights Reserved</p>
+                <p style="margin-bottom: 8px; font-size: 1em;">© 2026 DACUM Live Pro | by Husham Jawad Kadhim | Version <span id="dacumFooterVersion">3.3</span> | All Rights Reserved</p>
                 <p style="font-size: 0.85em; color: #999; font-style: italic;">
                     <strong>Disclaimer:</strong> DACUM Live Pro is a facilitation and analysis tool provided "as is" without warranty of any kind.
                     The developer assumes no responsibility for any inaccuracies, errors, omissions, or inconsistencies in the generated documents.
