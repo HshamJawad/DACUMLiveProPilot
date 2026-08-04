@@ -9,7 +9,7 @@ import { updateUsageBadge }  from './storage.js';
 import { setupTabs }         from './tabs.js';
 import { setupEvents }       from './events.js';
 import { switchTab }         from './projects.js';
-import { addDuty, addTask }  from './duties.js';
+import { addDuty }           from './duties.js';
 import { updateCollectionMode, updateWorkflowMode, updateDutyLevelSummary } from './tasks.js';
 import { lwCheckAndShowSection } from './workshop.js';
 import { setBaseline }       from './history.js';
@@ -40,11 +40,12 @@ document.addEventListener('DOMContentLoaded', function () {
   // Wire all event listeners
   setupEvents();
 
-  // Add initial duty + task if duties container is empty
+  // Add an initial duty if the duties container is empty.
+  // addDuty() seeds its own first task (see duties.js), so calling
+  // addTask() here as well would create a spare blank task on boot.
   const dutiesContainer = document.getElementById('dutiesContainer');
   if (dutiesContainer && dutiesContainer.children.length === 0) {
     addDuty();
-    addTask(`duty_${appState.dutyCount}`);
   }
 
   // Anchor the history baseline

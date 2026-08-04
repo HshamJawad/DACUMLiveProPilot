@@ -5,7 +5,7 @@
 // ============================================================
 
 import { appState } from './state.js';
-import { addDuty, addTask } from './duties.js';
+import { addDuty } from './duties.js';
 import { initializeClusteringFromTasks } from './modules.js';
 import { renderPCSourceList, renderLearningOutcomes,
   renderModuleLoList, renderModules } from './modules.js';
@@ -30,8 +30,7 @@ export function setupTabs() {
       if (tabId === 'duties-tab') {
         const dutiesContainer = document.getElementById('dutiesContainer');
         if (dutiesContainer && dutiesContainer.children.length === 0) {
-          addDuty();
-          addTask(`duty_${appState.dutyCount}`);
+          addDuty();   // seeds its own first task — see duties.js
         }
       }
 

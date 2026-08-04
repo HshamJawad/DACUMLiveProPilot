@@ -14,6 +14,7 @@
 import { appState }           from './state.js';
 import { showStatus }         from './renderer.js';
 import { syncAllFromDOM }     from './duties.js';
+import { clearAllSilent }     from './projects.js';
 import { renderAll }          from './workshop_snapshots.js';
 import { resetHistoryToCurrentState } from './history.js';
 
@@ -28,8 +29,26 @@ let _searchQuery = '';
 export function createProject(name) {
   hideWelcomeOverlay();   // dismiss welcome screen if visible
   const label    = (name || '').trim() || 'Untitled DACUM Project';
-  const projects = _loadProjects();
   const id       = `project_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+  // ── Persist the outgoing project before wiping the workspace ──
+  // Without this, any unsaved edits in the project the user is
+  // leaving would be destroyed by the reset below.
+  const previousId = _getActive();
+  if (previousId) {
+    try { saveCurrentProject(); } catch (_) { /* best effort */ }
+  }
+
+  // ── Blank the workspace, THEN capture ────────────────────────
+  // _captureState() snapshots the live DOM + appState. Called while
+  // another project is still loaded, it copied that project's duties,
+  // tasks and chart info straight into the "new" project — which is
+  // exactly the bug this guards against. Clearing first guarantees a
+  // genuinely empty starting point (one blank duty + one blank task,
+  // the same baseline the app boots with).
+  clearAllSilent();
+
+  const projects = _loadProjects();   // re-read AFTER the save above
 
   const project = {
     id,
@@ -43,6 +62,12 @@ export function createProject(name) {
 
   _saveProjects(projects);
   _setActive(id);
+
+  // The clear wiped the workspace, so the undo stack's baseline must
+  // move with it — otherwise Ctrl+Z would resurrect the old project's
+  // content inside this new one.
+  try { resetHistoryToCurrentState(); } catch (_) {}
+
   renderProjectsSidebar();
   showStatus(`✅ Project "${label}" created`, 'success');
   return id;

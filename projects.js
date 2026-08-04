@@ -5,7 +5,7 @@
 
 import { appState } from './state.js';
 import { showStatus } from './renderer.js';
-import { addDuty, addTask, renderDutiesFromState } from './duties.js';
+import { addDuty, renderDutiesFromState } from './duties.js';
 import { resetSkillsLevel, renderSkillsLevel } from './renderer.js';
 import { renderLearningOutcomes, renderPCSourceList, renderModules, renderModuleLoList,
   renderClusters, renderAvailableTasks } from './modules.js';
@@ -112,11 +112,13 @@ function _doClear() {
   _resetImagePreview('producedBy');
 
   // ── Duties (state-first, then single render) ──────────────
+  // addDuty() now seeds its own first task (see duties.js), so the
+  // explicit addTask() that used to follow here would produce a
+  // second, unwanted blank task on every clear.
   appState.dutiesData = [];
   appState.dutyCount  = 0;
   appState.taskCounts = {};
   addDuty();
-  addTask(`duty_${appState.dutyCount}`);
 
   // ── Additional Info ───────────────────────────────────────
   _resetHeading('knowledgeHeading',  'Knowledge Requirements');
@@ -245,8 +247,7 @@ export function clearCurrentTab(tabId) {
     document.getElementById('dutiesContainer').innerHTML = '';
     appState.dutyCount  = 0;
     appState.taskCounts = {};
-    addDuty();
-    addTask(`duty_${appState.dutyCount}`);
+    addDuty();          // seeds its own first task — see duties.js
     showStatus('Duties & Tasks cleared!', 'success');
 
   } else if (tabId === 'additional-info-tab') {
