@@ -2621,28 +2621,48 @@ export function exportToPDF() {
         if (venueInput && venueInput.value) {
             pdf.setFontSize(14);
             pdf.setFont(undefined, 'bold');
-            pdf.text('Venue: ', leftColX, leftY);
+            const venueLabel = 'Venue: ';
+            pdf.text(venueLabel, leftColX, leftY);
+            const venueLabelW = pdf.getTextWidth(venueLabel) + 1;
             pdf.setFont(undefined, 'normal');
-            pdf.text(venueInput.value, leftColX + 20, leftY);
+            pdf.text(venueInput.value, leftColX + venueLabelW, leftY);
         }
         
         // Right column - Job info
-        pdf.setFontSize(16); // 16pt for labels
-        pdf.setFont(undefined, 'bold');
-        pdf.text('Occupation:', rightColX, rightY);
-        pdf.setFont(undefined, 'normal');
-        pdf.setFontSize(14); // 14pt for content
-        pdf.text(jobTitleInput.value || '', rightColX + 30, rightY);
-        rightY += 7;
+        //
+        // Label offsets are MEASURED, not hard-coded. The previous
+        // fixed +30mm / +15mm offsets were narrower than the bold 16pt
+        // labels themselves, so the value printed on top of the label
+        // ("Occupation:Furniture Carpenter"). getTextWidth returns the
+        // real width at the current font+size, so the gap is always
+        // correct whatever the label or font.
+        //
+        // Values also wrap now: a long occupation title used to run off
+        // the right edge of the page instead of flowing to a new line.
+        const rightColMaxW = pageWidth - margin - rightColX;
+        const LABEL_GAP    = 3;   // mm between label and value
+
+        const drawLabelledValue = (label, value) => {
+            pdf.setFontSize(16);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(label, rightColX, rightY);
+            const labelW = pdf.getTextWidth(label) + LABEL_GAP;
+
+            pdf.setFontSize(14);
+            pdf.setFont(undefined, 'normal');
+            const valueLines = pdf.splitTextToSize(value, Math.max(20, rightColMaxW - labelW));
+            pdf.text(valueLines, rightColX + labelW, rightY);
+            rightY += Math.max(7, valueLines.length * 5.7);
+        };
+
+        // NOTE: these two were previously crossed over — the
+        // "Occupation:" line printed jobTitleInput.value and the "Job:"
+        // line printed occupationTitleInput.value. Corrected here.
+        drawLabelledValue('Occupation:', occupationTitleInput.value);
 
         // Job line — only if filled (skips orphan "Job:" label with empty value)
         if (jobTitleInput.value && jobTitleInput.value.trim()) {
-            pdf.setFontSize(16); // 16pt for labels
-            pdf.setFont(undefined, 'bold');
-            pdf.text('Job:', rightColX, rightY);
-            pdf.setFont(undefined, 'normal');
-            pdf.setFontSize(14); // 14pt for content
-            pdf.text(occupationTitleInput.value, rightColX + 15, rightY);
+            drawLabelledValue('Job:', jobTitleInput.value.trim());
         }
         
         // Workshop Roles Section
@@ -2811,6 +2831,22 @@ export function exportToPDF() {
         const maxCols = 4;
         const chartWidth = pageWidth - (margin * 2);
         const colWidth = chartWidth / maxCols;
+
+        // ── Cell metrics ───────────────────────────────────────────
+        // jsPDF renders multi-line text at fontSize x lineHeightFactor
+        // (1.15 by default): 12pt -> 4.87mm per line, 14pt -> 5.68mm.
+        // The old code assumed 4.0mm and 4.5mm, so every wrapped cell
+        // was measured shorter than it actually drew — text crept past
+        // the bottom border and the whole grid ran tight.
+        const LINE_H_TASK = 4.9;   // 12pt
+        const LINE_H_DUTY = 5.7;   // 14pt
+        const CELL_PAD_X  = 2.5;   // left/right inset
+        const CELL_PAD_T  = 4.6;   // top inset to the FIRST BASELINE —
+                                   // text sits on its baseline, so a
+                                   // smaller value pushes the glyphs up
+                                   // against the top border (the cause
+                                   // of the cramped "Task A1:" labels)
+        const CELL_PAD_B  = 2.5;   // breathing room under the last line
         
         let dutyIndex = 0;
         
@@ -2831,8 +2867,8 @@ export function exportToPDF() {
                 pdf.setFont(undefined, 'bold');
                 
                 const headerText = `DUTY ${letter}: ${duty.duty}`;
-                const lines = pdf.splitTextToSize(headerText, colWidth - 3);
-                const textHeight = lines.length * 4.5 + 3; // Adjusted for larger font
+                const lines = pdf.splitTextToSize(headerText, colWidth - (CELL_PAD_X * 2));
+                const textHeight = lines.length * LINE_H_DUTY + CELL_PAD_T + CELL_PAD_B;
                 maxHeaderHeight = Math.max(maxHeaderHeight, textHeight);
             }
             
@@ -2847,8 +2883,8 @@ export function exportToPDF() {
                 
                 pdf.setFontSize(14); // 14pt for duty headers
                 const headerText = `DUTY ${letter}: ${duty.duty}`;
-                const lines = pdf.splitTextToSize(headerText, colWidth - 3);
-                pdf.text(lines, x + 1.5, yPos + 4.5);
+                const lines = pdf.splitTextToSize(headerText, colWidth - (CELL_PAD_X * 2));
+                pdf.text(lines, x + CELL_PAD_X, yPos + CELL_PAD_T + 0.6);
             }
             
             yPos += maxHeaderHeight;
@@ -2866,8 +2902,8 @@ export function exportToPDF() {
                         pdf.setFontSize(12); // 12pt for task text
                         const letter = String.fromCharCode(65 + dutyIndex + col);
                         const taskText = `Task ${letter}${taskRow + 1}:\n${duty.tasks[taskRow]}`;
-                        const lines = pdf.splitTextToSize(taskText, colWidth - 3);
-                        const textHeight = lines.length * 4 + 3; // Adjusted for larger font
+                        const lines = pdf.splitTextToSize(taskText, colWidth - (CELL_PAD_X * 2));
+                        const textHeight = lines.length * LINE_H_TASK + CELL_PAD_T + CELL_PAD_B;
                         rowHeight = Math.max(rowHeight, textHeight);
                     }
                 }
@@ -2899,8 +2935,8 @@ export function exportToPDF() {
                     if (duty.tasks[taskRow]) {
                         const letter = String.fromCharCode(65 + dutyIndex + col);
                         const taskText = `Task ${letter}${taskRow + 1}:\n${duty.tasks[taskRow]}`;
-                        const lines = pdf.splitTextToSize(taskText, colWidth - 3);
-                        pdf.text(lines, x + 1.5, yPos + 3);
+                        const lines = pdf.splitTextToSize(taskText, colWidth - (CELL_PAD_X * 2));
+                        pdf.text(lines, x + CELL_PAD_X, yPos + CELL_PAD_T);
                     }
                 }
                 
@@ -2936,61 +2972,50 @@ export function exportToPDF() {
             pdf.text('General Knowledge and Skills', pageWidth / 2, yPos, { align: 'center' });
             yPos += 8;
             
-            const thirdWidth = (pageWidth - (margin * 2)) / 3;
-            let col1Y = yPos;
-            let col2Y = yPos;
-            let col3Y = yPos;
-            
-            if (knowledgeText) {
-                const heading = document.getElementById('knowledgeHeading').textContent;
-                pdf.setFontSize(14); // 14pt for section heading
+            // ── Three-column layout ────────────────────────────────
+            // Each item is now WRAPPED to its own column width. The old
+            // code drew every line at full length with no width limit,
+            // so any item longer than a third of the page ran straight
+            // across the neighbouring column — the overlap seen in the
+            // exported chart. A gutter keeps adjacent columns from
+            // touching even when both are full.
+            const COL_GUTTER  = 6;                                   // mm between columns
+            const thirdWidth  = (pageWidth - (margin * 2)) / 3;
+            const colTextW    = thirdWidth - COL_GUTTER;
+            const LINE_H_ITEM = 4.9;                                 // 12pt
+            const bottomLimit = pageHeight - margin;
+
+            const drawColumn = (text, headingId, colX) => {
+                if (!text) return;
+                let y = yPos;
+
+                const headingEl = document.getElementById(headingId);
+                pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
-                pdf.text(heading, margin, col1Y);
-                col1Y += 6;
-                
-                pdf.setFontSize(12); // 12pt for content
+                pdf.text(
+                    pdf.splitTextToSize(headingEl ? headingEl.textContent : '', colTextW),
+                    colX, y
+                );
+                y += 7;
+
+                pdf.setFontSize(12);
                 pdf.setFont(undefined, 'normal');
-                const items = knowledgeText.split('\n').filter(line => line.trim());
-                items.forEach(item => {
+
+                text.split('\n').filter(line => line.trim()).forEach(item => {
                     const clean = item.trim().replace(/^[•\-*]\s*/, '');
-                    pdf.text(clean, margin, col1Y);
-                    col1Y += 4.5;
+                    const lines = pdf.splitTextToSize(clean, colTextW);
+                    lines.forEach(line => {
+                        if (y > bottomLimit) return;   // clip rather than spill off-page
+                        pdf.text(line, colX, y);
+                        y += LINE_H_ITEM;
+                    });
+                    y += 1;                            // small gap between items
                 });
-            }
-            
-            if (skillsText) {
-                const heading = document.getElementById('skillsHeading').textContent;
-                pdf.setFontSize(14); // 14pt for section heading
-                pdf.setFont(undefined, 'bold');
-                pdf.text(heading, margin + thirdWidth, col2Y);
-                col2Y += 6;
-                
-                pdf.setFontSize(12); // 12pt for content
-                pdf.setFont(undefined, 'normal');
-                const items = skillsText.split('\n').filter(line => line.trim());
-                items.forEach(item => {
-                    const clean = item.trim().replace(/^[•\-*]\s*/, '');
-                    pdf.text(clean, margin + thirdWidth, col2Y);
-                    col2Y += 4.5;
-                });
-            }
-            
-            if (behaviorsText) {
-                const heading = document.getElementById('behaviorsHeading').textContent;
-                pdf.setFontSize(14); // 14pt for section heading
-                pdf.setFont(undefined, 'bold');
-                pdf.text(heading, margin + (thirdWidth * 2), col3Y);
-                col3Y += 6;
-                
-                pdf.setFontSize(12); // 12pt for content
-                pdf.setFont(undefined, 'normal');
-                const items = behaviorsText.split('\n').filter(line => line.trim());
-                items.forEach(item => {
-                    const clean = item.trim().replace(/^[•\-*]\s*/, '');
-                    pdf.text(clean, margin + (thirdWidth * 2), col3Y);
-                    col3Y += 4.5;
-                });
-            }
+            };
+
+            drawColumn(knowledgeText, 'knowledgeHeading', margin);
+            drawColumn(skillsText,    'skillsHeading',    margin + thirdWidth);
+            drawColumn(behaviorsText, 'behaviorsHeading', margin + (thirdWidth * 2));
         }
         
         // ============ TOOLS AND TRENDS ============
@@ -3001,41 +3026,42 @@ export function exportToPDF() {
             pdf.addPage('a4', 'landscape');
             yPos = margin + 5;
             
-            const halfWidth = (pageWidth - (margin * 2) - 5) / 2;
-            let leftY = yPos;
-            let rightY = yPos;
-            
-            if (tools.length > 0) {
-                const heading = document.getElementById('toolsHeading').textContent;
-                pdf.setFontSize(14); // 14pt for section heading
+            // Same wrapping treatment as the Knowledge/Skills page —
+            // tool and material names are often long enough to cross
+            // into the neighbouring column when drawn unconstrained.
+            const halfWidth   = (pageWidth - (margin * 2) - 5) / 2;
+            const colTextW2   = halfWidth - 6;
+            const LINE_H_ITEM2 = 4.9;
+            const bottomLimit2 = pageHeight - margin;
+
+            const drawList = (items, headingId, colX) => {
+                if (!items.length) return;
+                let y = yPos;
+
+                const headingEl = document.getElementById(headingId);
+                pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
-                pdf.text(heading, margin, leftY);
-                leftY += 6;
-                
-                pdf.setFontSize(12); // 12pt for content
+                pdf.text(
+                    pdf.splitTextToSize(headingEl ? headingEl.textContent : '', colTextW2),
+                    colX, y
+                );
+                y += 7;
+
+                pdf.setFontSize(12);
                 pdf.setFont(undefined, 'normal');
-                tools.forEach(tool => {
-                    const clean = tool.trim().replace(/^[•\-*]\s*/, '');
-                    pdf.text(clean, margin, leftY);
-                    leftY += 4.5;
+                items.forEach(item => {
+                    const clean = item.trim().replace(/^[•\-*]\s*/, '');
+                    pdf.splitTextToSize(clean, colTextW2).forEach(line => {
+                        if (y > bottomLimit2) return;
+                        pdf.text(line, colX, y);
+                        y += LINE_H_ITEM2;
+                    });
+                    y += 1;
                 });
-            }
-            
-            if (trends.length > 0) {
-                const heading = document.getElementById('trendsHeading').textContent;
-                pdf.setFontSize(14); // 14pt for section heading
-                pdf.setFont(undefined, 'bold');
-                pdf.text(heading, margin + halfWidth + 5, rightY);
-                rightY += 6;
-                
-                pdf.setFontSize(12); // 12pt for content
-                pdf.setFont(undefined, 'normal');
-                trends.forEach(trend => {
-                    const clean = trend.trim().replace(/^[•\-*]\s*/, '');
-                    pdf.text(clean, margin + halfWidth + 5, rightY);
-                    rightY += 4.5;
-                });
-            }
+            };
+
+            drawList(tools,  'toolsHeading',  margin);
+            drawList(trends, 'trendsHeading', margin + halfWidth + 5);
         }
         
         // ============ ACRONYMS ============
@@ -3052,10 +3078,17 @@ export function exportToPDF() {
             pdf.setFontSize(12); // 12pt for content
             pdf.setFont(undefined, 'normal');
             const acronyms = acronymsInput.value.split('\n').filter(line => line.trim());
+            const fullTextW = pageWidth - (margin * 2);
             acronyms.forEach(acronym => {
                 const clean = acronym.trim().replace(/^[•\-*]\s*/, '');
-                pdf.text(clean, margin, yPos);
-                yPos += 4.5;
+                pdf.splitTextToSize(clean, fullTextW).forEach(line => {
+                    if (yPos > pageHeight - margin) {
+                        pdf.addPage('a4', 'landscape');
+                        yPos = margin + 5;
+                    }
+                    pdf.text(line, margin, yPos);
+                    yPos += 4.9;
+                });
             });
         }
         
@@ -3074,10 +3107,17 @@ export function exportToPDF() {
             pdf.setFontSize(12); // 12pt for content
             pdf.setFont(undefined, 'normal');
             const careerPathItems = careerPathInput.value.split('\n').filter(line => line.trim());
+            const fullTextW = pageWidth - (margin * 2);
             careerPathItems.forEach(item => {
                 const clean = item.trim().replace(/^[•\-*]\s*/, '');
-                pdf.text(clean, margin, yPos);
-                yPos += 4.5;
+                pdf.splitTextToSize(clean, fullTextW).forEach(line => {
+                    if (yPos > pageHeight - margin) {
+                        pdf.addPage('a4', 'landscape');
+                        yPos = margin + 5;
+                    }
+                    pdf.text(line, margin, yPos);
+                    yPos += 4.9;
+                });
             });
         }
         
@@ -3100,10 +3140,17 @@ export function exportToPDF() {
                 pdf.setFontSize(12); // 12pt for content
                 pdf.setFont(undefined, 'normal');
                 const items = textareaElement.value.split('\n').filter(line => line.trim());
+                const customTextW = pageWidth - (margin * 2);
                 items.forEach(item => {
                     const clean = item.trim().replace(/^[•\-*]\s*/, '');
-                    pdf.text(clean, margin, yPos);
-                    yPos += 4.5;
+                    pdf.splitTextToSize(clean, customTextW).forEach(line => {
+                        if (yPos > pageHeight - margin) {
+                            pdf.addPage('a4', 'landscape');
+                            yPos = margin + 5;
+                        }
+                        pdf.text(line, margin, yPos);
+                        yPos += 4.9;
+                    });
                 });
             }
         });
