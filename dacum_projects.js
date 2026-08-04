@@ -310,8 +310,8 @@ export function showWelcomeOverlay() {
         color:#a6adc8;font-size:0.91em;line-height:1.75;margin:0 0 8px;
       ">Every analysis begins with a <strong style="color:#cdd6f4;">project</strong>.</p>
       <p style="
-        color:#a6adc8;font-size:0.91em;line-height:1.75;margin:0 0 32px;
-      ">Click the button below to create your first project —<br>
+        color:#a6adc8;font-size:0.91em;line-height:1.75;margin:0 0 28px;
+      ">Start a new one, or open a project you saved earlier —<br>
       this is <strong style="color:#cdd6f4;">Step 1</strong> before entering any data.</p>
 
       <button id="dacumWelcomeNewBtn" style="
@@ -330,9 +330,30 @@ export function showWelcomeOverlay() {
         + &nbsp;Create New Project
       </button>
 
+      <div style="display:flex;align-items:center;gap:12px;margin:18px 0;">
+        <span style="flex:1;height:1px;background:#313244;"></span>
+        <span style="color:#585b70;font-size:0.72em;font-weight:700;letter-spacing:0.06em;">OR</span>
+        <span style="flex:1;height:1px;background:#313244;"></span>
+      </div>
+
+      <button id="dacumWelcomeOpenBtn" style="
+        display:block;width:100%;
+        background:transparent;
+        color:#cdd6f4;border:1.5px solid #45475a;border-radius:12px;
+        padding:14px 28px;font-size:1em;font-weight:700;
+        cursor:pointer;letter-spacing:0.01em;
+        transition:background 0.15s,border-color 0.15s,transform 0.1s;
+      "
+      onmouseover="this.style.background='#313244';this.style.borderColor='#585b70'"
+      onmouseout="this.style.background='transparent';this.style.borderColor='#45475a'"
+      onmousedown="this.style.transform='scale(0.97)'"
+      onmouseup="this.style.transform='scale(1)'">
+        📂 &nbsp;Open Existing Project
+      </button>
+
       <p style="color:#45475a;font-size:0.76em;margin:20px 0 0;line-height:1.6;">
-        Tip: You can also import an existing project using the
-        <strong style="color:#6c7086;">Load JSON</strong> button in the toolbar.
+        Open a <strong style="color:#6c7086;">.json</strong> project you exported earlier,
+        or one shared with you by another facilitator.
       </p>
     </div>`;
 
@@ -351,6 +372,42 @@ export function showWelcomeOverlay() {
     const name = prompt('Project name:', `DACUM Project ${_loadProjects().length + 1}`);
     if (name !== null) createProject(name);
   });
+
+  // ── "Open Existing Project" ────────────────────────────────
+  // Reuses the toolbar's hidden #loadFileInput rather than creating a
+  // second file input: events.js already wires its change event to
+  // loadFromJSON(), which handles parsing, project creation, sidebar
+  // refresh and history reset. Duplicating that pipeline here would
+  // mean two code paths to keep in sync.
+  const openBtn = document.getElementById('dacumWelcomeOpenBtn');
+  if (openBtn) {
+    openBtn.addEventListener('click', () => {
+      const input = document.getElementById('loadFileInput');
+      if (!input) {
+        alert('Import is unavailable — the file picker could not be found.');
+        return;
+      }
+
+      // Dismiss the overlay only once a project actually exists.
+      // The import is asynchronous (FileReader) and can fail on a
+      // malformed file; hiding immediately would strand the user on an
+      // empty screen with no way back to these two buttons.
+      const onPicked = () => {
+        let tries = 0;
+        const poll = setInterval(() => {
+          if (_getActive()) {
+            clearInterval(poll);
+            hideWelcomeOverlay();
+          } else if (++tries > 20) {          // ~4s ceiling
+            clearInterval(poll);              // import failed → overlay stays
+          }
+        }, 200);
+      };
+
+      input.addEventListener('change', onPicked, { once: true });
+      input.click();
+    });
+  }
 }
 
 function hideWelcomeOverlay() {
