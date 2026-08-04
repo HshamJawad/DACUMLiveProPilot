@@ -1715,7 +1715,11 @@
             <div id="dutiesContainer"></div>
             <button class="btn-add" id="btnAddDuty">➕ Add Duty</button>
             
-            <div style="margin-top: 30px; text-align: right;">
+            <div class="step-nav-row">
+                <button type="button" class="btn-back-step" data-nav-back="info-tab"
+                        title="Return to Chart Info to review or edit">
+                    ← Back to Chart Info
+                </button>
                 <button onclick="window.switchTab('additional-info-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
                     Proceed to Additional Info →
                 </button>
@@ -1878,7 +1882,11 @@
                 </div>
             </div>
             
-            <div style="margin-top: 30px; text-align: right;">
+            <div class="step-nav-row">
+                <button type="button" class="btn-back-step" data-nav-back="duties-tab"
+                        title="Return to Duties & Tasks to review or edit">
+                    ← Back to Duties & Tasks
+                </button>
                 <button onclick="window.switchTab('verification-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
                     Proceed to Task Verification →
                 </button>
@@ -2233,7 +2241,11 @@
                 </div>
             </div>
             
-            <div style="margin-top: 30px; text-align: right;">
+            <div class="step-nav-row">
+                <button type="button" class="btn-back-step" data-nav-back="additional-info-tab"
+                        title="Return to Additional Info to review or edit">
+                    ← Back to Additional Info
+                </button>
                 <button id="btnProceedToClustering" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
                     Proceed to Competency Clustering →
                 </button>
@@ -2281,7 +2293,11 @@
                 </div>
             </div>
             
-            <div style="margin-top: 30px; text-align: right;">
+            <div class="step-nav-row">
+                <button type="button" class="btn-back-step" data-nav-back="verification-tab"
+                        title="Return to Task Verification to review or edit">
+                    ← Back to Task Verification
+                </button>
                 <button onclick="window.switchTab('learning-outcomes-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
                     Proceed to Learning Outcomes →
                 </button>
@@ -2334,7 +2350,7 @@
                  the conventional order, so "Proceed" keeps the position
                  users already know from the other tabs. -->
             <div class="step-nav-row">
-                <button type="button" id="btnBackToClusters" class="btn-back-step"
+                <button type="button" class="btn-back-step" data-nav-back="clustering-tab"
                         title="Return to Competency Clusters to edit clusters or criteria">
                     ← Back to Competency Clusters
                 </button>
@@ -2413,6 +2429,14 @@
                 <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 0.95em; font-style: italic;">
                     Export your modules and continue with detailed curriculum development
                 </p>
+            </div>
+
+            <!-- Last step in the chain — back only, no "Proceed". -->
+            <div class="step-nav-row">
+                <button type="button" class="btn-back-step" data-nav-back="learning-outcomes-tab"
+                        title="Return to Learning Outcomes to review or edit">
+                    ← Back to Learning Outcomes
+                </button>
             </div>
         </div>
         

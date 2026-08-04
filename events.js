@@ -139,10 +139,18 @@ export function setupEvents() {
       .catch(() => {});
   });
 
-  // ── Step navigation: Learning Outcomes → Competency Clusters ──
-  // switchTab() re-renders the clustering views on entry, so the
-  // clusters the user built are shown as they left them.
-  _on('btnBackToClusters', 'click', () => switchTab('clustering-tab'));
+  // ── Step navigation: "← Back to …" buttons ───────────────────
+  // One delegated listener for every back button in the workflow
+  // chain; each declares its own destination via data-nav-back, so
+  // adding a step later needs no JS change. Delegated on document
+  // because some of these live inside containers that are re-rendered.
+  // switchTab() re-renders the destination tab's views on entry, so
+  // the user always returns to their work as they left it.
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-nav-back]');
+    if (!btn) return;
+    switchTab(btn.getAttribute('data-nav-back'));
+  });
 
   // ── Tab "?" help modals ─────────────────────────────────────
   _on('addInfoHelpBtn',    'click', () => _showAdditionalInfoHelp());
