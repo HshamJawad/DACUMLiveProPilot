@@ -138,6 +138,9 @@ export function setupEvents() {
       .catch(() => {});
   });
 
+  // ── Additional Information tab: "?" help modal ──────────────
+  _on('addInfoHelpBtn', 'click', () => _showAdditionalInfoHelp());
+
   // ── Additional Information tab: AI supporting-info generation ──
   // No markAiGenerated() here — the Refine Results card operates on
   // duties/tasks only, so surfacing it after this run would be wrong.
@@ -630,5 +633,86 @@ function _onStaticInfoButtons() {
     btn.addEventListener('click', function () {
       formatList(this.getAttribute('data-input-id'), this.getAttribute('data-format-type'));
     });
+  });
+}
+
+// ── Additional Information help modal ─────────────────────────
+// Replaces the old one-line hint that sat under the tab heading.
+// A modal keeps the guidance available without permanently spending
+// vertical space above the fields the facilitator actually works in.
+
+function _showAdditionalInfoHelp() {
+  const existing = document.getElementById('addInfoHelpModal');
+  if (existing) { existing.remove(); return; }   // second click closes it
+
+  const overlay = document.createElement('div');
+  overlay.id = 'addInfoHelpModal';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Why Additional Information matters');
+  overlay.style.cssText =
+    'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;' +
+    'justify-content:center;padding:20px;background:rgba(0,0,0,0.55);' +
+    'backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);' +
+    'animation:aiErrFadeIn 0.2s ease;';
+
+  const ITEMS = [
+    ['📚', 'Skills &amp; Knowledge', 'Core competencies needed across multiple duties'],
+    ['🧭', 'Behaviors',              'Work attitudes and traits that lead to success'],
+    ['🛠️', 'Tools &amp; Equipment',  'Resources used to perform the occupation'],
+    ['📈', 'Future Trends',          'Emerging factors that may impact the occupation'],
+  ];
+
+  const rows = ITEMS.map(([icon, title, desc]) =>
+    '<li style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;' +
+    'border-bottom:1px solid #f1f5f9;">' +
+      '<span style="font-size:1.05em;line-height:1.4;flex-shrink:0;">' + icon + '</span>' +
+      '<span style="font-size:0.87em;line-height:1.6;color:#334155;">' +
+        '<strong style="color:#1e293b;">' + title + '</strong> — ' + desc +
+      '</span>' +
+    '</li>'
+  ).join('');
+
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:16px;max-width:480px;width:100%;' +
+    'box-shadow:0 24px 60px rgba(0,0,0,0.35);overflow:hidden;' +
+    'font-family:\'Segoe UI\',system-ui,sans-serif;animation:aiErrSlideIn 0.22s ease;">' +
+      '<div style="padding:20px 22px 16px;display:flex;align-items:center;gap:12px;' +
+      'background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-bottom:1px solid #c7d2fe;">' +
+        '<span style="font-size:1.7em;line-height:1;">💡</span>' +
+        '<p style="margin:0;font-size:1em;font-weight:800;color:#3730a3;">' +
+          'Why Additional Information Matters</p>' +
+      '</div>' +
+      '<div style="padding:18px 22px 20px;">' +
+        '<p style="margin:0 0 8px;font-size:0.88em;color:#475569;line-height:1.6;">' +
+          'This section captures important context that supports the DACUM chart:</p>' +
+        '<ul style="list-style:none;margin:0 0 18px;padding:0;">' + rows + '</ul>' +
+        '<div style="display:flex;justify-content:flex-end;">' +
+          '<button id="addInfoHelpClose" style="padding:9px 22px;background:#667eea;' +
+          'color:#fff;border:none;border-radius:8px;font-size:0.9em;font-weight:700;' +
+          'cursor:pointer;font-family:inherit;">Got it</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  // Reuses the keyframes the AI error modals inject; create them only
+  // if neither generator has run yet this session.
+  if (!document.getElementById('aiErrStyles')) {
+    const st = document.createElement('style');
+    st.id = 'aiErrStyles';
+    st.textContent =
+      '@keyframes aiErrFadeIn  { from{opacity:0} to{opacity:1} }' +
+      '@keyframes aiErrSlideIn { from{transform:translateY(-14px);opacity:0}' +
+      ' to{transform:translateY(0);opacity:1} }';
+    document.head.appendChild(st);
+  }
+
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  overlay.querySelector('#addInfoHelpClose').addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
   });
 }

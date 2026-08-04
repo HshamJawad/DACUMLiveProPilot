@@ -499,6 +499,46 @@
         }
       }
 
+      /* ── Inline "?" help button beside a tab title ─────────────
+         Sits with the heading in the left half of .tab-header-row so
+         the row's space-between still pushes "Clear This Tab" to the
+         far side. */
+      .tab-title-with-help {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      .tab-title-with-help h2 { margin: 0; }
+
+      .tab-help-btn {
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #e0e7ff;
+        color: #4338ca;
+        border: 1px solid #c7d2fe;
+        font-size: 0.82em;
+        font-weight: 800;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s, transform 0.12s;
+      }
+      .tab-help-btn:hover {
+        background: #4f46e5;
+        color: #ffffff;
+        border-color: #4f46e5;
+        transform: scale(1.1);
+      }
+      .tab-help-btn:active { transform: scale(0.95); }
+
       /* Post-refine flash on changed duties/tasks (2.5s) */
       .refined-highlight {
         background-color: rgba(16, 185, 129, 0.15) !important;
@@ -1613,12 +1653,17 @@
         
         <div class="tab-content" id="additional-info-tab">
             <div class="tab-header-row">
-                <h2>Additional Information</h2>
+                <div class="tab-title-with-help">
+                    <h2>Additional Information</h2>
+                    <button type="button" id="addInfoHelpBtn" class="tab-help-btn"
+                            title="Why does this section matter?"
+                            aria-label="Why does this section matter?"
+                            aria-haspopup="dialog">?</button>
+                </div>
                 <button data-action="clear-tab" data-tab-id="additional-info-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
                     🗑️ Clear This Tab
                 </button>
             </div>
-            <p style="color: #666; margin-bottom: 25px; font-size: 1.05em;">📝 Enter information for each section. Click the rename button to customize section headings.</p>
 
             <!-- AI Generation Section — mirrors the card in the Duties tab -->
             <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
