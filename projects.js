@@ -36,6 +36,15 @@ export function switchTab(tabId) {
     selectedTab.classList.add('active');
     selectedContent.classList.add('active');
 
+    // Re-render from appState on entry. These containers are not
+    // rebuilt anywhere else, so without this they keep showing
+    // whatever was last painted — stale data after a project switch,
+    // or an empty placeholder for clusters created earlier in the
+    // session but never re-rendered since.
+    if (tabId === 'clustering-tab') {
+      renderAvailableTasks();
+      renderClusters();
+    }
     if (tabId === 'learning-outcomes-tab') {
       renderPCSourceList();
       renderLearningOutcomes();

@@ -15,6 +15,9 @@ import { appState }           from './state.js';
 import { showStatus }         from './renderer.js';
 import { syncAllFromDOM }     from './duties.js';
 import { clearAllSilent }     from './projects.js';
+import { renderAvailableTasks, renderClusters,
+         renderPCSourceList, renderLearningOutcomes,
+         renderModuleLoList, renderModules } from './modules.js';
 import { renderAll }          from './workshop_snapshots.js';
 import { resetHistoryToCurrentState } from './history.js';
 
@@ -806,6 +809,20 @@ function _applyState(s) {
   _hydrateChartInfoDOM(s._chartInfo || s.chartInfo || {});
 
   _applyLiveWorkshopDOM(s);
+
+  // ── Downstream views: re-render from the state just applied ──
+  // These three tabs render into containers that are NOT rebuilt by
+  // anything above. Without this, switching or loading a project left
+  // the previous project's clusters, learning outcomes and modules
+  // sitting in the DOM while appState already held the new project's
+  // data — the two silently disagreed until something happened to
+  // trigger a re-render. Each render call is guarded independently so
+  // one failure can't abort the rest of the load.
+  [renderAvailableTasks, renderClusters,
+   renderPCSourceList,   renderLearningOutcomes,
+   renderModuleLoList,   renderModules].forEach(fn => {
+    try { fn(); } catch (err) { console.warn('[project] render skipped:', err); }
+  });
 }
 
 function _hydrateChartInfoDOM(ci) {

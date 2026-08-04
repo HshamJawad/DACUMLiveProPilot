@@ -36,7 +36,8 @@ import { showStatus, toggleInfoBox, escapeHtml,
   addCustomSection, removeCustomSection }                  from './renderer.js';
 import { exportToPDF, exportToWord,
   exportTaskVerificationPDF, exportTaskVerificationWord }  from './exports.js';
-import { clearAll, clearAllSilent, clearCurrentTab, generateAIDacum } from './projects.js';
+import { clearAll, clearAllSilent, clearCurrentTab, generateAIDacum,
+         switchTab } from './projects.js';
 import { handleImageUpload, removeImage }                  from './storage.js';
 import { saveToJSON, loadFromJSON }                        from './snapshots.js';
 import { saveSnapshot, restoreSnapshot,
@@ -137,6 +138,11 @@ export function setupEvents() {
       })
       .catch(() => {});
   });
+
+  // ── Step navigation: Learning Outcomes → Competency Clusters ──
+  // switchTab() re-renders the clustering views on entry, so the
+  // clusters the user built are shown as they left them.
+  _on('btnBackToClusters', 'click', () => switchTab('clustering-tab'));
 
   // ── Tab "?" help modals ─────────────────────────────────────
   _on('addInfoHelpBtn',    'click', () => _showAdditionalInfoHelp());

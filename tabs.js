@@ -8,7 +8,8 @@ import { appState } from './state.js';
 import { addDuty } from './duties.js';
 import { initializeClusteringFromTasks } from './modules.js';
 import { renderPCSourceList, renderLearningOutcomes,
-  renderModuleLoList, renderModules } from './modules.js';
+  renderModuleLoList, renderModules,
+  renderAvailableTasks, renderClusters } from './modules.js';
 
 export function setupTabs() {
   document.querySelectorAll('.tab').forEach(tab => {
@@ -32,6 +33,14 @@ export function setupTabs() {
         if (dutiesContainer && dutiesContainer.children.length === 0) {
           addDuty();   // seeds its own first task — see duties.js
         }
+      }
+
+      // Same re-render-on-entry rule as switchTab() in projects.js —
+      // both entry points must behave identically or the tab's freshness
+      // would depend on which one the user happened to use.
+      if (tabId === 'clustering-tab') {
+        renderAvailableTasks();
+        renderClusters();
       }
 
       if (tabId === 'learning-outcomes-tab') {

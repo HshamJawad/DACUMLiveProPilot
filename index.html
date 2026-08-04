@@ -561,6 +561,32 @@
       }
       .cluster-section-header h4 { margin: 0; }
 
+      /* "← Back to …" step-navigation button. Deliberately neutral
+         rather than coloured: it's a wayfinding control, not the
+         primary action of the tab. */
+      .btn-back-step {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 0.88em;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+      }
+      .btn-back-step:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+        border-color: #94a3b8;
+      }
+
       /* Post-refine flash on changed duties/tasks (2.5s) */
       .refined-highlight {
         background-color: rgba(16, 185, 129, 0.15) !important;
@@ -2240,7 +2266,13 @@
         </div>
         
         <div class="tab-content" id="learning-outcomes-tab">
-            <h2>🎓 Learning Outcomes</h2>
+            <div class="tab-header-row">
+                <h2>🎓 Learning Outcomes</h2>
+                <button type="button" id="btnBackToClusters" class="btn-back-step"
+                        title="Return to Competency Clusters to edit clusters or criteria">
+                    ← Back to Competency Clusters
+                </button>
+            </div>
             
             <!-- Section 1: Mode Information -->
             <div class="lo-mode-info">
