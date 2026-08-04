@@ -202,31 +202,31 @@ export async function exportTaskVerificationWord() {
                     children: [
                         new TableCell({
                             children: [new Paragraph({ children: [new TextRun({ text: 'Rank', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
                             children: [new Paragraph({ children: [new TextRun({ text: 'Duty', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
                             children: [new Paragraph({ children: [new TextRun({ text: 'Task', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
                             children: [new Paragraph({ children: [new TextRun({ text: 'Mean I', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
                             children: [new Paragraph({ children: [new TextRun({ text: 'Mean F', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
                             children: [new Paragraph({ children: [new TextRun({ text: 'Mean D', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
                             children: [new Paragraph({ children: [new TextRun({ text: 'Priority', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                     ],
                 }));
@@ -412,8 +412,16 @@ export async function exportToWord() {
     // the same grey the PDF exporter fills duty bars with. This export
     // previously mixed four tints (667eea purple headers, E8E8E8,
     // F5F5F5 and DCDCDC), so the Word and PDF versions of the same
-    // chart read as two different documents. Cell text is black, which
-    // also has far better contrast on light grey than on the old purple.
+    // chart read as two different documents.
+    //
+    // IMPORTANT — always use ShadingType.CLEAR here, never SOLID.
+    // In OOXML, w:shd carries BOTH a background (w:fill) and a pattern
+    // foreground (w:color). val="solid" means "paint the cell 100% in
+    // the PATTERN colour", so w:fill is ignored entirely — and where no
+    // colour was given it defaulted to "auto", i.e. black. That is why
+    // these bars rendered as solid black blocks regardless of the fill
+    // value set. val="clear" means "no pattern", which lets w:fill show
+    // through as an ordinary background. Cell text stays black.
             // ============ CHECK FOR VERIFIED LIVE WORKSHOP RESULTS ============
             const hasVerifiedResults = typeof appState.lwFinalizedData !== 'undefined' && appState.lwFinalizedData && 
                                         typeof appState.lwAggregatedResults !== 'undefined' && appState.lwAggregatedResults;
@@ -833,7 +841,8 @@ export async function exportToWord() {
                                         // PDF exporter fills duty bars with, so the Word
                                         // and PDF versions of the same chart match.
                                         fill: "DCDCDC",
-                                        type: ShadingType.SOLID,
+                                        type: ShadingType.CLEAR,
+                                        color: "auto",
                                     },
                                     width: {
                                         size: 100,
@@ -970,7 +979,8 @@ export async function exportToWord() {
                                     ],
                                     shading: {
                                         fill: "DCDCDC", // RGB(220,220,220) — matches the duty bar
-                                        type: ShadingType.SOLID,
+                                        type: ShadingType.CLEAR,
+                                        color: "auto",
                                     },
                                     width: {
                                         size: 30,
@@ -1201,7 +1211,8 @@ export async function exportToWord() {
                                     columnSpan: 5,
                                     shading: {
                                         fill: "DCDCDC",
-                                        type: ShadingType.SOLID,
+                                        type: ShadingType.CLEAR,
+                                        color: "auto",
                                     },
                                 }),
                             ],
@@ -1226,7 +1237,8 @@ export async function exportToWord() {
                                     width: { size: 40, type: WidthType.PERCENTAGE },
                                     shading: {
                                         fill: "DCDCDC",
-                                        type: ShadingType.SOLID,
+                                        type: ShadingType.CLEAR,
+                                        color: "auto",
                                     },
                                 }),
                                 new TableCell({
@@ -1245,7 +1257,8 @@ export async function exportToWord() {
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
                                         fill: "DCDCDC",
-                                        type: ShadingType.SOLID,
+                                        type: ShadingType.CLEAR,
+                                        color: "auto",
                                     },
                                 }),
                                 new TableCell({
@@ -1264,7 +1277,8 @@ export async function exportToWord() {
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
                                         fill: "DCDCDC",
-                                        type: ShadingType.SOLID,
+                                        type: ShadingType.CLEAR,
+                                        color: "auto",
                                     },
                                 }),
                                 new TableCell({
@@ -1283,7 +1297,8 @@ export async function exportToWord() {
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
                                         fill: "DCDCDC",
-                                        type: ShadingType.SOLID,
+                                        type: ShadingType.CLEAR,
+                                        color: "auto",
                                     },
                                 }),
                                 new TableCell({
@@ -1302,7 +1317,8 @@ export async function exportToWord() {
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
                                         fill: "DCDCDC",
-                                        type: ShadingType.SOLID,
+                                        type: ShadingType.CLEAR,
+                                        color: "auto",
                                     },
                                 }),
                             ],
@@ -1549,31 +1565,31 @@ export async function exportToWord() {
                             children: [
                                 new TableCell({
                                     children: [new Paragraph({ children: [new TextRun({ text: 'Rank', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
                                     children: [new Paragraph({ children: [new TextRun({ text: 'Duty', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
                                     children: [new Paragraph({ children: [new TextRun({ text: 'Task', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
                                     children: [new Paragraph({ children: [new TextRun({ text: 'Mean I', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
                                     children: [new Paragraph({ children: [new TextRun({ text: 'Mean F', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
                                     children: [new Paragraph({ children: [new TextRun({ text: 'Mean D', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
                                     children: [new Paragraph({ children: [new TextRun({ text: 'Priority', bold: true })], alignment: AlignmentType.CENTER, bidirectional: false })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.SOLID, color: 'ffffff' },
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                             ],
                         }));
