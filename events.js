@@ -154,6 +154,7 @@ export function setupEvents() {
 
   // ── Tab "?" help modals ─────────────────────────────────────
   _on('addInfoHelpBtn',    'click', () => _showAdditionalInfoHelp());
+  _on('dutiesHelpBtn',        'click', () => _showDutiesHelp());
   _on('clusteringHelpBtn',    'click', () => _showClusteringHelp());
   _on('clusterNamingHelpBtn', 'click', () => _showClusterNamingHelp());
 
@@ -860,5 +861,71 @@ function _showPCRangeHelp() {
     title:    'What are Performance Criteria and Range?',
     maxWidth: '620px',
     bodyHtml,
+  });
+}
+
+// Duty & Task statement guidelines.
+// Duty rules are paraphrased from the duty-statement guidance in
+// Robert E. Norton's DACUM Handbook (the standard reference for the
+// methodology) rather than quoted, and the source is credited in the
+// modal so a facilitator can look it up.
+//
+// Duties and tasks share one modal because their rules only make
+// sense in contrast: a duty is the general heading, a task is the
+// specific, observable unit of work beneath it. Facilitators most
+// often go wrong at exactly that boundary — writing a task that is
+// really a duty, or vice versa.
+function _showDutiesHelp() {
+  const P  = 'margin:0 0 8px;font-size:0.88em;color:#475569;line-height:1.6;';
+  const LI = 'font-size:0.87em;line-height:1.7;color:#334155;margin-bottom:4px;';
+
+  const formatBox = (accent, bg, label, formula, example) =>
+    '<div style="background:' + bg + ';border-left:3px solid ' + accent + ';' +
+    'border-radius:8px;padding:11px 13px;margin-bottom:10px;">' +
+      '<p style="margin:0 0 5px;font-size:0.83em;font-weight:800;color:' + accent + ';">' +
+        label + '</p>' +
+      '<p style="margin:0 0 5px;font-size:0.85em;color:#334155;line-height:1.6;">' +
+        formula + '</p>' +
+      '<p style="margin:0;font-size:0.84em;color:#475569;font-style:italic;">' +
+        '💡 ' + example + '</p>' +
+    '</div>';
+
+  const bodyHtml =
+    '<p style="' + P + '"><strong style="color:#1e293b;">Duty statements</strong> ' +
+      'name the broad areas of work. According to Norton\'s DACUM Handbook, a good ' +
+      'duty statement should:</p>' +
+    '<ul style="margin:0 0 16px;padding-left:20px;">' +
+      '<li style="' + LI + '">Describe a <strong>large area of work</strong> in performance terms</li>' +
+      '<li style="' + LI + '">Act as the <strong>heading for a group of related tasks</strong> ' +
+        '(usually 6–20 tasks per duty)</li>' +
+      '<li style="' + LI + '">Use <strong>one verb, an object,</strong> and usually a qualifier</li>' +
+      '<li style="' + LI + '">Stay <strong>general rather than specific</strong> ' +
+        '(a chart usually has 6–12 duties)</li>' +
+      '<li style="' + LI + '"><strong>Stand alone</strong> — make sense without naming the job</li>' +
+      '<li style="' + LI + '">Leave out <strong>worker behaviours, tools and knowledge</strong> — ' +
+        'those belong in the Additional Information tab</li>' +
+    '</ul>' +
+
+    formatBox('#4338ca', '#eef2ff', '🗂️ Duty format',
+      'Verb + Object (+ qualifier) — broad, never a single action',
+      '"Maintain testing equipment"') +
+
+    formatBox('#a16207', '#fffbeb', '📝 Task format',
+      'Action Verb + Task/Activity (What) + Context (Where/How/Why if relevant)',
+      '"Calibrate a digital multimeter to manufacturer specifications"') +
+
+    '<p style="margin:12px 0 0;font-size:0.78em;color:#94a3b8;line-height:1.6;">' +
+      'Duty guidance adapted from Norton, R. E., <em>DACUM Handbook</em>.</p>';
+
+  _showHelpModal({
+    id:       'dutiesHelpModal',
+    icon:     '📋',
+    title:    'Writing Duty and Task Statements',
+    maxWidth: '560px',
+    bodyHtml,
+    note: '<strong>The difference that matters:</strong> a duty is a heading, a task is ' +
+          'a single observable unit of work with a clear beginning and end. If a "task" ' +
+          'covers a whole area of work, it is really a duty — and if a "duty" describes ' +
+          'one concrete action, it is really a task.',
   });
 }
