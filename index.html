@@ -587,6 +587,29 @@
         border-color: #94a3b8;
       }
 
+      /* Step navigation footer: back on the left, proceed on the right.
+         Matches the 30px top margin the plain right-aligned "Proceed"
+         blocks use on the other tabs, so the rhythm stays consistent. */
+      .step-nav-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 600px) {
+        .step-nav-row {
+          flex-direction: column-reverse;   /* proceed stays on top */
+          align-items: stretch;
+        }
+        .step-nav-row button {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
       /* Post-refine flash on changed duties/tasks (2.5s) */
       .refined-highlight {
         background-color: rgba(16, 185, 129, 0.15) !important;
@@ -2266,13 +2289,7 @@
         </div>
         
         <div class="tab-content" id="learning-outcomes-tab">
-            <div class="tab-header-row">
-                <h2>🎓 Learning Outcomes</h2>
-                <button type="button" id="btnBackToClusters" class="btn-back-step"
-                        title="Return to Competency Clusters to edit clusters or criteria">
-                    ← Back to Competency Clusters
-                </button>
-            </div>
+            <h2>🎓 Learning Outcomes</h2>
             
             <!-- Section 1: Mode Information -->
             <div class="lo-mode-info">
@@ -2313,7 +2330,14 @@
                 </div>
             </div>
             
-            <div style="margin-top: 30px; text-align: right;">
+            <!-- Step navigation: back on the left, forward on the right —
+                 the conventional order, so "Proceed" keeps the position
+                 users already know from the other tabs. -->
+            <div class="step-nav-row">
+                <button type="button" id="btnBackToClusters" class="btn-back-step"
+                        title="Return to Competency Clusters to edit clusters or criteria">
+                    ← Back to Competency Clusters
+                </button>
                 <button onclick="window.switchTab('module-mapping-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
                     Proceed to Module Mapping →
                 </button>
