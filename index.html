@@ -2171,7 +2171,18 @@
         </div>
         
         <div class="tab-content" id="clustering-tab">
-            <h2>🎯 Competency Clusters</h2>
+            <div class="tab-header-row">
+                <div class="tab-title-with-help">
+                    <h2>🎯 Competency Clusters</h2>
+                    <button type="button" id="clusteringHelpBtn" class="tab-help-btn"
+                            title="How should I group tasks into clusters?"
+                            aria-label="How should I group tasks into clusters?"
+                            aria-haspopup="dialog">?</button>
+                </div>
+                <button data-action="clear-tab" data-tab-id="clustering-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ Clear This Tab
+                </button>
+            </div>
             
             <!-- Available Tasks Section -->
             <div class="clustering-section">

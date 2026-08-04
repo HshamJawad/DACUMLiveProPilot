@@ -138,8 +138,9 @@ export function setupEvents() {
       .catch(() => {});
   });
 
-  // ── Additional Information tab: "?" help modal ──────────────
-  _on('addInfoHelpBtn', 'click', () => _showAdditionalInfoHelp());
+  // ── Tab "?" help modals ─────────────────────────────────────
+  _on('addInfoHelpBtn',    'click', () => _showAdditionalInfoHelp());
+  _on('clusteringHelpBtn', 'click', () => _showClusteringHelp());
 
   // ── Additional Information tab: AI supporting-info generation ──
   // No markAiGenerated() here — the Refine Results card operates on
@@ -636,59 +637,67 @@ function _onStaticInfoButtons() {
   });
 }
 
-// ── Additional Information help modal ─────────────────────────
-// Replaces the old one-line hint that sat under the tab heading.
-// A modal keeps the guidance available without permanently spending
+// ── Tab help modals ───────────────────────────────────────────
+// Small "?" buttons next to a tab heading open a guidance modal.
+// These replace the permanent hint paragraphs that used to sit under
+// each heading — the guidance stays available without spending
 // vertical space above the fields the facilitator actually works in.
+//
+// _showHelpModal is generic so each tab only supplies its content;
+// the chrome, animations, and close behaviour are defined once.
 
-function _showAdditionalInfoHelp() {
-  const existing = document.getElementById('addInfoHelpModal');
+function _showHelpModal({ id, icon, title, intro, items, note }) {
+  const existing = document.getElementById(id);
   if (existing) { existing.remove(); return; }   // second click closes it
 
   const overlay = document.createElement('div');
-  overlay.id = 'addInfoHelpModal';
+  overlay.id = id;
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', 'Why Additional Information matters');
+  overlay.setAttribute('aria-label', title);
   overlay.style.cssText =
     'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;' +
     'justify-content:center;padding:20px;background:rgba(0,0,0,0.55);' +
     'backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);' +
     'animation:aiErrFadeIn 0.2s ease;';
 
-  const ITEMS = [
-    ['📚', 'Skills &amp; Knowledge', 'Core competencies needed across multiple duties'],
-    ['🧭', 'Behaviors',              'Work attitudes and traits that lead to success'],
-    ['🛠️', 'Tools &amp; Equipment',  'Resources used to perform the occupation'],
-    ['📈', 'Future Trends',          'Emerging factors that may impact the occupation'],
-  ];
-
-  const rows = ITEMS.map(([icon, title, desc]) =>
+  const rows = items.map(([bullet, strong, rest]) =>
     '<li style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;' +
     'border-bottom:1px solid #f1f5f9;">' +
-      '<span style="font-size:1.05em;line-height:1.4;flex-shrink:0;">' + icon + '</span>' +
+      '<span style="font-size:1.05em;line-height:1.4;flex-shrink:0;">' + bullet + '</span>' +
       '<span style="font-size:0.87em;line-height:1.6;color:#334155;">' +
-        '<strong style="color:#1e293b;">' + title + '</strong> — ' + desc +
+        (strong ? '<strong style="color:#1e293b;">' + strong + '</strong>' + (rest ? ' — ' : '') : '') +
+        (rest || '') +
       '</span>' +
     '</li>'
   ).join('');
 
+  const noteHtml = note
+    ? '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;' +
+      'padding:11px 13px;margin-bottom:18px;font-size:0.84em;line-height:1.6;color:#92400e;">' +
+      note + '</div>'
+    : '';
+
   overlay.innerHTML =
     '<div style="background:#fff;border-radius:16px;max-width:480px;width:100%;' +
     'box-shadow:0 24px 60px rgba(0,0,0,0.35);overflow:hidden;' +
-    'font-family:\'Segoe UI\',system-ui,sans-serif;animation:aiErrSlideIn 0.22s ease;">' +
+    'font-family:\'Segoe UI\',system-ui,sans-serif;animation:aiErrSlideIn 0.22s ease;' +
+    'max-height:86vh;display:flex;flex-direction:column;">' +
       '<div style="padding:20px 22px 16px;display:flex;align-items:center;gap:12px;' +
-      'background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-bottom:1px solid #c7d2fe;">' +
-        '<span style="font-size:1.7em;line-height:1;">💡</span>' +
-        '<p style="margin:0;font-size:1em;font-weight:800;color:#3730a3;">' +
-          'Why Additional Information Matters</p>' +
+      'background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-bottom:1px solid #c7d2fe;' +
+      'flex-shrink:0;">' +
+        '<span style="font-size:1.7em;line-height:1;">' + icon + '</span>' +
+        '<p style="margin:0;font-size:1em;font-weight:800;color:#3730a3;">' + title + '</p>' +
       '</div>' +
-      '<div style="padding:18px 22px 20px;">' +
-        '<p style="margin:0 0 8px;font-size:0.88em;color:#475569;line-height:1.6;">' +
-          'This section captures important context that supports the DACUM chart:</p>' +
+      '<div style="padding:18px 22px 20px;overflow-y:auto;">' +
+        (intro
+          ? '<p style="margin:0 0 8px;font-size:0.88em;color:#475569;line-height:1.6;">' +
+            intro + '</p>'
+          : '') +
         '<ul style="list-style:none;margin:0 0 18px;padding:0;">' + rows + '</ul>' +
+        noteHtml +
         '<div style="display:flex;justify-content:flex-end;">' +
-          '<button id="addInfoHelpClose" style="padding:9px 22px;background:#667eea;' +
+          '<button data-help-close style="padding:9px 22px;background:#667eea;' +
           'color:#fff;border:none;border-radius:8px;font-size:0.9em;font-weight:700;' +
           'cursor:pointer;font-family:inherit;">Got it</button>' +
         '</div>' +
@@ -696,7 +705,7 @@ function _showAdditionalInfoHelp() {
     '</div>';
 
   // Reuses the keyframes the AI error modals inject; create them only
-  // if neither generator has run yet this session.
+  // if nothing has needed them yet this session.
   if (!document.getElementById('aiErrStyles')) {
     const st = document.createElement('style');
     st.id = 'aiErrStyles';
@@ -710,9 +719,40 @@ function _showAdditionalInfoHelp() {
   document.body.appendChild(overlay);
 
   const close = () => overlay.remove();
-  overlay.querySelector('#addInfoHelpClose').addEventListener('click', close);
+  overlay.querySelector('[data-help-close]').addEventListener('click', close);
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
   document.addEventListener('keydown', function esc(e) {
     if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+  });
+}
+
+function _showAdditionalInfoHelp() {
+  _showHelpModal({
+    id:    'addInfoHelpModal',
+    icon:  '💡',
+    title: 'Why Additional Information Matters',
+    intro: 'This section captures important context that supports the DACUM chart:',
+    items: [
+      ['📚', 'Skills &amp; Knowledge', 'Core competencies needed across multiple duties'],
+      ['🧭', 'Behaviors',              'Work attitudes and traits that lead to success'],
+      ['🛠️', 'Tools &amp; Equipment',  'Resources used to perform the occupation'],
+      ['📈', 'Future Trends',          'Emerging factors that may impact the occupation'],
+    ],
+  });
+}
+
+function _showClusteringHelp() {
+  _showHelpModal({
+    id:    'clusteringHelpModal',
+    icon:  '🎯',
+    title: 'Create Competence Clusters',
+    intro: 'Group related tasks into competence clusters based on:',
+    items: [
+      ['🎯', '', 'Common purpose or industry objective'],
+      ['🔄', '', 'Similar workflow or process'],
+      ['🧠', '', 'Shared knowledge and skills required'],
+    ],
+    note: '<strong>Important:</strong> Tasks from different duties can be grouped ' +
+          'together if they are related by purpose, process, or required skills!',
   });
 }
