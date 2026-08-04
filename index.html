@@ -462,6 +462,43 @@
       /* The wall is a presentation surface — no build chrome on it. */
       body.wall-view-active #dacumVersionBadge { display: none !important; }
 
+      /* ── Tab header row ────────────────────────────────────────
+         Title on one side, "Clear This Tab" on the other, aligned on
+         the same baseline. Replaces the old layout where the button
+         sat in its own block ABOVE the heading, which pushed the page
+         title out of first position. Used by Chart Info, Duties &
+         Tasks, and Additional Information. */
+      .tab-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .tab-header-row h2 {
+        margin: 0;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      .tab-header-row [data-action="clear-tab"] {
+        flex: 0 0 auto;
+      }
+
+      /* Phones: the title needs the full width, so the button drops
+         below it and stretches — easier to hit than a cramped chip. */
+      @media (max-width: 600px) {
+        .tab-header-row {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+        }
+        .tab-header-row [data-action="clear-tab"] {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
       /* Post-refine flash on changed duties/tasks (2.5s) */
       .refined-highlight {
         background-color: rgba(16, 185, 129, 0.15) !important;
@@ -1348,13 +1385,12 @@
         </div>
         
         <div class="tab-content active" id="info-tab">
-            <div style="margin-bottom: 15px;">
+            <div class="tab-header-row">
+                <h2>DACUM Research Chart Information</h2>
                 <button data-action="clear-tab" data-tab-id="info-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
                     🗑️ Clear This Tab
                 </button>
             </div>
-            
-            <h2>DACUM Research Chart Information</h2>
             
             <div class="mb-20">
                 <div class="mb-10">
@@ -1460,13 +1496,12 @@
         </div>
         
         <div class="tab-content" id="duties-tab">
-            <div style="margin-bottom: 15px;">
+            <div class="tab-header-row">
+                <h2 id="dutiesViewHeadingLegacy">Duties and Tasks</h2>
                 <button data-action="clear-tab" data-tab-id="duties-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
                     🗑️ Clear This Tab
                 </button>
             </div>
-            
-            <h2 id="dutiesViewHeadingLegacy">Duties and Tasks</h2>
             
             <!-- AI Generation Section -->
             <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
@@ -1577,7 +1612,12 @@
         </div>
         
         <div class="tab-content" id="additional-info-tab">
-            <h2>Additional Information</h2>
+            <div class="tab-header-row">
+                <h2>Additional Information</h2>
+                <button data-action="clear-tab" data-tab-id="additional-info-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ Clear This Tab
+                </button>
+            </div>
             <p style="color: #666; margin-bottom: 25px; font-size: 1.05em;">📝 Enter information for each section. Click the rename button to customize section headings.</p>
 
             <!-- AI Generation Section — mirrors the card in the Duties tab -->
