@@ -8,6 +8,8 @@ import { appState }             from './state.js';
 import { generateAdditionalInfoAI } from './additional_info_ai.js';
 import { generateOneModulePerOutcome,
          generateModulesAI } from './module_mapping_ai.js';
+import { suggestClustersAI, generateRangeAndCriteriaAI,
+         generateForSingleCluster } from './clustering_ai.js';
 import { addDuty, addTask, removeDuty, removeTask, clearDuty,
          syncAllFromDOM, syncDutyTitle, syncTaskText,
          toggleViewMode, switchToViewMode }            from './duties.js';
@@ -160,6 +162,23 @@ export function setupEvents() {
   _on('clusteringHelpBtn',    'click', () => _showClusteringHelp());
   _on('loHelpBtn',            'click', () => _showLearningOutcomesHelp());
   _on('mmHelpBtn',            'click', () => _showModuleMappingHelp());
+
+  // ── Competency Clusters: AI assistance ──────────────────────
+  // Two separate actions on purpose — see clustering_ai.js. Both save
+  // afterwards so the result survives a reload.
+  const _afterClusterAI = (ok) => {
+    if (!ok) return;
+    saveCurrentProject();
+    renderProjectsSidebar();
+  };
+
+  _on('aiSuggestClustersBtn', 'click', () => {
+    suggestClustersAI().then(_afterClusterAI).catch(() => {});
+  });
+
+  _on('aiGenCriteriaBtn', 'click', () => {
+    generateRangeAndCriteriaAI().then(_afterClusterAI).catch(() => {});
+  });
 
   // ── Module Mapping: automatic module generation ──────────────
   // Mode 1 is local and synchronous; the AI grouping is async. Both
@@ -429,6 +448,11 @@ export function setupEvents() {
       if (action === 'rename-cluster')          renameCluster(target.getAttribute('data-cluster-id'));
       else if (action === 'delete-cluster')     deleteCluster(target.getAttribute('data-cluster-id'));
       else if (action === 'show-pc-range-help') _showPCRangeHelp();
+      else if (action === 'regen-cluster-criteria') {
+        generateForSingleCluster(target.getAttribute('data-cluster-id'))
+          .then((ok) => { if (ok) { saveCurrentProject(); renderProjectsSidebar(); } })
+          .catch(() => {});
+      }
       else if (action === 'remove-task-from-cluster') {
         removeTaskFromCluster(target.getAttribute('data-cluster-id'), parseInt(target.getAttribute('data-task-index')));
       }

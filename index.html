@@ -92,19 +92,19 @@
       })();
     </script>
 
-    <!-- Service Worker v10 -->
+    <!-- Service Worker v11 -->
     <script>
     (function () {
       if (!('serviceWorker' in navigator)) return;
 
       // Must match CACHE_VERSION in sw.js
-      var EXPECTED_SW = 'v10';
+      var EXPECTED_SW = 'v11';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bump these together with EXPECTED_SW / CACHE_VERSION on every
       // release, so a trainer can read the running build off the
       // screen instead of digging through DevTools.
-      var APP_VERSION = '3.4';
+      var APP_VERSION = '3.5';
       var APP_RELEASED = '2026-08-03';
 
       // Per-version reload guard — prevents infinite refresh loops
@@ -2273,6 +2273,21 @@
                 </button>
             </div>
             
+            <!-- AI Generation Section — mirrors the card in the Duties tab -->
+            <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ AI Clustering Assistant</h3>
+                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;">Two separate steps — review the clusters before generating their criteria</p>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn-ai-generate" id="aiSuggestClustersBtn" style="background: white; color: #667eea; padding: 12px 22px; font-size: 1em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        🤖 Suggest Competency Clusters
+                    </button>
+                    <button id="aiGenCriteriaBtn" style="background: rgba(255,255,255,0.18); color: white; border: 1.5px solid rgba(255,255,255,0.55); padding: 12px 22px; font-size: 1em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                        📐 Generate Range &amp; Criteria
+                    </button>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 Step 1 groups tasks across duties by shared purpose, process or skills. Step 2 writes the Range and observable, measurable criteria for whichever clusters exist — including ones you built by hand.</p>
+            </div>
+
             <!-- Available Tasks Section -->
             <div class="clustering-section">
                 <h3>📋 Available Tasks</h3>

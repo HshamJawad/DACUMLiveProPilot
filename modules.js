@@ -169,6 +169,8 @@ export function renderClusters() {
         <div class="cluster-header">
           <div class="cluster-title">${cluster.name}</div>
           <div class="cluster-actions">
+            <button class="btn-rename-cluster" data-action="regen-cluster-criteria" data-cluster-id="${cluster.id}"
+                    title="Regenerate this cluster's Range and Performance Criteria only">🤖 AI Criteria</button>
             <button class="btn-rename-cluster" data-action="rename-cluster" data-cluster-id="${cluster.id}">✏️ Rename</button>
             <button class="btn-delete-cluster" data-action="delete-cluster" data-cluster-id="${cluster.id}">🗑️ Delete</button>
           </div>
