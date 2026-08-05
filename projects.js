@@ -16,14 +16,32 @@ const BACKEND_URL = 'https://dacum-ai-backend-production.up.railway.app';
 // ── Tab Switching ─────────────────────────────────────────────
 
 export function switchTab(tabId) {
+  // ── Clustering gate ──────────────────────────────────────────
+  // This gate exists to stop someone SKIPPING task verification on the
+  // way forward. It must not block someone coming BACK: if clusters
+  // already exist, the user has demonstrably passed through this tab
+  // already, and re-asking them to "choose an option in Task
+  // Verification" is both wrong and a dead end — the ← Back button on
+  // Learning Outcomes became unusable because of it.
+  //
+  // Existing clusters are also the only reliable signal after a project
+  // is imported or reloaded, because clusteringAllowed is reset to
+  // false in those paths even when the chart is fully clustered.
   if (tabId === 'clustering-tab' && !appState.clusteringAllowed) {
-    alert(
-      'Please choose an option in Task Verification tab:\n\n' +
-      '1. Finalize & Create Live Voting Session\n   OR\n' +
-      '2. Proceed to Competency Clustering Without Verification\n\n' +
-      'You must select one option before proceeding.'
-    );
-    return;
+    const hasClusters = (appState.clusteringData?.clusters?.length || 0) > 0;
+
+    if (hasClusters) {
+      // Re-open the gate permanently for this session.
+      appState.clusteringAllowed = true;
+    } else {
+      alert(
+        'Please choose an option in Task Verification tab:\n\n' +
+        '1. Finalize & Create Live Voting Session\n   OR\n' +
+        '2. Proceed to Competency Clustering Without Verification\n\n' +
+        'You must select one option before proceeding.'
+      );
+      return;
+    }
   }
 
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));

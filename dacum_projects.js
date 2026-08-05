@@ -135,8 +135,13 @@ export function importProjectFromData(data, fileName) {
                               ? { modules: s.moduleMapping.modules || [],
                                   moduleCounter: s.moduleMapping.moduleCounter || 0 }
                               : { modules: [], moduleCounter: 0 },
-    verificationDecisionMade: false,
-    clusteringAllowed:        false,
+    // An imported chart that already contains clusters has, by
+    // definition, been through the verification decision already —
+    // forcing the gate shut would lock the user out of their own
+    // clustering work until they re-made a decision they had made
+    // before exporting.
+    verificationDecisionMade: (s.competencyClusters?.clusters?.length || 0) > 0,
+    clusteringAllowed:        (s.competencyClusters?.clusters?.length || 0) > 0,
     lwSessionId:              null,
     lwFinalizedData:          null,
     lwAggregatedResults:      null,
