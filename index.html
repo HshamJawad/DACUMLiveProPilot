@@ -1105,7 +1105,8 @@
         left: auto !important;
         align-items: center;
         justify-content: center;
-        width: 14px;
+        width: calc(var(--wv-font) * 1.05);
+        min-width: 12px;
         height: auto;
         flex-shrink: 0;
         padding: 0;
@@ -1131,9 +1132,12 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-size: calc(var(--wv-font) * 0.82);
+        /* Was 0.82 — too small to read from the back of a room once
+           the auto-zoom shrinks --wv-font on a dense chart. */
+        font-size: calc(var(--wv-font) * 0.95);
         font-weight: 800;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
       }
 
       /* Small square icon buttons — these fully replace Card View's
@@ -1198,14 +1202,25 @@
         padding: 8px 10px 10px;
         box-shadow: 0 2px 6px rgba(79,70,229,0.28);
       }
-      .wall-view-mode .dcv-duty-label { color: rgba(255,255,255,0.95); }
+      .wall-view-mode .dcv-duty-label { color: #ffffff !important; }
+
+      /* Duty text on the indigo card.
+         dacum-typography.css sets `.dcv-duty-input { color:#1e3a8a
+         !important; font-weight:700 !important }` — dark navy on a dark
+         indigo card, which is what made the title hard to read. Both
+         have to be overridden with !important to win, and the size is
+         raised a little since the card is the anchor of the row. */
       .wall-view-mode .dcv-duty-input {
-        font-size: var(--wv-font);
-        /* Two lines rather than 3.6 — still comfortable to type in,
-           but no longer reserving space most duty titles never use. */
+        font-size: calc(var(--wv-font) * 1.05) !important;
         min-height: calc(var(--wv-font) * 2.4);
         padding: 4px 6px;
-        color: rgba(255,255,255,0.92);
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        font-style: normal;
+        text-shadow: 0 1px 2px rgba(30, 27, 75, 0.35);
+      }
+      .wall-view-mode .dcv-duty-input::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
         font-style: italic;
       }
       .wall-view-mode .dcv-duty-input::placeholder { color: rgba(255,255,255,0.55); }
@@ -1252,11 +1267,12 @@
       }
       .wall-view-mode .dcv-task-label { color: #78350f; }
       .wall-view-mode .dcv-task-input {
-        font-size: var(--wv-font);
+        font-size: calc(var(--wv-font) * 1.05) !important;
         min-height: calc(var(--wv-font) * 2.2);
         padding: 3px 5px;
-        color: #422006;
-        font-style: italic;
+        color: #422006 !important;
+        font-weight: 600 !important;
+        font-style: normal;
       }
       .wall-view-mode .dcv-task-input::placeholder { color: rgba(66,32,6,0.45); }
 
