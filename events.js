@@ -6,6 +6,8 @@
 
 import { appState }             from './state.js';
 import { generateAdditionalInfoAI } from './additional_info_ai.js';
+import { generateOneModulePerOutcome,
+         generateModulesAI } from './module_mapping_ai.js';
 import { addDuty, addTask, removeDuty, removeTask, clearDuty,
          syncAllFromDOM, syncDutyTitle, syncTaskText,
          toggleViewMode, switchToViewMode }            from './duties.js';
@@ -158,6 +160,26 @@ export function setupEvents() {
   _on('clusteringHelpBtn',    'click', () => _showClusteringHelp());
   _on('loHelpBtn',            'click', () => _showLearningOutcomesHelp());
   _on('mmHelpBtn',            'click', () => _showModuleMappingHelp());
+
+  // ── Module Mapping: automatic module generation ──────────────
+  // Mode 1 is local and synchronous; the AI grouping is async. Both
+  // save afterwards so the rebuilt module set survives a reload.
+  _on('mmGenOneToOneBtn', 'click', () => {
+    if (generateOneModulePerOutcome()) {
+      saveCurrentProject();
+      renderProjectsSidebar();
+    }
+  });
+
+  _on('mmGenAIBtn', 'click', () => {
+    generateModulesAI()
+      .then((ok) => {
+        if (!ok) return;
+        saveCurrentProject();
+        renderProjectsSidebar();
+      })
+      .catch(() => {});
+  });
   _on('clusterNamingHelpBtn', 'click', () => _showClusterNamingHelp());
 
   // ── Additional Information tab: AI supporting-info generation ──

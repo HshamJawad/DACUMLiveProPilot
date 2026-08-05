@@ -1,10 +1,10 @@
 // ============================================================
-// sw.js — DACUM Live Pro Service Worker  v9
+// sw.js — DACUM Live Pro Service Worker  v10
 // Path-agnostic: BASE is derived dynamically from scope.
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v9';
+const CACHE_VERSION = 'v10';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -49,6 +49,7 @@ const PRECACHE_URLS = [
   BASE + 'refine.js',
   BASE + 'drag_drop.js',
   BASE + 'additional_info_ai.js',
+  BASE + 'module_mapping_ai.js',
   BASE + 'autosave.js',
   BASE + 'error-handler.js',
 
