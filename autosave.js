@@ -19,7 +19,8 @@
 // ============================================================
 
 import { saveCurrentProject,
-         getActiveProjectId }  from './dacum_projects.js';
+         getActiveProjectId,
+         loadProject }         from './dacum_projects.js';
 import { renderAll }           from './workshop_snapshots.js';
 import { appState }            from './state.js';
 import { syncAllFromDOM }      from './duties.js';
@@ -161,6 +162,13 @@ function _watchDocumentInputs() {
 
 // ── Internal: recovery dialog ─────────────────────────────────
 
+/** Escape a user-supplied string before it enters innerHTML. */
+function _esc(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 function _showRecoveryDialog(backup) {
   // Inject dialog styles once
   if (!document.getElementById('as-dialog-styles')) {
@@ -194,6 +202,13 @@ function _showRecoveryDialog(backup) {
         color: #6b7280;
         line-height: 1.55;
       }
+      #asRecoveryDialog .as-meta-row {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 20px;
+      }
       #asRecoveryDialog .as-meta {
         display: inline-block;
         background: #f3f4f6;
@@ -201,7 +216,37 @@ function _showRecoveryDialog(backup) {
         padding: 4px 12px;
         font-size: 0.82em;
         color: #374151;
-        margin-bottom: 20px;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      /* The project name is the key detail — give it more weight than
+         the timestamp so it reads first. */
+      #asRecoveryDialog .as-meta-project {
+        background: #eef2ff;
+        color: #3730a3;
+        font-weight: 700;
+      }
+      #asRecoveryDialog .as-meta-missing {
+        background: #fef2f2;
+        color: #b91c1c;
+        font-weight: 700;
+      }
+      #asRecoveryDialog .as-warning {
+        margin: -6px 0 18px;
+        padding: 9px 12px;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 8px;
+        font-size: 0.8em;
+        color: #92400e;
+        line-height: 1.5;
+      }
+      .as-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none !important;
       }
       .as-btn-row { display: flex; gap: 12px; justify-content: center; }
       .as-btn {
@@ -227,15 +272,44 @@ function _showRecoveryDialog(backup) {
   const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
+  // ── Which project does this backup belong to? ────────────────
+  // Without this the user is asked to restore "unsaved work" with no
+  // way to tell which of several projects it came from.
+  const info      = _getProjectInfo(backup.projectId);
+  const activeId  = getActiveProjectId();
+  const isForeign = info.exists && backup.projectId && backup.projectId !== activeId;
+
+  let projectLine;
+  if (info.exists) {
+    projectLine = `<span class="as-meta as-meta-project">📁 ${_esc(info.name)}</span>`;
+  } else {
+    // The project was deleted after the crash — restoring would have
+    // nowhere to go, so say so instead of showing an empty name.
+    projectLine = `<span class="as-meta as-meta-missing">📁 Project no longer exists</span>`;
+  }
+
+  // Restoring into a DIFFERENT project than the one open would silently
+  // overwrite the open project's workspace with another project's
+  // content — and autosave would then persist that. Warn, and switch.
+  const foreignWarning = isForeign
+    ? `<p class="as-warning">⚠️ This belongs to a different project than the one
+       currently open. Restoring will switch you to it.</p>`
+    : '';
+
   const overlay = document.createElement('div');
   overlay.id = 'asRecoveryOverlay';
   overlay.innerHTML = `
     <div id="asRecoveryDialog">
       <h2>⚡ Unsaved Work Found</h2>
       <p>We found unsaved work from your previous session.<br>Would you like to restore it?</p>
-      <span class="as-meta">📅 ${dateStr} · ${timeStr}</span>
+      <div class="as-meta-row">
+        ${projectLine}
+        <span class="as-meta">📅 ${dateStr} · ${timeStr}</span>
+      </div>
+      ${foreignWarning}
       <div class="as-btn-row">
-        <button class="as-btn as-btn-restore" id="asBtnRestore">↩ Restore</button>
+        <button class="as-btn as-btn-restore" id="asBtnRestore"
+                ${info.exists ? '' : 'disabled title="The original project was deleted"'}>↩ Restore</button>
         <button class="as-btn as-btn-discard" id="asBtnDiscard">Discard</button>
       </div>
     </div>
@@ -243,6 +317,17 @@ function _showRecoveryDialog(backup) {
   document.body.appendChild(overlay);
 
   document.getElementById('asBtnRestore').addEventListener('click', () => {
+    if (!info.exists) return;
+
+    // Make the backup's own project active FIRST, so the recovered
+    // state lands where it came from rather than on top of whatever
+    // happens to be open.
+    if (isForeign) {
+      try { loadProject(backup.projectId); } catch (e) {
+        console.warn('[autosave] could not switch project before restore:', e);
+      }
+    }
+
     _applyBackupState(backup.state);
     renderAll();
     localStorage.removeItem(LS_BACKUP);
@@ -316,6 +401,22 @@ function _applyBackupState(s) {
   appState.clusteringAllowed        = s.clusteringAllowed        || false;
   appState._chartInfo               = s._chartInfo               || {};
   appState._additionalInfo          = s._additionalInfo          || {};
+}
+
+/**
+ * Look up the project a backup belongs to.
+ * Returns { name, exists } — `exists:false` when the project has since
+ * been deleted, which the dialog must say out loud rather than showing
+ * a blank name.
+ */
+function _getProjectInfo(projectId) {
+  if (!projectId) return { name: '', exists: false };
+  try {
+    const projects = JSON.parse(localStorage.getItem('dacum_projects') || '[]');
+    const p = projects.find(x => x.id === projectId);
+    return p ? { name: p.name || 'Untitled Project', exists: true }
+             : { name: '', exists: false };
+  } catch { return { name: '', exists: false }; }
 }
 
 /** Return the lastSaved timestamp of a stored project (or 0). */
