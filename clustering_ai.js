@@ -23,7 +23,10 @@
 // Rules encoded in the prompts come from the guidance shown in the
 // tab's own help modals (Norton's DACUM Handbook conventions):
 //   • Cluster on common purpose, shared workflow, or shared knowledge
-//     and skills — NOT on which duty a task came from.
+//     and skills rather than on which duty a task came from. Clusters
+//     usually cut across duties — but a duty-aligned cluster is valid
+//     when those tasks really do form one competency, so this is
+//     steered in the prompt and flagged for review, never forced.
 //   • Performance criteria must be observable, measurable and
 //     learner-focused, in What + Action + Qualifier form.
 //   • Range describes the contexts, conditions, equipment and
@@ -112,10 +115,19 @@ CLUSTERING RULES (these are the defining rules — follow them strictly):
     • a similar workflow or process
     • the same underpinning knowledge and skills
 - CRITICAL: Tasks from DIFFERENT duties SHOULD be grouped together when
-  they are related by purpose, process, or required skills. A cluster
-  that simply reproduces one duty's task list is a FAILED cluster —
-  duties organise work by area, clusters organise it by competence.
-  Actively look for relationships that cut across duties.
+  they are related by purpose, process, or required skills. Duties
+  organise work by AREA; clusters organise it by COMPETENCE, so the two
+  structures will usually differ. Examine cross-duty relationships
+  FIRST, before considering any duty-aligned grouping.
+- Do NOT simply reproduce the duty structure. Copying each duty's task
+  list into a cluster of the same name is the default lazy answer and
+  is almost always wrong.
+- HOWEVER: a cluster MAY align with a single duty when those tasks
+  genuinely constitute one coherent competency in their own right —
+  judged on shared purpose, workflow and underpinning skills, NOT on
+  the fact that they happen to share a duty heading. This is a
+  legitimate outcome; just make sure it is a conclusion you reached,
+  not a shortcut you took.
 - Each cluster must contain between ${MIN_TASKS_PER_CLUSTER} and ${MAX_TASKS_PER_CLUSTER} tasks.
 - Aim for roughly ${target} clusters, adjusting where the content justifies it.
 - EVERY task id above must appear in exactly ONE cluster.
@@ -156,12 +168,13 @@ function _dutyMirrorWarning(clusters) {
   }).length;
 
   if (clusters.length && singleDuty === clusters.length) {
-    return 'every cluster came from a single duty — review carefully, ' +
-           'clusters should normally cut across duties';
+    return 'no cluster crosses duty boundaries — worth checking whether the ' +
+           'duty structure was simply copied, though duty-aligned clusters ' +
+           'are valid where the panel agrees they form one competency';
   }
   if (singleDuty > clusters.length / 2) {
-    return `${singleDuty} of ${clusters.length} clusters draw on only one duty — ` +
-           'consider whether they should be combined';
+    return `${singleDuty} of ${clusters.length} clusters draw on a single duty — ` +
+           'confirm each one is a competency in its own right';
   }
   return '';
 }
