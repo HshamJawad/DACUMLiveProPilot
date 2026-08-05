@@ -406,6 +406,18 @@ export async function exportTaskVerificationWord() {
             }
         }
 
+/**
+ * docx v8+ requires an explicit `type` on ImageRun; omitting it throws,
+ * and because the call sites wrap it in try/catch the logo was dropped
+ * silently — the export simply came out with no image and no warning.
+ */
+function _docxImageType(dataUrl) {
+  const m = /^data:image\/(png|jpeg|jpg|gif|bmp)/i.exec(dataUrl || '');
+  if (!m) return 'png';
+  const t = m[1].toLowerCase();
+  return t === 'jpeg' ? 'jpg' : t;
+}
+
 export async function exportToWord() {
     // ── TABLE SHADING ──────────────────────────────────────────
     // Every shaded cell in this document uses DCDCDC = RGB(220,220,220),
@@ -571,15 +583,23 @@ export async function exportToWord() {
                         spacing: { after: 200 },
                         bidirectional: false,
                     }));
-                    
-                    // Add Produced For logo if exists
-                    if (appState.producedForImage) {
+                }
+
+                // Logo, independent of the text field.
+                // It used to be nested inside `if (producedFor)`, so a
+                // chart with a logo but an empty "Produced For" name
+                // exported with no logo at all — a silent, puzzling
+                // failure since the logo is visible in Chart Info.
+                {
+                    const logoSrc = appState.producedForImage;
+                    if (logoSrc) {
                         try {
-                            const base64Data = appState.producedForImage.split(',')[1];
+                            const base64Data = logoSrc.split(',')[1];
                             
                             children.push(new Paragraph({
                                 children: [
                                     new ImageRun({
+                                        type: _docxImageType(logoSrc),
                                         data: Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)),
                                         transformation: {
                                             width: 94, // 2.5cm = 94 points approximately
@@ -609,15 +629,19 @@ export async function exportToWord() {
                         spacing: { after: 200 },
                         bidirectional: false,
                     }));
-                    
-                    // Add Produced By logo if exists
-                    if (appState.producedByImage) {
+                }
+
+                // Logo, independent of the text field — see above.
+                {
+                    const logoSrc = appState.producedByImage;
+                    if (logoSrc) {
                         try {
                             const base64Data = appState.producedByImage.split(',')[1];
                             
                             children.push(new Paragraph({
                                 children: [
                                     new ImageRun({
+                                        type: _docxImageType(logoSrc),
                                         data: Uint8Array.from(atob(base64Data), c => c.charCodeAt(0)),
                                         transformation: {
                                             width: 94, // 2.5cm = 94 points approximately
@@ -2597,53 +2621,40 @@ export function exportToPDF() {
         let rightY = yPos;
         
         // Left column - Produced For/By
-        if (producedForInput.value) {
-            pdf.setFontSize(16); // 16pt for labels
+        // Heading + logo + name are each rendered on their own merits.
+        // Both logos used to sit inside `if (<text field>.value)`, so a
+        // chart with a logo but no typed name exported without it.
+        const _pdfLogoBlock = (label, textValue, image, gapAfter) => {
+            const hasText  = !!(textValue && textValue.trim());
+            const hasImage = !!image;
+            if (!hasText && !hasImage) return;
+
+            pdf.setFontSize(16);
             pdf.setFont(undefined, 'bold');
-            pdf.text('Produced for', leftColX, leftY);
+            pdf.text(label, leftColX, leftY);
             leftY += 7;
-            
-            // Add logo if exists
-            if (appState.producedForImage) {
+
+            if (hasImage) {
                 try {
-                    const imgWidth = 30;
+                    const imgWidth  = 30;
                     const imgHeight = 20;
-                    pdf.addImage(appState.producedForImage, _imageFormat(appState.producedForImage), leftColX, leftY, imgWidth, imgHeight);
+                    pdf.addImage(image, _imageFormat(image), leftColX, leftY, imgWidth, imgHeight);
                     leftY += imgHeight + 5;
                 } catch (e) {
-                    console.error('Error adding Produced For image:', e);
+                    console.error(`Error adding ${label} image:`, e);
                 }
             }
-            
-            pdf.setFont(undefined, 'normal');
-            pdf.setFontSize(14); // 14pt for content
-            pdf.text(producedForInput.value, leftColX, leftY);
-            leftY += 15;
-        }
-        
-        if (producedByInput.value) {
-            pdf.setFontSize(16); // 16pt for labels
-            pdf.setFont(undefined, 'bold');
-            pdf.text('Produced by', leftColX, leftY);
-            leftY += 7;
-            
-            // Add logo if exists
-            if (appState.producedByImage) {
-                try {
-                    const imgWidth = 30;
-                    const imgHeight = 20;
-                    pdf.addImage(appState.producedByImage, _imageFormat(appState.producedByImage), leftColX, leftY, imgWidth, imgHeight);
-                    leftY += imgHeight + 5;
-                } catch (e) {
-                    console.error('Error adding Produced By image:', e);
-                }
+
+            if (hasText) {
+                pdf.setFont(undefined, 'normal');
+                pdf.setFontSize(14);
+                pdf.text(textValue, leftColX, leftY);
+                leftY += gapAfter;
             }
-            
-            pdf.setFont(undefined, 'normal');
-            pdf.setFontSize(14); // 14pt for content
-            pdf.text(producedByInput.value, leftColX, leftY);
-            leftY += 10;
-        }
+        };
+
+        _pdfLogoBlock('Produced for', producedForInput.value, appState.producedForImage, 15);
+        _pdfLogoBlock('Produced by',  producedByInput.value,  appState.producedByImage,  10);
         
         if (dacumDateFormatted) {
             pdf.setFontSize(14); // 14pt for date
