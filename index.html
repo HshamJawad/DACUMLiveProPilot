@@ -955,6 +955,7 @@
         --wv-font:     13px;
         --wv-card-w:   130px;
         --wv-duty-w:   220px;
+        --wv-duty-h:   220px;   /* kept equal to --wv-duty-w by duties.js */
         --wv-task-gap: 8px;
 
         width: 100%;
@@ -1191,11 +1192,16 @@
            sizing and break the wall layout on those screens. */
         width: var(--wv-duty-w) !important;
         min-width: var(--wv-duty-w) !important;
-        /* No min-height: the card now hugs its text. The old
-           font x 6 floor is what left the blank lower half visible in
-           short-titled duties. */
-        min-height: 0;
+        /* Square by default: --wv-duty-h is set to the same pixel value
+           as --wv-duty-w in duties.js, as a MIN-height rather than a
+           fixed one. So a short duty title gives a clean square block,
+           and a long one grows downward — naturally lining the card up
+           with a second row of task notes instead of leaving the gap
+           that a fixed height would force. */
+        min-height: var(--wv-duty-h, var(--wv-duty-w));
         align-self: flex-start;
+        display: flex;
+        flex-direction: column;
         background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
         border: none;
         border-radius: 10px;
@@ -1212,7 +1218,11 @@
          raised a little since the card is the anchor of the row. */
       .wall-view-mode .dcv-duty-input {
         font-size: calc(var(--wv-font) * 1.05) !important;
+        /* Fill whatever height the square leaves below the header, so
+           clicking anywhere in the card lands in the text field. */
+        flex: 1 1 auto;
         min-height: calc(var(--wv-font) * 2.4);
+        resize: none;
         padding: 4px 6px;
         color: #ffffff !important;
         font-weight: 600 !important;
@@ -1312,7 +1322,13 @@
       @media (max-width: 720px) {
         .wall-view-mode { --wv-duty-w: 100%; }
         .wall-view-mode .dcv-row { flex-direction: column; }
-        .wall-view-mode .dcv-duty-card { width: 100%; min-width: 0; }
+        .wall-view-mode .dcv-duty-card {
+          width: 100%;
+          min-width: 0;
+          /* A square is meaningless once the card spans the full width
+             of a phone — let it hug its text again. */
+          min-height: 0;
+        }
       }
 
       /* ══════════════════════════════════════════════════════════

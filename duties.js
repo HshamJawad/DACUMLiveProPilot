@@ -445,14 +445,52 @@ function _esc(str) {
 
 const SS_WALL_ZOOM = 'dacum_wall_zoom';
 
+// Zoom-out now reaches 25% so a very large chart can be shown whole on
+// a projector or smartboard.
+const WALL_ZOOM_MIN = 0.25;
+const WALL_ZOOM_MAX = 1.5;
+
+/**
+ * Readability compensation.
+ *
+ * Zooming out shrinks the cards, but text has a hard floor: below
+ * roughly 9-10px nothing is readable from the back of a room, and at
+ * 25% a linear scale would give ~3px — a grey smudge. So the FONT is
+ * deliberately scaled less aggressively than the LAYOUT.
+ *
+ * The compensation grows as the zoom drops (none at 100%, strongest at
+ * 25%), which is exactly the trade a facilitator wants: at low zoom
+ * they are looking for structure and want the words still legible, and
+ * they accept that cards hold fewer words per line to buy it.
+ *
+ * Zooming IN is left untouched (factor 1) — text there is already
+ * comfortable and inflating it further would just waste card space.
+ */
+function _fontZoomFactor(zoom) {
+  if (zoom >= 1) return zoom;
+  // Geometric blend: at 25% the layout is at 0.25 but the font sits
+  // near 0.5, at 50% the font sits near 0.7, at 75% near 0.87.
+  return Math.sqrt(zoom);
+}
+
+/**
+ * Zoom step. Finer below 50% because the same 10 points of zoom is a
+ * far bigger visual jump down there — and because a flat 0.1 step
+ * skips straight from 30% to the 25% floor.
+ */
+function _zoomStep(current, dir) {
+  const step = current <= 0.5 ? 0.05 : 0.1;
+  return Math.round((current + (dir * step)) * 100) / 100;
+}
+
 function _getWallZoom() {
   const raw = sessionStorage.getItem(SS_WALL_ZOOM);
   const n   = raw ? parseFloat(raw) : 1;
-  return (isFinite(n) && n >= 0.5 && n <= 1.5) ? n : 1;
+  return (isFinite(n) && n >= WALL_ZOOM_MIN && n <= WALL_ZOOM_MAX) ? n : 1;
 }
 
 function _setWallZoom(z) {
-  const clamped = Math.max(0.5, Math.min(1.5, z));
+  const clamped = Math.max(WALL_ZOOM_MIN, Math.min(WALL_ZOOM_MAX, z));
   sessionStorage.setItem(SS_WALL_ZOOM, String(clamped));
   return clamped;
 }
@@ -489,16 +527,24 @@ function _renderWallView(container) {
   }
 
   // Compute auto-zoom metrics once per render
-  const metrics = _computeWallAutoZoom(duties);
+  const metrics  = _computeWallAutoZoom(duties);
   const userZoom = _getWallZoom();
-  const fontPx   = Math.round(metrics.fontSize * userZoom);
-  const cardW    = Math.round(metrics.cardWidth * userZoom);
+
+  // Layout scales with the raw zoom; type scales with the compensated
+  // curve, then gets an absolute 8px floor as a last line of defence.
+  const fontZoom = _fontZoomFactor(userZoom);
+  const fontPx   = Math.max(8, Math.round(metrics.fontSize * fontZoom));
+  const cardW    = Math.max(60, Math.round(metrics.cardWidth * userZoom));
+  const dutyW    = Math.max(90, Math.round(220 * userZoom));
 
   // Apply CSS custom properties for this render
   container.style.setProperty('--wv-font',      `${fontPx}px`);
   container.style.setProperty('--wv-card-w',    `${cardW}px`);
-  container.style.setProperty('--wv-duty-w',    `${Math.round(220 * userZoom)}px`);
-  container.style.setProperty('--wv-task-gap',  `${Math.max(4, Math.round(8 * userZoom))}px`);
+  container.style.setProperty('--wv-duty-w',    `${dutyW}px`);
+  container.style.setProperty('--wv-task-gap',  `${Math.max(3, Math.round(8 * userZoom))}px`);
+  // Square duty card: the CSS uses this as a min-height so the card
+  // starts square and only grows when its text needs more room.
+  container.style.setProperty('--wv-duty-h',    `${dutyW}px`);
 
   // Update zoom percentage label in the toolbar
   const pctEl = container.querySelector('.wv-zoom-pct');
@@ -688,8 +734,8 @@ function _makeWallToolbar() {
     const action = btn.getAttribute('data-wv-action');
     switch (action) {
       case 'exit':        switchToViewMode('card'); _exitFullscreen(); break;
-      case 'zoom-in':     _setWallZoom(_getWallZoom() + 0.1); renderDutiesFromState(); break;
-      case 'zoom-out':    _setWallZoom(_getWallZoom() - 0.1); renderDutiesFromState(); break;
+      case 'zoom-in':     _setWallZoom(_zoomStep(_getWallZoom(), +1)); renderDutiesFromState(); break;
+      case 'zoom-out':    _setWallZoom(_zoomStep(_getWallZoom(), -1)); renderDutiesFromState(); break;
       case 'zoom-reset':  _setWallZoom(1);                     renderDutiesFromState(); break;
       case 'print':       _populatePrintHeader(); window.print(); break;
       case 'fullscreen':  _toggleFullscreen(); break;
@@ -757,8 +803,8 @@ function _wireWallHandlers() {
   document.addEventListener('keydown', (e) => {
     if (!document.body.classList.contains('wall-view-active')) return;
     if (!(e.ctrlKey || e.metaKey)) return;
-    if (e.key === '+' || e.key === '=') { e.preventDefault(); _setWallZoom(_getWallZoom() + 0.1); renderDutiesFromState(); }
-    else if (e.key === '-' || e.key === '_') { e.preventDefault(); _setWallZoom(_getWallZoom() - 0.1); renderDutiesFromState(); }
+    if (e.key === '+' || e.key === '=') { e.preventDefault(); _setWallZoom(_zoomStep(_getWallZoom(), +1)); renderDutiesFromState(); }
+    else if (e.key === '-' || e.key === '_') { e.preventDefault(); _setWallZoom(_zoomStep(_getWallZoom(), -1)); renderDutiesFromState(); }
     else if (e.key === '0') { e.preventDefault(); _setWallZoom(1); renderDutiesFromState(); }
   });
 
