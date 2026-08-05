@@ -26,9 +26,25 @@ import { appState }            from './state.js';
 import { syncAllFromDOM }      from './duties.js';
 
 const LS_BACKUP     = 'dacum_session_backup';
+// Marks whether the previous session ended in an orderly way. Written
+// to localStorage (NOT sessionStorage) precisely because it has to
+// survive the browser dying — that is the event it exists to detect.
+const LS_CLEAN_EXIT = 'dacum_clean_exit';
 const DEBOUNCE_MS   = 800;
 let   _debounceTimer = null;
 let   _started       = false;
+
+function _markSessionRunning() {
+  try { localStorage.setItem(LS_CLEAN_EXIT, '0'); } catch (e) {}
+}
+
+function _markSessionClosed() {
+  try { localStorage.setItem(LS_CLEAN_EXIT, '1'); } catch (e) {}
+}
+
+function _previousSessionEndedCleanly() {
+  try { return localStorage.getItem(LS_CLEAN_EXIT) !== '0'; } catch (e) { return true; }
+}
 
 // ── Public API ────────────────────────────────────────────────
 
@@ -80,6 +96,13 @@ export function saveSessionBackup() {
  */
 export function checkCrashRecovery() {
   try {
+    const endedCleanly = _previousSessionEndedCleanly();
+
+    // Claim the session immediately, whatever happens below, so a crash
+    // from this point on is still detected next time.
+    _markSessionRunning();
+    _installExitHandlers();
+
     const raw = localStorage.getItem(LS_BACKUP);
     if (!raw) return;
 
@@ -89,12 +112,20 @@ export function checkCrashRecovery() {
       return;
     }
 
-    // Compare backup timestamp against the project's lastSaved timestamp.
-    // If the backup is newer by more than 5 s → offer recovery.
-    const projectLastSaved = _getProjectLastSaved(backup.projectId);
-    const delta = backup.timestamp - (projectLastSaved || 0);
-    if (delta < 5000) {
-      // Not meaningfully newer — discard silently
+    // ── Why this is a clean-exit flag and not a timestamp race ──
+    // The previous rule offered recovery only when the backup was more
+    // than 5 s newer than the project's lastSaved. But _flushAutoSave()
+    // writes BOTH in the same tick, so the gap was always ~0 ms and the
+    // condition could never be true: the dialog was unreachable in
+    // normal use and every backup was deleted silently at startup.
+    //
+    // What actually matters is not which write is newer, but whether
+    // the last session got the chance to shut down at all. If it did,
+    // autosave had already persisted everything and there is nothing to
+    // recover. If it did not — crash, tab kill, power loss — the last
+    // few edits may live only in the backup. That is exactly what the
+    // flag records.
+    if (endedCleanly) {
       localStorage.removeItem(LS_BACKUP);
       return;
     }
@@ -104,6 +135,29 @@ export function checkCrashRecovery() {
     console.warn('[autosave] crash recovery check failed:', e);
     localStorage.removeItem(LS_BACKUP);
   }
+}
+
+/**
+ * Mark the session closed on the way out, flushing any edit still
+ * sitting in the debounce window.
+ *
+ * Both events are registered on purpose: `beforeunload` is the classic
+ * desktop signal, but mobile browsers routinely discard a tab without
+ * ever firing it — `pagehide` is the one that survives there. Marking
+ * clean twice is harmless; missing it entirely would show a false
+ * recovery prompt on the next launch.
+ */
+function _installExitHandlers() {
+  const onExit = () => {
+    try {
+      clearTimeout(_debounceTimer);
+      _flushAutoSave();     // capture edits newer than the last debounce
+    } catch (e) { /* best effort */ }
+    _markSessionClosed();
+  };
+
+  window.addEventListener('pagehide', onExit);
+  window.addEventListener('beforeunload', onExit);
 }
 
 // ── Internal: debounced autosave trigger ─────────────────────
@@ -419,12 +473,7 @@ function _getProjectInfo(projectId) {
   } catch { return { name: '', exists: false }; }
 }
 
-/** Return the lastSaved timestamp of a stored project (or 0). */
-function _getProjectLastSaved(projectId) {
-  if (!projectId) return 0;
-  try {
-    const projects = JSON.parse(localStorage.getItem('dacum_projects') || '[]');
-    const p = projects.find(p => p.id === projectId);
-    return p?.lastSaved || p?.created || 0;
-  } catch { return 0; }
-}
+// NOTE: _getProjectLastSaved() lived here and compared the backup's
+// timestamp against the project's lastSaved. It was removed along with
+// that rule — see checkCrashRecovery() for why the comparison could
+// never succeed. Recovery is now decided by the clean-exit flag.
