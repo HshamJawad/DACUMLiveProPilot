@@ -2518,6 +2518,16 @@ export function exportTaskVerificationPDF() {
     }
 }
 
+/**
+ * jsPDF needs the real encoding of a data URL. Both logo slots used to
+ * be passed as 'JPEG' unconditionally, which silently mis-declares a
+ * PNG — and since transparent logos are now deliberately kept as PNG
+ * by storage.js's compressor, that assumption would start failing.
+ */
+function _imageFormat(dataUrl) {
+  return /^data:image\/png/i.test(dataUrl || '') ? 'PNG' : 'JPEG';
+}
+
 export function exportToPDF() {
     // ============ CHECK FOR VERIFIED LIVE WORKSHOP RESULTS ============
     const hasVerifiedResults = typeof appState.lwFinalizedData !== 'undefined' && appState.lwFinalizedData && 
@@ -2598,7 +2608,7 @@ export function exportToPDF() {
                 try {
                     const imgWidth = 30;
                     const imgHeight = 20;
-                    pdf.addImage(appState.producedForImage, 'JPEG', leftColX, leftY, imgWidth, imgHeight);
+                    pdf.addImage(appState.producedForImage, _imageFormat(appState.producedForImage), leftColX, leftY, imgWidth, imgHeight);
                     leftY += imgHeight + 5;
                 } catch (e) {
                     console.error('Error adding Produced For image:', e);
@@ -2622,7 +2632,7 @@ export function exportToPDF() {
                 try {
                     const imgWidth = 30;
                     const imgHeight = 20;
-                    pdf.addImage(appState.producedByImage, 'JPEG', leftColX, leftY, imgWidth, imgHeight);
+                    pdf.addImage(appState.producedByImage, _imageFormat(appState.producedByImage), leftColX, leftY, imgWidth, imgHeight);
                     leftY += imgHeight + 5;
                 } catch (e) {
                     console.error('Error adding Produced By image:', e);

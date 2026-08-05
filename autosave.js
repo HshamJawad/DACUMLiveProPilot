@@ -24,6 +24,7 @@ import { saveCurrentProject,
 import { renderAll }           from './workshop_snapshots.js';
 import { appState }            from './state.js';
 import { syncAllFromDOM }      from './duties.js';
+import { getImageSync }        from './image_store.js';
 
 const LS_BACKUP     = 'dacum_session_backup';
 // Marks whether the previous session ended in an orderly way. Written
@@ -403,8 +404,14 @@ function _snapshotAppState() {
       dutiesData:               appState.dutiesData              || [],
       dutyCount:                appState.dutyCount               || 0,
       taskCounts:               appState.taskCounts              || {},
-      producedForImage:         appState.producedForImage        || null,
-      producedByImage:          appState.producedByImage         || null,
+      // Logos are deliberately NOT copied into the backup. They live in
+      // IndexedDB (image_store.js) and are unchanged by a crash, so
+      // duplicating megabytes of base64 into localStorage on every
+      // keystroke would reintroduce the quota pressure this whole
+      // change removes. The project's own reference is what restores
+      // them — see _applyBackupState.
+      producedForImage:         null,
+      producedByImage:          null,
       customSectionCounter:     appState.customSectionCounter    || 0,
       skillsLevelData:          appState.skillsLevelData,
       verificationRatings:      appState.verificationRatings     || {},
@@ -434,8 +441,11 @@ function _applyBackupState(s) {
   appState.dutiesData               = s.dutiesData               || [];
   appState.dutyCount                = s.dutyCount                || 0;
   appState.taskCounts               = s.taskCounts               || {};
-  appState.producedForImage         = s.producedForImage         || null;
-  appState.producedByImage          = s.producedByImage          || null;
+  // Keep whatever is already loaded rather than blanking the logos:
+  // the backup never carries them (see _snapshotAppState), so a null
+  // here would wipe a perfectly good logo on restore.
+  appState.producedForImage         = getImageSync(s.producedForImage) || appState.producedForImage || null;
+  appState.producedByImage          = getImageSync(s.producedByImage)  || appState.producedByImage  || null;
   appState.customSectionCounter     = s.customSectionCounter     || 0;
   if (s.skillsLevelData) appState.skillsLevelData = s.skillsLevelData;
   appState.verificationRatings      = s.verificationRatings      || {};

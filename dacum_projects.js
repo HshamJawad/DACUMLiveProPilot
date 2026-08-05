@@ -15,6 +15,8 @@ import { appState }           from './state.js';
 import { showStatus }         from './renderer.js';
 import { syncAllFromDOM }     from './duties.js';
 import { clearAllSilent }     from './projects.js';
+import { setImage, getImageSync, imageKey,
+         removeProjectImages }  from './image_store.js';
 import { renderAvailableTasks, renderClusters,
          renderPCSourceList, renderLearningOutcomes,
          renderModuleLoList, renderModules } from './modules.js';
@@ -306,6 +308,11 @@ export function deleteProject(id) {
   projects = projects.filter(p => p.id !== id);
   _saveProjects(projects);
 
+  // Images live outside localStorage now, so deleting the project row
+  // no longer removes them — do it explicitly or they accumulate in
+  // IndexedDB with no owner and no way for the user to reach them.
+  removeProjectImages(id);
+
   // If deleted project was active, switch to the next available one
   if (_getActive() === id) {
     if (projects.length > 0) {
@@ -343,6 +350,7 @@ export function deleteActiveProject() {
   if (id) {
     remaining = remaining.filter(p => p.id !== id);
     _saveProjects(remaining);
+    removeProjectImages(id);   // see deleteProject() for why
     _setActive(null);
   }
   renderProjectsSidebar();
@@ -793,8 +801,12 @@ function _captureState() {
     dutiesData:               appState.dutiesData              || [],
     dutyCount:                appState.dutyCount,
     taskCounts:               appState.taskCounts              || {},
-    producedForImage:         appState.producedForImage,
-    producedByImage:          appState.producedByImage,
+    // Logos live in IndexedDB (see image_store.js); only a short
+    // reference is written into localStorage. Keeping the base64 here
+    // is what used to make a single project weigh megabytes and put the
+    // whole store within reach of the quota ceiling.
+    producedForImage:         _persistLogo('producedFor', appState.producedForImage),
+    producedByImage:          _persistLogo('producedBy',  appState.producedByImage),
     customSectionCounter:     appState.customSectionCounter,
     skillsLevelData:          appState.skillsLevelData,
     verificationRatings:      appState.verificationRatings     || {},
@@ -831,8 +843,11 @@ function _applyState(s) {
   appState.dutiesData               = s.dutiesData               || [];
   appState.dutyCount                = s.dutyCount                || 0;
   appState.taskCounts               = s.taskCounts               || {};
-  appState.producedForImage         = s.producedForImage         || null;
-  appState.producedByImage          = s.producedByImage          || null;
+  // getImageSync resolves an `idb:` reference from the in-memory cache
+  // and passes a legacy inline data URL straight through, so projects
+  // saved before this change keep working untouched.
+  appState.producedForImage         = getImageSync(s.producedForImage) || null;
+  appState.producedByImage          = getImageSync(s.producedByImage)  || null;
   appState.customSectionCounter     = s.customSectionCounter     || 0;
   appState.skillsLevelData          = s.skillsLevelData;
   appState.verificationRatings      = s.verificationRatings      || {};
@@ -998,6 +1013,25 @@ function _applyLiveWorkshopDOM(s) {
   }
 }
 
+/**
+ * Move a logo into the image store and return the reference to save.
+ *
+ * Keyed by the ACTIVE project id so each project owns its own logos.
+ * When no project is active yet (very first boot), the image is left
+ * inline — it will be migrated to the store on the next save, once a
+ * project id exists to file it under.
+ */
+function _persistLogo(slot, value) {
+  if (!value) return null;
+  if (typeof value === 'string' && value.startsWith('idb:')) return value;  // already a ref
+  if (typeof value !== 'string' || !value.startsWith('data:')) return value;
+
+  const projectId = _getActive();
+  if (!projectId) return value;
+
+  return setImage(imageKey(projectId, slot), value);
+}
+
 // ── localStorage ──────────────────────────────────────────────
 
 function _loadProjects() {
@@ -1005,14 +1039,161 @@ function _loadProjects() {
   catch { return []; }
 }
 
+// ── Quota handling ────────────────────────────────────────────
+//
+// The previous behaviour on a full quota was to run list.splice(0, 1)
+// and retry — silently destroying the oldest project, announced only by
+// a toast that disappears in three seconds. It could delete the project
+// the user was actively working on, and there was no undo and no export
+// first. Losing a completed DACUM chart, which represents days of panel
+// work, is a far worse outcome than a failed save the user can act on.
+//
+// The rule now: NEVER delete the user's data to make room. Reclaim only
+// what the app can regenerate, and if that is not enough, stop and say
+// so clearly enough that the user can rescue their work.
+
+let _quotaDialogOpen = false;
+
+function _isQuotaError(err) {
+  if (!err) return false;
+  return err.name === 'QuotaExceededError' ||
+         err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+         err.code === 22 || err.code === 1014;
+}
+
+/** Rough byte size of a project once serialised. */
+function _projectSize(project) {
+  try { return JSON.stringify(project).length; } catch { return 0; }
+}
+
+function _fmtSize(bytes) {
+  return bytes > 1024 * 1024
+    ? `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+/**
+ * Persist the project list.
+ * @returns {boolean} true when the write succeeded.
+ */
+// Warn once per session when the store passes this many bytes, so the
+// user hears about it while they still have room to export — not at the
+// moment a save fails mid-workshop.
+const QUOTA_WARN_BYTES = 3.5 * 1024 * 1024;
+let _quotaWarned = false;
+
 function _saveProjects(list) {
-  try { localStorage.setItem(LS_PROJECTS, JSON.stringify(list)); }
-  catch {
-    showStatus('⚠️ Storage full — oldest project removed.', 'error');
-    list.splice(0, 1);
-    try { localStorage.setItem(LS_PROJECTS, JSON.stringify(list)); } catch {}
+  try {
+    const payload = JSON.stringify(list);
+    localStorage.setItem(LS_PROJECTS, payload);
+
+    if (!_quotaWarned && payload.length > QUOTA_WARN_BYTES) {
+      _quotaWarned = true;
+      showStatus(
+        `⚠️ Storage is ${Math.round(payload.length / (1024 * 1024) * 10) / 10} MB and filling up. ` +
+        `Export and remove old projects before it runs out.`,
+        'error'
+      );
+    }
+    return true;
+  } catch (err) {
+    if (!_isQuotaError(err)) {
+      console.warn('[projects] save failed:', err);
+      showStatus('⚠️ Could not save. See the browser console for details.', 'error');
+      return false;
+    }
+
+    // Reclaim regenerable space first: the crash-recovery backup is a
+    // duplicate of the current state and is rewritten on the next edit,
+    // so dropping it costs the user nothing.
+    try {
+      localStorage.removeItem('dacum_session_backup');
+      localStorage.setItem(LS_PROJECTS, JSON.stringify(list));
+      console.warn('[projects] quota hit — recovered by dropping session backup');
+      return true;
+    } catch (_) { /* still full — fall through */ }
+
+    _showStorageFullDialog(list);
+    return false;
   }
 }
+
+/**
+ * Explain the problem and hand the user the actions that fix it.
+ * Blocking on purpose: a toast is too easy to miss, and continuing to
+ * edit unsaved work makes the situation worse with every keystroke.
+ */
+function _showStorageFullDialog(list) {
+  if (_quotaDialogOpen) return;      // autosave retries constantly
+  _quotaDialogOpen = true;
+
+  const activeId = _getActive();
+  const biggest = [...(list || [])]
+    .map(p => ({ name: p.name || 'Untitled', size: _projectSize(p), active: p.id === activeId }))
+    .sort((a, b) => b.size - a.size)
+    .slice(0, 5);
+
+  const rows = biggest.map(p =>
+    `<li style="display:flex;justify-content:space-between;gap:12px;padding:5px 0;
+                border-bottom:1px solid #f1f5f9;font-size:0.85em;">
+       <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#334155;">
+         ${p.active ? '▶ ' : ''}${_esc(p.name)}${p.active ? ' <em style="color:#64748b;">(open)</em>' : ''}
+       </span>
+       <strong style="color:#475569;flex-shrink:0;">${_fmtSize(p.size)}</strong>
+     </li>`
+  ).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'dacumQuotaOverlay';
+  overlay.style.cssText =
+    'position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;' +
+    'justify-content:center;padding:20px;background:rgba(0,0,0,0.6);';
+
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;
+                box-shadow:0 24px 60px rgba(0,0,0,0.35);overflow:hidden;font-family:inherit;">
+      <div style="padding:20px 22px 16px;display:flex;align-items:center;gap:12px;
+                  background:linear-gradient(135deg,#fef2f2,#fee2e2);border-bottom:1px solid #fecaca;">
+        <span style="font-size:1.8em;line-height:1;">💾</span>
+        <div>
+          <p style="margin:0;font-size:1em;font-weight:800;color:#991b1b;">Storage Full — Not Saved</p>
+          <p style="margin:2px 0 0;font-size:0.78em;color:#b91c1c;">Your recent changes are still on screen</p>
+        </div>
+      </div>
+      <div style="padding:18px 22px 20px;">
+        <p style="margin:0 0 14px;font-size:0.88em;color:#374151;line-height:1.6;">
+          This browser's storage for the app is full, so the last change could not be
+          written to disk. <strong>Nothing has been deleted.</strong> Free some space and
+          your work will save again — but export anything important first.
+        </p>
+        <p style="margin:0 0 6px;font-size:0.82em;font-weight:700;color:#1e293b;">Largest projects:</p>
+        <ul style="list-style:none;margin:0 0 16px;padding:0;">${rows}</ul>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;
+                    padding:11px 13px;margin-bottom:16px;">
+          <p style="margin:0;font-size:0.82em;color:#15803d;font-weight:700;">What to do:</p>
+          <ol style="margin:6px 0 0;padding-left:18px;font-size:0.82em;color:#166534;line-height:1.8;">
+            <li>Export the projects you need (Export Project in the toolbar)</li>
+            <li>Delete projects you no longer need from the sidebar</li>
+            <li>Remove large logos in Chart Info if you added any</li>
+          </ol>
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button id="dacumQuotaClose"
+                  style="padding:9px 22px;background:#667eea;color:#fff;border:none;
+                         border-radius:8px;font-size:0.9em;font-weight:700;cursor:pointer;
+                         font-family:inherit;">I understand</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  overlay.querySelector('#dacumQuotaClose').addEventListener('click', () => {
+    overlay.remove();
+    _quotaDialogOpen = false;
+  });
+}
+
 
 function _getActive()      { return localStorage.getItem(LS_ACTIVE) || null; }
 function _setActive(id)    { id ? localStorage.setItem(LS_ACTIVE, id) : localStorage.removeItem(LS_ACTIVE); }

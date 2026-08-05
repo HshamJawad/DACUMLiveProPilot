@@ -293,8 +293,15 @@ export function setupEvents() {
   _on('btnToggleInfoBox',           'click', () => toggleInfoBox());
 
   // Image upload
-  _on('producedForImageInput',      'change', (e) => handleImageUpload(e, 'producedFor'));
-  _on('producedByImageInput',       'change', (e) => handleImageUpload(e, 'producedBy'));
+  // handleImageUpload is async now (it downscales the logo before
+  // storing it). The autosave 'change' listener fires immediately, i.e.
+  // BEFORE compression finishes, so without an explicit save here the
+  // logo would sit in appState unpersisted until the next edit.
+  const _uploadThenSave = (e, type) =>
+    handleImageUpload(e, type).then(() => saveCurrentProject()).catch(() => {});
+
+  _on('producedForImageInput',      'change', (e) => _uploadThenSave(e, 'producedFor'));
+  _on('producedByImageInput',       'change', (e) => _uploadThenSave(e, 'producedBy'));
   _on('removeProducedForImage',     'click',  () => removeImage('producedFor'));
   _on('removeProducedByImage',      'click',  () => removeImage('producedBy'));
 

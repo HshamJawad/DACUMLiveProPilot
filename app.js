@@ -17,6 +17,7 @@ import { renderSnapshotPanel } from './workshop_snapshots.js';
 import { initProjectsSidebar, saveCurrentProject,
          createProject, getActiveProjectId } from './dacum_projects.js';
 import { startAutoSave, checkCrashRecovery } from './autosave.js';
+import { initImageStore }     from './image_store.js';
 import { clearAiGeneratedFlag } from './refine.js';
 import { initDragDrop }        from './drag_drop.js';
 
@@ -24,7 +25,15 @@ import { initDragDrop }        from './drag_drop.js';
 window.switchTab = switchTab;
 window.updateDutyLevelSummary = updateDutyLevelSummary;
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
+  // Open the logo store and warm its in-memory cache BEFORE any project
+  // is loaded. Everything downstream reads images synchronously from
+  // that cache (see image_store.js), so this has to finish first or a
+  // project restored on boot would come up without its logos.
+  // It resolves even when IndexedDB is blocked — the store then runs
+  // memory-only and logos simply stay inline in the project state.
+  try { await initImageStore(); } catch (e) { console.warn('[app] image store init:', e); }
+
   // Initialize Skills Level Matrix
   renderSkillsLevel();
 

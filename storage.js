@@ -83,7 +83,90 @@ export function hideLoadingModal() {
 
 // ── Image Upload ──────────────────────────────────────────────
 
-export function handleImageUpload(event, imageType) {
+// ── Logo compression ──────────────────────────────────────────
+//
+// Logos are stored as base64 data URLs INSIDE each project's state in
+// localStorage, and base64 inflates binary by roughly a third. A single
+// 2 MB camera-resolution logo therefore costs ~2.7 MB of a 5 MB origin
+// quota — and it is duplicated into the session backup as well. Two
+// such uploads can fill the quota, at which point _saveProjects() in
+// dacum_projects.js starts DELETING the oldest project to make room.
+//
+// Nothing in the app displays a logo larger than a few hundred pixels
+// (chart header, PDF/Word title block), so the full-resolution original
+// buys nothing and risks real data loss. Downscaling on upload removes
+// the problem at its source.
+
+const LOGO_MAX_DIM = 400;   // px on the longest side
+const LOGO_QUALITY = 0.82;  // JPEG quality — visually lossless at this size
+
+/**
+ * Downscale an image file and return a compact data URL.
+ *
+ * Transparency is preserved by re-encoding as PNG when the source
+ * actually uses it; everything else becomes JPEG, which is far smaller.
+ * Encoding a transparent logo as JPEG would fill its background with
+ * black, so this check is not optional.
+ *
+ * Falls back to the untouched original on any failure — a slightly
+ * oversized logo is a much better outcome than a failed upload.
+ */
+function _compressImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const original = e.target.result;
+      const img = new Image();
+
+      img.onload = () => {
+        try {
+          const scale = Math.min(1, LOGO_MAX_DIM / Math.max(img.width, img.height));
+          const w = Math.max(1, Math.round(img.width  * scale));
+          const h = Math.max(1, Math.round(img.height * scale));
+
+          const canvas = document.createElement('canvas');
+          canvas.width  = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, w, h);
+
+          let hasAlpha = false;
+          try {
+            const data = ctx.getImageData(0, 0, w, h).data;
+            for (let i = 3; i < data.length; i += 4) {
+              if (data[i] < 250) { hasAlpha = true; break; }
+            }
+          } catch (_) {
+            // Tainted canvas (shouldn't happen for a local file) —
+            // assume alpha so we never flatten a transparent logo.
+            hasAlpha = true;
+          }
+
+          const out = hasAlpha
+            ? canvas.toDataURL('image/png')
+            : canvas.toDataURL('image/jpeg', LOGO_QUALITY);
+
+          // Keep whichever is actually smaller. A tiny flat-colour logo
+          // can compress better as the original PNG than as our JPEG.
+          resolve(out.length < original.length ? out : original);
+        } catch (err) {
+          console.warn('[storage] logo compression failed, using original:', err);
+          resolve(original);
+        }
+      };
+
+      img.onerror = () => resolve(original);
+      img.src = original;
+    };
+
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function handleImageUpload(event, imageType) {
   const file = event.target.files[0];
   if (!file) return;
 
@@ -93,22 +176,27 @@ export function handleImageUpload(event, imageType) {
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const imageData = e.target.result;
+  const imageData = await _compressImage(file);
+  if (!imageData) {
+    showStatus('Could not read that image file. Please try another.', 'error');
+    return;
+  }
 
-    if (imageType === 'producedFor') appState.producedForImage = imageData;
-    else if (imageType === 'producedBy') appState.producedByImage = imageData;
+  if (imageType === 'producedFor') appState.producedForImage = imageData;
+  else if (imageType === 'producedBy') appState.producedByImage = imageData;
 
-    const previewDiv = document.getElementById(`${imageType}ImagePreview`);
+  const previewDiv = document.getElementById(`${imageType}ImagePreview`);
+  if (previewDiv) {
     previewDiv.innerHTML = `<img src="${imageData}" alt="${imageType} logo">`;
     previewDiv.classList.add('has-image');
+  }
 
-    const cap = imageType.charAt(0).toUpperCase() + imageType.slice(1);
-    document.getElementById(`remove${cap}Image`).style.display = 'inline-block';
-    showStatus('Image uploaded successfully! ✓', 'success');
-  };
-  reader.readAsDataURL(file);
+  const cap = imageType.charAt(0).toUpperCase() + imageType.slice(1);
+  const removeBtn = document.getElementById(`remove${cap}Image`);
+  if (removeBtn) removeBtn.style.display = 'inline-block';
+
+  const kb = Math.round((imageData.length * 0.75) / 1024);
+  showStatus(`Image uploaded successfully! ✓ (optimised to ~${kb} KB)`, 'success');
 }
 
 export function removeImage(imageType) {

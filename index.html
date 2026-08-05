@@ -92,19 +92,19 @@
       })();
     </script>
 
-    <!-- Service Worker v12 -->
+    <!-- Service Worker v13 -->
     <script>
     (function () {
       if (!('serviceWorker' in navigator)) return;
 
       // Must match CACHE_VERSION in sw.js
-      var EXPECTED_SW = 'v12';
+      var EXPECTED_SW = 'v13';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bump these together with EXPECTED_SW / CACHE_VERSION on every
       // release, so a trainer can read the running build off the
       // screen instead of digging through DevTools.
-      var APP_VERSION = '3.6';
+      var APP_VERSION = '3.7';
       var APP_RELEASED = '2026-08-03';
 
       // Per-version reload guard — prevents infinite refresh loops
