@@ -1018,7 +1018,10 @@
       .wall-rows {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        /* Was 10px on top of each .duty-row's own 20px card padding.
+           With the card removed the rows need to carry that separation
+           themselves, or duties run together on the wall. */
+        gap: 16px;
         min-width: min-content;   /* ensures horizontal scroll when rows are wider than viewport */
       }
 
@@ -1036,11 +1039,31 @@
          absolute floating circular buttons. Everything below is
          scoped under .wall-view-mode, so Card View is never touched. */
 
+      /* ── Open layout: no box around the duty row ───────────────
+         dacum-styles.css wraps every .duty-row in a light-blue card
+         (background + 2px border + 20px padding). That reads fine in
+         the editing views, but on a projector or smartboard it wastes
+         a frame's worth of space per duty and boxes in what should
+         read as one continuous wall. Stripped here so the duty and its
+         notes sit directly on the surface. */
+      .wall-view-mode .duty-row {
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+      }
+
       .wall-view-mode .dcv-row {
         padding: 0;
         border-bottom: none;
         gap: var(--wv-task-gap);
-        min-height: 56px;
+        /* align-items:flex-start, not stretch: a stretched duty card
+           grows to the height of the tallest task row and leaves the
+           dead space visible in the screenshot. Sizing it to its own
+           content lets the row close up. */
+        align-items: flex-start;
       }
 
       /* ── Header row: drag handle + title (left) ── ＋ / ✕ (right) ──
@@ -1164,7 +1187,11 @@
            sizing and break the wall layout on those screens. */
         width: var(--wv-duty-w) !important;
         min-width: var(--wv-duty-w) !important;
-        min-height: calc(var(--wv-font) * 6);
+        /* No min-height: the card now hugs its text. The old
+           font x 6 floor is what left the blank lower half visible in
+           short-titled duties. */
+        min-height: 0;
+        align-self: flex-start;
         background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
         border: none;
         border-radius: 10px;
@@ -1174,7 +1201,9 @@
       .wall-view-mode .dcv-duty-label { color: rgba(255,255,255,0.95); }
       .wall-view-mode .dcv-duty-input {
         font-size: var(--wv-font);
-        min-height: calc(var(--wv-font) * 3.6);
+        /* Two lines rather than 3.6 — still comfortable to type in,
+           but no longer reserving space most duty titles never use. */
+        min-height: calc(var(--wv-font) * 2.4);
         padding: 4px 6px;
         color: rgba(255,255,255,0.92);
         font-style: italic;
@@ -1203,7 +1232,8 @@
            for the task text. */
         width: max(var(--wv-card-w), 132px) !important;
         min-width: max(var(--wv-card-w), 132px) !important;
-        min-height: calc(var(--wv-font) * 3.8);
+        min-height: 0;
+        align-self: flex-start;
         background: #fffdf0;
         border: 1px solid #fde68a;
         border-radius: 8px;
@@ -1223,7 +1253,7 @@
       .wall-view-mode .dcv-task-label { color: #78350f; }
       .wall-view-mode .dcv-task-input {
         font-size: var(--wv-font);
-        min-height: calc(var(--wv-font) * 2.6);
+        min-height: calc(var(--wv-font) * 2.2);
         padding: 3px 5px;
         color: #422006;
         font-style: italic;
