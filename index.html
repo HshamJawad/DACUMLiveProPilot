@@ -1403,12 +1403,25 @@
       /* ══════════════════════════════════════════════════════════
          PRINT — Wall View only
          ══════════════════════════════════════════════════════════ */
-      @page {
-        margin: 12mm 10mm 14mm 10mm;
-        /* Browser date/title headers are user-controlled — user can
-           disable them in print dialog under "Headers and footers". */
-      }
       @media print {
+        /* ── Page margins ──────────────────────────────────────────
+           Declared ONCE, here. There used to be a second @page rule at
+           the end of this block that only set the footer counter;
+           re-declaring @page like that drops the margin in some
+           engines, which is why pages after the first printed with
+           cards flush against the paper edge. Margin and footer now
+           live in the same rule so they cannot come apart. */
+        @page {
+          margin: 12mm 10mm 14mm 10mm;
+          /* Browser date/title headers are user-controlled — user can
+             disable them in print dialog under "Headers and footers". */
+          @bottom-center {
+            content: "Page " counter(page) " of " counter(pages);
+            font-size: 9pt;
+            color: #64748b;
+          }
+        }
+
         body.wall-view-active {
           background: #ffffff !important;
         }
@@ -1435,6 +1448,22 @@
         body.wall-view-active #dacumAppWrapper,
         body.wall-view-active #duties-tab {
           margin: 0 !important; padding: 0 !important; box-shadow: none !important;
+        }
+
+        /* Belt and braces: an explicit inner margin on the rows
+           themselves. @page margins are honoured inconsistently across
+           browsers and print-to-PDF backends, so this guarantees white
+           space around the cards on EVERY page even where the page
+           margin is ignored — the symptom being cards printed hard
+           against the paper edge from page 2 onward. */
+        body.wall-view-active .wall-rows-scroll {
+          padding: 5mm !important;
+          box-sizing: border-box !important;
+        }
+        /* Never let a card sit across the fold. */
+        body.wall-view-active .duty-row {
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
         /* Print header (block-level, on first page only via CSS) */
         body.wall-view-active .wall-print-header {
@@ -1497,14 +1526,6 @@
         body.wall-view-active .dcv-duty-input,
         body.wall-view-active .dcv-task-input {
           pointer-events: none;
-        }
-        /* Page number footer via @page counters (supported by Chrome/Edge) */
-        @page {
-          @bottom-center {
-            content: "Page " counter(page) " of " counter(pages);
-            font-size: 9pt;
-            color: #64748b;
-          }
         }
       }
     </style>
