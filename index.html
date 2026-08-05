@@ -2363,31 +2363,17 @@
         </div>
         
         <div class="tab-content" id="module-mapping-tab">
-            <h2>📦 Module Mapping</h2>
-            
-            <div style="background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%); padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #667eea;">
-                <p style="margin: 0; color: #334155; line-height: 1.6;">
-                    <strong>📚 Purpose:</strong> Group Learning Outcomes into training modules or units of competency.
-                    Each module represents a logical instructional unit for curriculum delivery.
-                </p>
-            </div>
-
-            <!-- Grouping Mode Selector -->
-            <div class="lo-mode-info" style="margin-bottom: 25px;">
-                <h4>📋 Module Grouping Strategy</h4>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="radio" name="moduleGroupMode" value="one-to-one" style="width: 18px; height: 18px;">
-                        <span><strong>Mode 1:</strong> One Learning Outcome → One Module <em style="color: #666;">(Each LO creates its own module)</em></span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="radio" name="moduleGroupMode" value="many-to-one" style="width: 18px; height: 18px;">
-                        <span><strong>Mode 2:</strong> Multiple Learning Outcomes → One Module <em style="color: #666;">(Selected LOs grouped into one module)</em></span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="radio" name="moduleGroupMode" value="manual" checked style="width: 18px; height: 18px;">
-                        <span><strong>Mode 3:</strong> Manual / Flexible Grouping <em style="color: #666;">(Use dropdowns to assign freely)</em></span>
-                    </label>
+            <!-- The Purpose card and the Module Grouping Strategy block
+                 that used to sit here are now behind the "?" button, in
+                 line with the other tabs. See events.js
+                 _showModuleMappingHelp() for the content. -->
+            <div class="tab-header-row">
+                <div class="tab-title-with-help">
+                    <h2>📦 Module Mapping</h2>
+                    <button type="button" id="mmHelpBtn" class="tab-help-btn"
+                            title="Purpose and module grouping strategies"
+                            aria-label="Purpose and module grouping strategies"
+                            aria-haspopup="dialog">?</button>
                 </div>
             </div>
 

@@ -157,6 +157,7 @@ export function setupEvents() {
   _on('dutiesHelpBtn',        'click', () => _showDutiesHelp());
   _on('clusteringHelpBtn',    'click', () => _showClusteringHelp());
   _on('loHelpBtn',            'click', () => _showLearningOutcomesHelp());
+  _on('mmHelpBtn',            'click', () => _showModuleMappingHelp());
   _on('clusterNamingHelpBtn', 'click', () => _showClusterNamingHelp());
 
   // ── Additional Information tab: AI supporting-info generation ──
@@ -968,5 +969,54 @@ function _showLearningOutcomesHelp() {
     note: '💡 Select Performance Criteria below and create Learning Outcomes that align ' +
           'with your curriculum design approach. The pattern is a choice, not a setting — ' +
           'you can apply a different one to each cluster.',
+  });
+}
+
+// Module Mapping purpose + grouping strategies.
+//
+// NOTE: the three "Module Grouping Strategy" radio buttons that used to
+// sit at the top of this tab were purely decorative — no code anywhere
+// read the moduleGroupMode input, so selecting a mode changed nothing.
+// Rather than leave a control that silently does nothing, the three
+// strategies are documented here as guidance on how to use the
+// dropdowns below, which is how grouping actually works today.
+function _showModuleMappingHelp() {
+  const mode = (n, title, detail) =>
+    '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;' +
+    'padding:11px 13px;margin-bottom:9px;">' +
+      '<p style="margin:0;font-size:0.86em;line-height:1.6;color:#334155;">' +
+        '<strong style="color:#4338ca;">Mode ' + n + ':</strong> ' + title +
+        '<br><span style="color:#64748b;">' + detail + '</span>' +
+      '</p>' +
+    '</div>';
+
+  const bodyHtml =
+    '<div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;' +
+    'padding:12px 14px;margin-bottom:16px;">' +
+      '<p style="margin:0;font-size:0.87em;line-height:1.6;color:#3730a3;">' +
+        '<strong>📚 Purpose:</strong> Group Learning Outcomes into training modules ' +
+        'or units of competency. Each module represents a logical instructional unit ' +
+        'for curriculum delivery.' +
+      '</p>' +
+    '</div>' +
+
+    '<p style="margin:0 0 10px;font-size:0.88em;font-weight:700;color:#1e293b;">' +
+      '📋 Module Grouping Strategy</p>' +
+
+    mode(1, 'One Learning Outcome → One Module',
+            'Each LO creates its own module.') +
+    mode(2, 'Multiple Learning Outcomes → One Module',
+            'Selected LOs are grouped into a single module.') +
+    mode(3, 'Manual / Flexible Grouping',
+            'Use the dropdowns below to assign outcomes freely.');
+
+  _showHelpModal({
+    id:       'mmHelpModal',
+    icon:     '📦',
+    title:    'Module Mapping',
+    maxWidth: '540px',
+    bodyHtml,
+    note: 'These are ways of thinking about the grouping, not settings to switch ' +
+          'between — build any of them with the module controls below.',
   });
 }
