@@ -1,0 +1,445 @@
+// ============================================================
+// /learning_outcomes_ai.js
+// AI generation for the Learning Outcomes tab.
+//
+// Implements the three design patterns documented in the tab's help
+// modal, as three explicit user choices rather than one "smart" button:
+//
+//   Pattern A — One-to-One:  each Performance Criterion becomes one
+//               Learning Outcome. Grouping is fixed; only the WORDING
+//               is generated.
+//   Pattern B — Many-to-One: related criteria are integrated into
+//               fewer, broader outcomes. Grouping IS the judgement.
+//   Pattern C — Hybrid:      criteria that stand alone stay alone,
+//               those that belong together are integrated.
+//
+// Note that unlike the module generator, Pattern A is NOT a local
+// no-AI shortcut. A Learning Outcome is not a copy of a criterion with
+// a new label: a criterion states the STANDARD an assessor checks
+// against, while an outcome states what the LEARNER will be able to do.
+// Converting one into the other is a rewriting task, so even the
+// one-to-one case needs the model.
+//
+// The pattern is applied per run, not stored as a setting — the help
+// modal is explicit that a facilitator may use a different pattern for
+// each cluster, so the generator can be re-run per selection.
+//
+// Guarantees enforced in code, not merely requested in the prompt:
+//   • Only EXISTING criterion ids are linked; invented ids are dropped.
+//   • A criterion is never linked to two outcomes.
+//   • Under Pattern A the 1:1 relationship is verified after the fact.
+//   • Criteria the model ignored are reported, never silently lost.
+// ============================================================
+
+import { appState }   from './state.js';
+import { showStatus } from './renderer.js';
+import { renderPCSourceList, renderLearningOutcomes } from './modules.js';
+import { checkUsageLimit, incrementUsage,
+         showLoadingModal, hideLoadingModal } from './storage.js';
+
+const BACKEND_URL = 'https://dacum-ai-backend-production.up.railway.app';
+
+// Integration bounds for Patterns B and C. Beyond ~5 criteria an
+// outcome becomes too broad to assess as a single capability.
+const MIN_PC_PER_LO = 2;
+const MAX_PC_PER_LO = 5;
+
+// ── Collect criteria ──────────────────────────────────────────
+
+/**
+ * Build the working set of criteria.
+ * If the user has ticked boxes in the source list, only those are used
+ * — that is the existing manual workflow and the AI must respect it.
+ * With nothing ticked, every unused criterion in the chart is used.
+ */
+function _collectCriteria() {
+  const cd = appState.clusteringData;
+  const lo = appState.learningOutcomesData;
+  const clusters = cd?.clusters || [];
+
+  const used = new Set();
+  (lo?.outcomes || []).forEach(o =>
+    (o.linkedCriteria || []).forEach(pc => used.add(pc.id))
+  );
+
+  const checked = new Set(
+    Array.from(document.querySelectorAll('#pcSourceList input[type="checkbox"]:checked'))
+         .map(cb => cb.getAttribute('data-pc-id'))
+         .filter(Boolean)
+  );
+
+  const all = [];
+  clusters.forEach((cluster, ci) => {
+    const clusterNumber = ci + 1;
+    (cluster.performanceCriteria || []).forEach((text, idx) => {
+      if (!text || !text.trim()) return;
+      const id = `C${clusterNumber}-PC${idx + 1}`;
+      all.push({
+        id,
+        text: text.trim(),
+        clusterNumber,
+        clusterName: cluster.name || `Cluster ${clusterNumber}`,
+      });
+    });
+  });
+
+  const selection = checked.size
+    ? all.filter(c => checked.has(c.id))
+    : all.filter(c => !used.has(c.id));
+
+  return { selection, usedSelection: checked.size > 0 };
+}
+
+// ── Prompt ────────────────────────────────────────────────────
+
+const _PATTERN_RULES = {
+  A: `PATTERN A — ONE-TO-ONE
+- Create EXACTLY ONE Learning Outcome for EACH criterion listed.
+- The number of outcomes MUST equal the number of criteria.
+- Each outcome links to exactly one criterion id.
+- Rewrite the criterion as a learner capability; do NOT copy it verbatim
+  and do NOT merge criteria.`,
+
+  B: `PATTERN B — MANY-TO-ONE
+- Integrate related criteria into FEWER, broader Learning Outcomes.
+- Each outcome must link ${MIN_PC_PER_LO}-${MAX_PC_PER_LO} criteria.
+- Group criteria that a learner would demonstrate together in a single
+  assessment task, or that rest on the same underpinning skill.
+- Criteria from different clusters MAY be integrated when they genuinely
+  form one capability.`,
+
+  C: `PATTERN C — HYBRID
+- Decide criterion by criterion.
+- A criterion that describes a distinct, independently assessable
+  capability becomes its OWN outcome (1 criterion -> 1 outcome).
+- Criteria that a learner would demonstrate together are INTEGRATED into
+  one outcome linking up to ${MAX_PC_PER_LO} criteria.
+- Do not force either extreme: a result where everything is integrated,
+  or nothing is, means the hybrid judgement was not actually made.`,
+};
+
+function _buildPrompt(criteria, pattern) {
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const occupation = v('occupationTitle');
+  const jobTitle   = v('jobTitle');
+
+  const byCluster = {};
+  criteria.forEach(c => {
+    (byCluster[c.clusterName] ||= []).push(c);
+  });
+
+  const list = Object.entries(byCluster).map(([name, items]) =>
+    `  Competency: ${name}\n` +
+    items.map(c => `    - id: ${c.id}\n      criterion: ${c.text}`).join('\n')
+  ).join('\n');
+
+  return `You are a curriculum design engine specialized in competency-based training (CBT) derived from DACUM analysis.
+
+OCCUPATION: ${occupation || '(not specified)'}${jobTitle ? `
+JOB / ROLE: ${jobTitle}` : ''}
+
+PERFORMANCE CRITERIA (${criteria.length} total):
+${list}
+
+TASK:
+Convert these Performance Criteria into Learning Outcomes using the
+pattern specified below.
+
+${_PATTERN_RULES[pattern]}
+
+WHAT A LEARNING OUTCOME IS (this distinction is the whole point):
+- A Performance Criterion states the STANDARD an assessor checks against.
+- A Learning Outcome states what the LEARNER WILL BE ABLE TO DO after
+  the training.
+- Therefore: rewrite, never relabel. "Joints are cut to within 1 mm of
+  the marked line" (criterion) becomes "Cut mortise and tenon joints to
+  within 1 mm of the marked line" (outcome).
+
+LEARNING OUTCOME WRITING RULES:
+- Begin with a single, observable, measurable ACTION VERB.
+- NEVER use understand, know, learn, be aware of, appreciate,
+  be familiar with — these cannot be assessed.
+- Address ONE demonstrable capability per outcome.
+- Keep the STANDARD or condition where it makes the outcome assessable
+  ("to within 1 mm", "according to manufacturer specifications").
+  Leave out the purpose ("to ensure quality").
+- Write in the third person, present tense, without the "The learner
+  will be able to" prefix — the app supplies that framing.
+- 6-20 words. One line of plain text, no numbering or bullets.
+- Every outcome must be traceable to the criteria linked to it. Do NOT
+  invent capabilities that no listed criterion supports.
+- Use ONLY the criterion ids given above. Link each id to at most ONE
+  outcome, and link every id exactly once.
+
+OUTPUT FORMAT (STRICT — NO EXTRA TEXT, NO MARKDOWN):
+{
+  "outcomes": [
+    {
+      "statement": "Cut mortise and tenon joints to within 1 mm of the marked line",
+      "criterionIds": ["C1-PC1"]
+    }
+  ]
+}
+
+Return ONLY that JSON object.`;
+}
+
+// ── Generation ────────────────────────────────────────────────
+
+const _PATTERN_LABEL = {
+  A: 'Pattern A (one-to-one)',
+  B: 'Pattern B (many-to-one)',
+  C: 'Pattern C (hybrid)',
+};
+
+export async function generateLearningOutcomesAI(pattern = 'C') {
+  if (!_PATTERN_RULES[pattern]) pattern = 'C';
+
+  const cd = appState.clusteringData;
+  if (!cd?.clusters?.length) {
+    showStatus('No Competency Clusters yet — create clusters and criteria first.', 'error');
+    return false;
+  }
+
+  const { selection, usedSelection } = _collectCriteria();
+
+  if (!selection.length) {
+    showStatus(
+      usedSelection
+        ? 'The ticked criteria are empty — select criteria with text.'
+        : 'No unused Performance Criteria found. Generate criteria in the Clusters tab first.',
+      'error'
+    );
+    return false;
+  }
+
+  if (pattern !== 'A' && selection.length < MIN_PC_PER_LO) {
+    showStatus(
+      `${_PATTERN_LABEL[pattern]} integrates criteria — at least ${MIN_PC_PER_LO} are needed. ` +
+      `Use Pattern A for a single criterion.`,
+      'error'
+    );
+    return false;
+  }
+
+  const existing = appState.learningOutcomesData?.outcomes || [];
+  if (existing.length && !confirm(
+    `⚠️ This will ADD new Learning Outcomes using ${_PATTERN_LABEL[pattern]}.\n\n` +
+    `You already have ${existing.length} outcome${existing.length > 1 ? 's' : ''}. ` +
+    `They will be KEPT — the new ones are appended.\n\n` +
+    `Criteria already linked to an outcome are skipped, so nothing is duplicated.\n\n` +
+    `Click OK to continue, or Cancel to stop.`
+  )) {
+    showStatus('Generation cancelled. Your outcomes are unchanged.', 'error');
+    return false;
+  }
+
+  const usage = checkUsageLimit();
+  if (!usage.allowed) {
+    showStatus(`❌ Daily limit reached (${usage.count} generations). Try again tomorrow!`, 'error');
+    return false;
+  }
+
+  showLoadingModal();
+  await new Promise(r => setTimeout(r, 100));
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/generate-dacum`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ prompt: _buildPrompt(selection, pattern) }),
+    });
+    if (!response.ok) {
+      throw new Error(`Backend request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    if (!data.content?.[0]?.text) {
+      throw new Error('Invalid response from backend - no content found');
+    }
+
+    const jsonText = data.content[0].text.trim()
+      .replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    let parsed;
+    try { parsed = JSON.parse(jsonText); }
+    catch (e) { throw new Error('Failed to parse AI response as JSON'); }
+
+    if (!Array.isArray(parsed.outcomes) || !parsed.outcomes.length) {
+      throw new Error('AI response contained no learning outcomes');
+    }
+
+    const byId = {};
+    selection.forEach(c => { byId[c.id] = c; });
+
+    const lo = appState.learningOutcomesData;
+    const linked = new Set();
+    let added = 0;
+
+    parsed.outcomes.forEach(item => {
+      const statement = String(item.statement || '')
+        .trim()
+        .replace(/^[\s]*[•\-*]\s*/, '')
+        .replace(/^[\s]*\d+[.)]\s*/, '')
+        // Strip the framing prefix if the model added it anyway
+        .replace(/^(the\s+)?learner(s)?\s+(will\s+be\s+able\s+to|can|should\s+be\s+able\s+to)\s+/i, '')
+        .trim();
+
+      const criteria = [];
+      (item.criterionIds || []).forEach(raw => {
+        const id = String(raw || '').trim();
+        const c = byId[id];
+        if (!c || linked.has(id)) return;   // unknown or already linked → drop
+        linked.add(id);
+        criteria.push({ id: c.id, text: c.text, clusterNumber: c.clusterNumber });
+      });
+
+      // An outcome with no valid criteria has nothing to assess against
+      // and no traceability back to the chart — discard it.
+      if (!statement || !criteria.length) return;
+
+      lo.outcomeCounter++;
+      lo.outcomes.push({
+        id:      `lo_${lo.outcomeCounter}`,
+        number:  `LO-${lo.outcomeCounter}`,
+        statement,
+        linkedCriteria: criteria,
+      });
+      added++;
+    });
+
+    if (!added) throw new Error('No valid learning outcomes could be built from the response');
+
+    renderPCSourceList();
+    renderLearningOutcomes();
+    hideLoadingModal();
+    incrementUsage();
+
+    // ── Post-checks reported as advice, never as failure ──────
+    const notes = [];
+
+    const skipped = selection.filter(c => !linked.has(c.id)).length;
+    if (skipped) {
+      notes.push(`${skipped} criterion${skipped > 1 ? 'a' : ''} left unlinked — still available below`);
+    }
+
+    // Pattern A promises a 1:1 relationship; verify rather than assume.
+    if (pattern === 'A' && added !== (selection.length - skipped)) {
+      notes.push('one-to-one mapping was not exact — review the linked criteria');
+    }
+
+    // A "hybrid" run that integrated nothing is really Pattern A.
+    if (pattern === 'C') {
+      const integrated = lo.outcomes.slice(-added)
+        .filter(o => (o.linkedCriteria || []).length > 1).length;
+      if (integrated === 0) {
+        notes.push('no criteria were integrated — this result is effectively Pattern A');
+      } else if (integrated === added) {
+        notes.push('every outcome integrated several criteria — closer to Pattern B');
+      }
+    }
+
+    showStatus(
+      `✓ Created ${added} Learning Outcome${added > 1 ? 's' : ''} using ${_PATTERN_LABEL[pattern]}.` +
+      (notes.length ? ` (${notes.join('; ')}.)` : ''),
+      'success'
+    );
+    return true;
+
+  } catch (error) {
+    hideLoadingModal();
+    console.error('Error generating learning outcomes:', error);
+    showStatus('AI generation failed. See the error dialog for details.', 'error');
+    _showAIErrorModal(error.message || String(error));
+    return false;
+  }
+}
+
+// ── Error modal ───────────────────────────────────────────────
+
+function _showAIErrorModal(errorMessage) {
+  const existing = document.getElementById('loAiErrorModal');
+  if (existing) existing.remove();
+
+  const isOffline = /Failed to fetch|NetworkError|network|ECONNREFUSED|ERR_CONNECTION|ERR_NAME_NOT_RESOLVED|503|502/i.test(errorMessage);
+
+  const modal = document.createElement('div');
+  modal.id = 'loAiErrorModal';
+  modal.setAttribute('role', 'alertdialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.style.cssText =
+    'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;' +
+    'justify-content:center;padding:20px;background:rgba(0,0,0,0.55);' +
+    'backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);' +
+    'animation:aiErrFadeIn 0.2s ease';
+
+  const icon   = isOffline ? '\uD83D\uDD0C' : '\u26A0\uFE0F';
+  const title  = isOffline ? 'AI Service Unavailable' : 'Learning Outcome Generation Failed';
+  const sub    = isOffline ? 'Backend server unreachable' : 'Check connection and try again';
+  const hdrBg  = isOffline ? 'linear-gradient(135deg,#fff7ed,#ffedd5)'
+                           : 'linear-gradient(135deg,#fef2f2,#fee2e2)';
+  const hdrBdr = isOffline ? '#fed7aa' : '#fecaca';
+  const hdrClr = isOffline ? '#9a3412' : '#991b1b';
+  const subClr = isOffline ? '#c2410c' : '#b91c1c';
+
+  const bodyText = isOffline
+    ? 'The AI backend server is currently offline or unreachable.<br><br>' +
+      'Your criteria and existing Learning Outcomes have not been changed.'
+    : 'An error occurred while generating Learning Outcomes:<br><br>' +
+      '<code style="font-size:0.82em;background:#f1f5f9;padding:4px 8px;' +
+      'border-radius:4px;word-break:break-all;">' +
+      (errorMessage || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code>' +
+      '<br><br>Your existing work has not been changed.';
+
+  const tips =
+    '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;' +
+    'padding:12px 14px;margin-bottom:16px;">' +
+    '<p style="margin:0;font-size:0.82em;color:#15803d;font-weight:600;">' +
+    '\u2705 What you can do instead:</p>' +
+    '<ul style="margin:6px 0 0;padding-left:18px;font-size:0.82em;color:#166534;line-height:1.8;">' +
+    '<li>Tick criteria below and use <strong>Create Learning Outcome</strong></li>' +
+    '<li>Write the outcome statement directly in each LO card</li>' +
+    '<li>Use the <strong>?</strong> button for the three design patterns</li>' +
+    '</ul></div>';
+
+  modal.innerHTML =
+    '<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;' +
+    'box-shadow:0 24px 60px rgba(0,0,0,0.35);overflow:hidden;' +
+    'font-family:\'Segoe UI\',system-ui,sans-serif;animation:aiErrSlideIn 0.22s ease;">' +
+      '<div style="padding:20px 22px 16px;display:flex;align-items:center;gap:12px;' +
+      'background:' + hdrBg + ';border-bottom:1px solid ' + hdrBdr + ';">' +
+        '<span style="font-size:1.8em;line-height:1;">' + icon + '</span>' +
+        '<div>' +
+          '<p style="margin:0;font-size:1em;font-weight:800;color:' + hdrClr + ';">' + title + '</p>' +
+          '<p style="margin:2px 0 0;font-size:0.78em;color:' + subClr + ';">' + sub + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div style="padding:18px 22px 20px;">' +
+        '<p style="margin:0 0 16px;font-size:0.88em;color:#374151;line-height:1.6;">' + bodyText + '</p>' +
+        tips +
+        '<div style="display:flex;justify-content:flex-end;">' +
+          '<button id="loAiErrorClose" style="padding:9px 22px;background:#667eea;' +
+          'color:#fff;border:none;border-radius:8px;font-size:0.9em;font-weight:700;' +
+          'cursor:pointer;font-family:inherit;">Got it</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  if (!document.getElementById('aiErrStyles')) {
+    const st = document.createElement('style');
+    st.id = 'aiErrStyles';
+    st.textContent =
+      '@keyframes aiErrFadeIn  { from{opacity:0} to{opacity:1} }' +
+      '@keyframes aiErrSlideIn { from{transform:translateY(-14px);opacity:0}' +
+      ' to{transform:translateY(0);opacity:1} }';
+    document.head.appendChild(st);
+  }
+
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  modal.querySelector('#loAiErrorClose').addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+  });
+}

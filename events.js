@@ -10,6 +10,7 @@ import { generateOneModulePerOutcome,
          generateModulesAI } from './module_mapping_ai.js';
 import { suggestClustersAI, generateRangeAndCriteriaAI,
          generateForSingleCluster } from './clustering_ai.js';
+import { generateLearningOutcomesAI } from './learning_outcomes_ai.js';
 import { addDuty, addTask, removeDuty, removeTask, clearDuty,
          syncAllFromDOM, syncDutyTitle, syncTaskText,
          toggleViewMode, switchToViewMode }            from './duties.js';
@@ -178,6 +179,21 @@ export function setupEvents() {
 
   _on('aiGenCriteriaBtn', 'click', () => {
     generateRangeAndCriteriaAI().then(_afterClusterAI).catch(() => {});
+  });
+
+  // ── Learning Outcomes: pattern-based generation ──────────────
+  // The pattern is a per-run choice, not a stored setting — see the
+  // help modal: a facilitator may apply a different one to each cluster.
+  ['A', 'B', 'C'].forEach(pattern => {
+    _on(`loGenPattern${pattern}Btn`, 'click', () => {
+      generateLearningOutcomesAI(pattern)
+        .then((ok) => {
+          if (!ok) return;
+          saveCurrentProject();
+          renderProjectsSidebar();
+        })
+        .catch(() => {});
+    });
   });
 
   // ── Module Mapping: automatic module generation ──────────────
