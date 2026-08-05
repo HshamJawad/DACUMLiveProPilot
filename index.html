@@ -2311,23 +2311,19 @@
         </div>
         
         <div class="tab-content" id="learning-outcomes-tab">
-            <h2>🎓 Learning Outcomes</h2>
-            
-            <!-- Section 1: Mode Information -->
-            <div class="lo-mode-info">
-                <h4>📚 Learning Outcome Design Patterns</h4>
-                <div class="lo-pattern">
-                    <strong>Pattern A – One-to-One:</strong> Each Performance Criterion maps to one Learning Outcome. Best for precise, assessment-driven programs.
+            <!-- The design-patterns guidance that used to sit here as a
+                 permanent card now lives behind the "?" button, matching
+                 the other tabs. It freed a full screen of vertical space
+                 above the Performance Criteria list the user actually
+                 works in. -->
+            <div class="tab-header-row">
+                <div class="tab-title-with-help">
+                    <h2>🎓 Learning Outcomes</h2>
+                    <button type="button" id="loHelpBtn" class="tab-help-btn"
+                            title="Learning Outcome design patterns"
+                            aria-label="Learning Outcome design patterns"
+                            aria-haspopup="dialog">?</button>
                 </div>
-                <div class="lo-pattern">
-                    <strong>Pattern B – Many-to-One:</strong> Multiple Performance Criteria map to one integrated Learning Outcome. Best for competency-based modules.
-                </div>
-                <div class="lo-pattern">
-                    <strong>Pattern C – Hybrid:</strong> Mix of both patterns based on expert judgment and instructional design needs.
-                </div>
-                <p style="margin: 15px 0 0 0; color: #666; font-style: italic;">
-                    💡 Select Performance Criteria below and create Learning Outcomes that align with your curriculum design approach.
-                </p>
             </div>
 
             <!-- Section 2: Performance Criteria Source List -->

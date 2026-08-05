@@ -156,6 +156,7 @@ export function setupEvents() {
   _on('addInfoHelpBtn',    'click', () => _showAdditionalInfoHelp());
   _on('dutiesHelpBtn',        'click', () => _showDutiesHelp());
   _on('clusteringHelpBtn',    'click', () => _showClusteringHelp());
+  _on('loHelpBtn',            'click', () => _showLearningOutcomesHelp());
   _on('clusterNamingHelpBtn', 'click', () => _showClusterNamingHelp());
 
   // ── Additional Information tab: AI supporting-info generation ──
@@ -927,5 +928,45 @@ function _showDutiesHelp() {
           'a single observable unit of work with a clear beginning and end. If a "task" ' +
           'covers a whole area of work, it is really a duty — and if a "duty" describes ' +
           'one concrete action, it is really a task.',
+  });
+}
+
+// Learning Outcome design patterns.
+// Previously a permanent card at the top of the tab; moved behind the
+// "?" button so the Performance Criteria list starts at the top of the
+// screen. The three patterns are a design decision the facilitator
+// makes once per programme, not something they need on screen while
+// working through dozens of criteria.
+function _showLearningOutcomesHelp() {
+  const pattern = (name, rule, best) =>
+    '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;' +
+    'padding:11px 13px;margin-bottom:9px;">' +
+      '<p style="margin:0;font-size:0.86em;line-height:1.6;color:#334155;">' +
+        '<strong style="color:#4338ca;">' + name + ':</strong> ' + rule +
+        ' <span style="color:#64748b;">Best for ' + best + '.</span>' +
+      '</p>' +
+    '</div>';
+
+  const bodyHtml =
+    pattern('Pattern A – One-to-One',
+            'Each Performance Criterion maps to one Learning Outcome.',
+            'precise, assessment-driven programs') +
+    pattern('Pattern B – Many-to-One',
+            'Multiple Performance Criteria map to one integrated Learning Outcome.',
+            'competency-based modules') +
+    pattern('Pattern C – Hybrid',
+            'A mix of both patterns, based on expert judgment and instructional design needs.',
+            'most real programmes, where some criteria stand alone and others belong together');
+
+  _showHelpModal({
+    id:       'loHelpModal',
+    icon:     '📚',
+    title:    'Learning Outcome Design Patterns',
+    intro:    'Choose how Performance Criteria become Learning Outcomes:',
+    maxWidth: '540px',
+    bodyHtml,
+    note: '💡 Select Performance Criteria below and create Learning Outcomes that align ' +
+          'with your curriculum design approach. The pattern is a choice, not a setting — ' +
+          'you can apply a different one to each cluster.',
   });
 }
