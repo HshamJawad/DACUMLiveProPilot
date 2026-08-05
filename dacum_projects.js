@@ -89,7 +89,7 @@ export function importProjectFromData(data, fileName) {
     .replace(/[_]+/g, ' ')                           // underscores → spaces
     .trim();
 
-  const label = stemFromFile
+  let label = stemFromFile
              || (data?.chartInfo?.occupationTitle || '').trim()
              || (data?.chartInfo?.jobTitle || '').trim()
              || 'Imported Project';
@@ -171,6 +171,48 @@ export function importProjectFromData(data, fileName) {
     });
   } else {
     state.dutyCount = 0;
+  }
+
+  // ── Duplicate guard ──────────────────────────────────────────
+  // Re-importing the same file used to append ANOTHER project every
+  // time, so a facilitator who imported a chart three times ended up
+  // with three identical cards and no way to tell them apart. Now an
+  // existing project with the same name is offered for replacement.
+  // The choice is the user's: replacing is right when re-importing a
+  // corrected export, keeping both is right when comparing revisions.
+  const existingIdx = projects.findIndex(
+    p => (p.name || '').trim().toLowerCase() === label.trim().toLowerCase()
+  );
+
+  if (existingIdx !== -1) {
+    const existing = projects[existingIdx];
+    const when = existing.lastSaved
+      ? new Date(existing.lastSaved).toLocaleString()
+      : 'unknown date';
+
+    const replace = confirm(
+      `A project named "${label}" already exists.\n` +
+      `Last saved: ${when}\n\n` +
+      `OK  — Replace it with the imported file\n` +
+      `Cancel — Keep both (import as a separate copy)`
+    );
+
+    if (replace) {
+      projects[existingIdx] = {
+        ...existing,
+        name:      label,
+        lastSaved: Date.now(),
+        state,
+      };
+      _saveProjects(projects);
+      return { id: existing.id, label };
+    }
+
+    // Keep both: disambiguate the new one so the sidebar stays readable
+    let n = 2;
+    const taken = new Set(projects.map(p => (p.name || '').trim().toLowerCase()));
+    while (taken.has(`${label} (${n})`.toLowerCase())) n++;
+    label = `${label} (${n})`;
   }
 
   const project = { id, name: label, created: Date.now(), lastSaved: Date.now(), state };
@@ -291,14 +333,25 @@ export function getActiveProjectId() {
  */
 export function deleteActiveProject() {
   const id = _getActive();
+  let remaining = _loadProjects();
+
   if (id) {
-    let projects = _loadProjects();
-    projects = projects.filter(p => p.id !== id);
-    _saveProjects(projects);
+    remaining = remaining.filter(p => p.id !== id);
+    _saveProjects(remaining);
     _setActive(null);
   }
   renderProjectsSidebar();
-  showWelcomeOverlay();
+
+  // Only block the screen with the welcome overlay when there is
+  // genuinely nothing to return to. If other projects are still in the
+  // sidebar, the user's next step is to pick one — an overlay telling
+  // them to "create your first project" would be both wrong and in the
+  // way. The sidebar already shows the available options.
+  if (remaining.length === 0) {
+    showWelcomeOverlay();
+  } else {
+    showStatus('Workspace cleared. Select a project from the sidebar to continue.', 'success');
+  }
 }
 
 /**
