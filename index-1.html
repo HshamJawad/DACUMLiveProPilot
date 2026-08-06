@@ -1,0 +1,2964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>DACUM Live Pro</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="DACUM Pro">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- ── PWA install-prompt early capture ──────────────────────
+         `beforeinstallprompt` fires ONCE and is not replayed. It can
+         fire before dacum-fixes.js (loaded at the end of <body>) has
+         had a chance to attach its listener — in which case the event
+         is lost forever and the Install button never appears.
+         This stub runs in <head>, before anything else, and parks the
+         event on window.__dacumInstallPrompt. dacum-fixes.js picks it
+         up from there, so the timing race can no longer lose it. -->
+    <script>
+      (function () {
+        window.__dacumInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', function (e) {
+          e.preventDefault();
+          window.__dacumInstallPrompt = e;
+          console.log('[PWA] beforeinstallprompt captured early.');
+          // Let the late-loading handler know, whenever it arrives.
+          window.dispatchEvent(new CustomEvent('dacum-install-available'));
+        });
+
+        window.addEventListener('appinstalled', function () {
+          window.__dacumInstallPrompt = null;
+        });
+
+        // ── Diagnostics: why is there no install button? ──────────
+        // Chrome only fires beforeinstallprompt when EVERY installability
+        // criterion is met. When it doesn't fire, the cause is almost
+        // always the manifest, not the page code — so surface it.
+        window.addEventListener('load', function () {
+          setTimeout(function () {
+            if (window.__dacumInstallPrompt) return;
+
+            var standalone = window.matchMedia('(display-mode: standalone)').matches ||
+                             window.navigator.standalone === true;
+            if (standalone) {
+              console.log('[PWA] Already installed — no install prompt expected.');
+              return;
+            }
+
+            console.log('[PWA] No install prompt yet. Checking criteria…');
+            console.log('[PWA] • HTTPS/localhost:', location.protocol === 'https:' ||
+                        location.hostname === 'localhost');
+            console.log('[PWA] • Service worker controlling:',
+                        !!(navigator.serviceWorker && navigator.serviceWorker.controller));
+
+            fetch('manifest.json', { cache: 'no-store' })
+              .then(function (r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+              })
+              .then(function (m) {
+                var icons = m.icons || [];
+                var sizes = icons.map(function (i) { return i.sizes; }).join(', ');
+                var has192 = icons.some(function (i) { return /(^|\s)192x192(\s|$)/.test(i.sizes || ''); });
+                var has512 = icons.some(function (i) { return /(^|\s)512x512(\s|$)/.test(i.sizes || ''); });
+                console.log('[PWA] • manifest.json loaded OK');
+                console.log('[PWA]   – name:', m.name || '(MISSING)');
+                console.log('[PWA]   – short_name:', m.short_name || '(MISSING)');
+                console.log('[PWA]   – start_url:', m.start_url || '(MISSING)');
+                console.log('[PWA]   – display:', m.display || '(MISSING — needs standalone/fullscreen/minimal-ui)');
+                console.log('[PWA]   – icons:', sizes || '(NONE)');
+                if (!has192) console.warn('[PWA]   ⚠ missing a 192x192 icon');
+                if (!has512) console.warn('[PWA]   ⚠ missing a 512x512 icon');
+                if (!m.display || ['standalone','fullscreen','minimal-ui'].indexOf(m.display) === -1) {
+                  console.warn('[PWA]   ⚠ display must be standalone, fullscreen or minimal-ui');
+                }
+              })
+              .catch(function (err) {
+                console.warn('[PWA] ⚠ manifest.json could not be loaded:', err.message,
+                             '— this alone prevents installation.');
+              });
+          }, 3000);
+        });
+      })();
+    </script>
+
+    <!-- Service Worker v13 -->
+    <script>
+    (function () {
+      if (!('serviceWorker' in navigator)) return;
+
+      // Must match CACHE_VERSION in sw.js
+      var EXPECTED_SW = 'v13';
+
+      // ── Human-readable build identity (shown in the toolbar) ──
+      // Bump these together with EXPECTED_SW / CACHE_VERSION on every
+      // release, so a trainer can read the running build off the
+      // screen instead of digging through DevTools.
+      var APP_VERSION = '3.7';
+      var APP_RELEASED = '2026-08-03';
+
+      // Per-version reload guard — prevents infinite refresh loops
+      var _reloadPrefix = 'dacum_sw_v_';
+      var _minInterval  = 20000;
+
+      function _canReload(v) {
+        try {
+          var last = parseInt(sessionStorage.getItem(_reloadPrefix + v) || '0', 10);
+          return (Date.now() - last) > _minInterval;
+        } catch (e) { return true; }
+      }
+      function _markReload(v) {
+        try { sessionStorage.setItem(_reloadPrefix + v, String(Date.now())); } catch (e) {}
+      }
+
+      // ── Version badge in the toolbar ─────────────────────────
+      // Also fills the Help-tab footer from the SAME constant, so the
+      // two can never drift apart again — bumping APP_VERSION alone
+      // now updates both places.
+      function _paintVersionBadge() {
+        var foot = document.getElementById('dacumFooterVersion');
+        if (foot) foot.textContent = APP_VERSION;
+
+        var badge = document.getElementById('dacumVersionBadge');
+        var text  = document.getElementById('dacumVersionText');
+        if (!badge || !text) return;
+        text.textContent = 'v' + APP_VERSION;
+        badge.title = 'DACUM Live Pro v' + APP_VERSION +
+                      '  ·  released ' + APP_RELEASED +
+                      '  ·  cache ' + EXPECTED_SW;
+      }
+
+      // Flip the badge into an actionable "update available" chip.
+      function _markBadgeUpdatable(version, onApply) {
+        var badge = document.getElementById('dacumVersionBadge');
+        var text  = document.getElementById('dacumVersionText');
+        if (!badge || !text) return;
+        badge.classList.add('dacum-version-update');
+        text.textContent = 'Update';
+        badge.title = 'A newer version is ready — click to update now.' +
+                      '  (currently running v' + APP_VERSION + ')';
+        badge.onclick = onApply;
+      }
+
+      // ── Update prompt ────────────────────────────────────────
+      // NOTE: this deliberately does NOT reload on its own.
+      // In a live DACUM workshop the facilitator is often mid-typing
+      // with participants watching; a surprise refresh at that moment
+      // is far more costly than running one build behind for another
+      // few minutes. So the new worker is already installed and
+      // waiting — we just offer the switch and let the user pick the
+      // moment. Dismissing leaves the "Update" chip in the toolbar,
+      // so the offer is never actually lost.
+      function _showUpdatePrompt(version) {
+        if (document.getElementById('_dacumSwToast')) return;
+
+        var s = document.createElement('style');
+        s.textContent =
+          '@keyframes _swtin{from{opacity:0;transform:translateX(-50%) translateY(18px)}' +
+          'to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+        document.head.appendChild(s);
+
+        var t = document.createElement('div');
+        t.id = '_dacumSwToast';
+        t.style.cssText =
+          'position:fixed;bottom:18px;left:50%;transform:translateX(-50%);' +
+          'background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;' +
+          'padding:11px 14px 11px 18px;border-radius:12px;font-size:0.84em;font-weight:600;' +
+          'font-family:inherit;box-shadow:0 4px 20px rgba(102,126,234,0.55);' +
+          'z-index:2147483647;display:flex;align-items:center;gap:12px;' +
+          'white-space:nowrap;animation:_swtin 0.3s cubic-bezier(.16,1,.3,1);';
+
+        t.innerHTML =
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+          ' stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<polyline points="23 4 23 10 17 10"/>' +
+          '<path d="M20.49 15a9 9 0 1 1-.07-8.4"/></svg>' +
+          '<span>A new version is available.</span>' +
+          '<button id="_dacumSwApply" style="background:#fff;color:#4338ca;border:none;' +
+          'border-radius:8px;padding:6px 13px;font-size:0.95em;font-weight:700;' +
+          'cursor:pointer;font-family:inherit;">Update now</button>' +
+          '<button id="_dacumSwLater" style="background:transparent;color:rgba(255,255,255,0.85);' +
+          'border:none;padding:6px 4px;font-size:0.95em;font-weight:600;' +
+          'cursor:pointer;font-family:inherit;text-decoration:underline;">Later</button>';
+
+        document.body.appendChild(t);
+
+        function _apply() {
+          if (!_canReload(version)) { console.log('[PWA] reload suppressed', version); return; }
+          _markReload(version);
+          var btn = document.getElementById('_dacumSwApply');
+          if (btn) { btn.textContent = 'Updating…'; btn.disabled = true; }
+          setTimeout(function () { window.location.reload(true); }, 400);
+        }
+
+        document.getElementById('_dacumSwApply').addEventListener('click', _apply);
+        document.getElementById('_dacumSwLater').addEventListener('click', function () {
+          t.remove();
+        });
+
+        // Keep the offer reachable from the toolbar after dismissal.
+        _markBadgeUpdatable(version, _apply);
+      }
+
+      _paintVersionBadge();
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _paintVersionBadge);
+      }
+
+      // SW sends SW_UPDATED after activate
+      navigator.serviceWorker.addEventListener('message', function (e) {
+        if (!e.data) return;
+
+        // ── SW_UPDATED — offer the switch, don't force it ────────
+        if (e.data.type === 'SW_UPDATED') {
+          console.log('[APP] New version detected:', e.data.version);
+          _showUpdatePrompt(e.data.version);
+        }
+
+        // Version query response — if controller is stale, force update
+        if (e.data.type === 'VERSION_REPLY' && e.data.version !== EXPECTED_SW) {
+          console.log('[PWA] Stale SW detected (' + e.data.version + '), triggering update');
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.getRegistration().then(function (reg) { if (reg) reg.update(); });
+          }
+        }
+      });
+
+      // controllerchange fallback (fires when new SW takes control).
+      // Also non-forcing now: if the user already clicked "Update now"
+      // we're mid-reload anyway; otherwise this is the only signal we
+      // get on some browsers, so surface the offer here too.
+      var _ctrl = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (_ctrl) return; _ctrl = true;
+        _showUpdatePrompt('ctrl-' + EXPECTED_SW);
+      });
+
+      // Register
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register(
+          './sw.js',
+          { updateViaCache: 'none' }
+        ).then(function (reg) {
+          console.log('[PWA] Registered', reg.scope);
+
+          // ── TASK 3: Debug log ────────────────────────────────
+          console.log('[APP] SW controller:', navigator.serviceWorker.controller);
+
+          // ── TASK 2: Ensure page is controlled by SW ──────────
+          // If not yet controlled (first install or SW was cleared),
+          // reload once so the SW can intercept all requests.
+          navigator.serviceWorker.ready.then(function () {
+            if (!navigator.serviceWorker.controller) {
+              console.log('[APP] Not controlled by SW — reloading...');
+              window.location.reload();
+            }
+          });
+
+          // Immediate update check + every 30 s
+          reg.update();
+          setInterval(function () { reg.update(); }, 30000);
+
+          // Handle already-waiting SW
+          if (reg.waiting) {
+            console.log('[PWA] SW waiting — SKIP_WAITING');
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+
+          reg.addEventListener('updatefound', function () {
+            var nw = reg.installing;
+            if (!nw) return;
+            nw.addEventListener('statechange', function () {
+              if (nw.state === 'installed') {
+                console.log('[PWA] SW installed — SKIP_WAITING');
+                nw.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+
+          // Ask running SW its version — if stale, force update
+          if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
+          }
+
+        }).catch(function (err) { console.warn('[PWA] SW failed:', err); });
+      });
+    })();
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+    <link rel="stylesheet" href="dacum-styles.css">
+    <link rel="stylesheet" href="dacum-responsive.css">
+    <link rel="stylesheet" href="dacum-fixes.css">
+    <link rel="stylesheet" href="dacum-typography.css">
+    <style>
+      /* ── Top-toolbar sidebar toggle: hidden on desktop,
+            shown on mobile via dacum-mobile.js injected CSS  ── */
+      #btnSidebarToggle { display: none; }
+
+      /* ── Fully-hidden sidebar state (force-hide keeps 0px, not 68px) ── */
+      #dacumProjectsSidebar.dps-force-hidden {
+        width: 0 !important;
+        overflow: hidden !important;
+        box-shadow: none !important;
+        min-width: 0 !important;
+      }
+      #dacumAppWrapper.dps-force-hidden-wrapper > .container {
+        margin-left: 0 !important;
+      }
+
+      /* Mobile overlay */
+      @media (max-width: 900px) {
+        #dacumProjectsSidebar {
+          position: fixed !important;
+          top: 60px !important;
+          left: 0 !important;
+          height: calc(100vh - 60px) !important;
+          width: 260px !important;
+          transform: translateX(-100%);
+          transition: transform 0.28s cubic-bezier(.4,0,.2,1) !important;
+          z-index: 500 !important;
+          box-shadow: none !important;
+        }
+        #dacumProjectsSidebar.dps-mobile-open {
+          transform: translateX(0) !important;
+          box-shadow: 2px 0 24px rgba(0,0,0,0.3) !important;
+        }
+        #dacumProjectsSidebar.dps-force-hidden {
+          transform: translateX(-100%) !important;
+          width: 260px !important;
+        }
+        #dacumAppWrapper > .container,
+        #dacumAppWrapper.dps-force-hidden-wrapper > .container {
+          margin-left: 0 !important;
+        }
+      }
+
+      @keyframes refine-fade-in {
+        from { opacity:0; transform:translateY(-6px); }
+        to   { opacity:1; transform:translateY(0); }
+      }
+
+      /* ── Drag & Drop (Card View only) ─────────────────────── */
+      .drag-ghost    { opacity: 0.35; outline: 2px dashed #667eea; background: #eef2ff !important; }
+      .drag-chosen   { transform: scale(1.03); box-shadow: 0 8px 22px rgba(102,126,234,0.25); z-index: 5; }
+      .drag-dragging { opacity: 0.85; cursor: grabbing !important; }
+      .card-view-mode .dcv-task-card            { cursor: grab; transition: transform 0.15s, box-shadow 0.15s; }
+      .card-view-mode .dcv-task-card:active     { cursor: grabbing; }
+      .card-view-mode .dcv-task-card .dcv-task-input { cursor: text; }
+      .card-view-mode .dcv-task-card .dcv-close-btn  { cursor: pointer; }
+
+      /* Post-drop flash (no animation, auto-removed after 1.5s) */
+      .task-moved-highlight {
+        background-color: rgba(102, 126, 234, 0.15) !important;
+        border: 1px solid #667eea !important;
+      }
+
+      /* ── Refine Results: persistent summary card ─────────── */
+      #refineSummaryCard {
+        position: relative;
+        margin-top: 10px;
+        padding: 14px 42px 14px 18px;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        border: 1.5px solid #10b981;
+        border-radius: 10px;
+        color: #065f46;
+        font-size: 0.88em;
+        line-height: 1.55;
+        animation: refine-fade-in 0.35s ease;
+      }
+      .refine-summary-close {
+        position: absolute;
+        top: 6px; right: 10px;
+        background: transparent;
+        border: none;
+        font-size: 1.3em;
+        color: #065f46;
+        cursor: pointer;
+        opacity: 0.55;
+        line-height: 1;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: opacity 0.15s, background 0.15s;
+      }
+      .refine-summary-close:hover { opacity: 1; background: rgba(16,185,129,0.18); }
+      .refine-summary-icon  { font-size: 1.25em; margin-bottom: 2px; }
+      .refine-summary-title { font-weight: 700; margin-bottom: 6px; font-size: 1em; color: #064e3b; }
+      .refine-summary-body  { color: #065f46; }
+      .refine-summary-list  { margin: 4px 0 8px 22px; padding: 0; line-height: 1.75; color: #047857; }
+      .refine-summary-list li { margin: 0; }
+      .refine-summary-hint  { margin-top: 8px; color: #065f46; font-size: 0.92em; }
+      .refine-summary-undo  { margin-top: 8px; font-size: 0.85em; color: #047857; }
+      .refine-summary-undo kbd {
+        background: #ffffff;
+        border: 1px solid #a7f3d0;
+        border-radius: 4px;
+        padding: 1px 6px;
+        font-family: inherit;
+        font-size: 0.88em;
+        color: #065f46;
+        margin: 0 1px;
+      }
+
+      /* ── Version badge (toolbar, far right) ────────────────────
+         Quiet by default — it's reference information, not an action.
+         Gains an amber pulse only when a new build is waiting, at
+         which point clicking it applies the update. */
+      #dacumVersionBadge {
+        display: inline-flex;
+        align-items: center;
+        height: 26px;
+        padding: 0 9px;
+        margin-right: 4px;
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+        border-radius: 99px;
+        font-size: 0.72em;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        font-family: inherit;
+        cursor: default;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+      }
+      #dacumVersionBadge:hover { background: #e2e8f0; color: #475569; }
+
+      #dacumVersionBadge.dacum-version-update {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #ffffff;
+        border-color: #d97706;
+        cursor: pointer;
+        animation: dacum-version-pulse 2s ease-in-out infinite;
+      }
+      #dacumVersionBadge.dacum-version-update:hover {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: #ffffff;
+      }
+      @keyframes dacum-version-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.55); }
+        50%      { box-shadow: 0 0 0 5px rgba(245,158,11,0); }
+      }
+
+      /* Phones: the toolbar is tight — keep the badge only when it
+         actually needs attention. */
+      @media (max-width: 700px) {
+        #dacumVersionBadge:not(.dacum-version-update) { display: none; }
+      }
+
+      /* The wall is a presentation surface — no build chrome on it. */
+      body.wall-view-active #dacumVersionBadge { display: none !important; }
+
+      /* ── Tab header row ────────────────────────────────────────
+         Title on one side, "Clear This Tab" on the other, aligned on
+         the same baseline. Replaces the old layout where the button
+         sat in its own block ABOVE the heading, which pushed the page
+         title out of first position. Used by Chart Info, Duties &
+         Tasks, and Additional Information. */
+      .tab-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .tab-header-row h2 {
+        margin: 0;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      .tab-header-row [data-action="clear-tab"] {
+        flex: 0 0 auto;
+      }
+
+      /* Phones: the title needs the full width, so the button drops
+         below it and stretches — easier to hit than a cramped chip. */
+      @media (max-width: 600px) {
+        .tab-header-row {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+        }
+        .tab-header-row [data-action="clear-tab"] {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      /* ── Inline "?" help button beside a tab title ─────────────
+         Sits with the heading in the left half of .tab-header-row so
+         the row's space-between still pushes "Clear This Tab" to the
+         far side. */
+      .tab-title-with-help {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+      .tab-title-with-help h2 { margin: 0; }
+
+      .tab-help-btn {
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #e0e7ff;
+        color: #4338ca;
+        border: 1px solid #c7d2fe;
+        font-size: 0.82em;
+        font-weight: 800;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s, transform 0.12s;
+      }
+      .tab-help-btn:hover {
+        background: #4f46e5;
+        color: #ffffff;
+        border-color: #4f46e5;
+        transform: scale(1.1);
+      }
+      .tab-help-btn:active { transform: scale(0.95); }
+
+      /* Section-level (h3) header row — same title-left / action-right
+         arrangement as .tab-header-row, but scoped to a card inside a
+         tab rather than the tab heading itself. */
+      .section-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 15px;
+      }
+      .section-header-row h3 { margin: 0; }
+
+      /* Cluster card section heading + inline "?" help button */
+      .cluster-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+      .cluster-section-header h4 { margin: 0; }
+
+      /* "← Back to …" step-navigation button. Deliberately neutral
+         rather than coloured: it's a wayfinding control, not the
+         primary action of the tab. */
+      .btn-back-step {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 0.88em;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+      }
+      .btn-back-step:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+        border-color: #94a3b8;
+      }
+
+      /* Step navigation footer: back on the left, proceed on the right.
+         Matches the 30px top margin the plain right-aligned "Proceed"
+         blocks use on the other tabs, so the rhythm stays consistent. */
+      .step-nav-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 600px) {
+        .step-nav-row {
+          flex-direction: column-reverse;   /* proceed stays on top */
+          align-items: stretch;
+        }
+        .step-nav-row button {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      /* ══════════════════════════════════════════════════════════
+         ROUND ICON BUTTONS — keep them round
+         ──────────────────────────────────────────────────────────
+         base.css styles EVERY <button> with `padding: 12px 24px`, and
+         dacum-responsive.css re-pads toolbar buttons to `7px 10px` on
+         phones. Both are asymmetric, and with the global
+         `box-sizing: border-box` a 22x22 button whose padding exceeds
+         its box gets pushed outward — more vertically than
+         horizontally, because the flex row it sits in also lets it
+         shrink sideways. The result is the vertical ellipse seen on
+         mobile instead of a circle.
+
+         Fixing it needs three things together: zero the padding, pin
+         min-* to the same value as width/height so nothing can grow
+         it, and forbid flex shrinking so nothing can squeeze it. */
+      /* THE ACTUAL CAUSE on phones:
+         dacum-responsive.css applies `min-height: 44px` to every
+         <button> under `@media (hover:none) and (pointer:coarse)` — an
+         accessibility touch-target rule. It sets a minimum HEIGHT only,
+         with no matching width, so a 22x22 round button is stretched to
+         22x44: a vertical ellipse. This is why the problem appears on
+         mobile and never on desktop.
+         Overriding min-height is therefore mandatory, not optional.
+
+         The touch target is not lost: the buttons stay visually small
+         but are given an invisible tap area via a ::before overlay, so
+         they remain comfortable to hit while looking round. */
+      .dcv-close-btn,
+      .dcv-add-btn,
+      .tab-help-btn {
+        padding: 0 !important;
+        flex: 0 0 auto !important;
+        box-sizing: border-box !important;
+        aspect-ratio: 1 / 1;
+        position: relative;
+      }
+
+      @media (hover: none) and (pointer: coarse) {
+        .dcv-close-btn,
+        .dcv-add-btn,
+        .tab-help-btn,
+        #dacumTopToolbar .dtb-lens,
+        #dacumTopToolbar .dtb-hamburger,
+        #dacumTopToolbar .dtb-undo,
+        #dacumTopToolbar .dtb-redo {
+          min-height: 0 !important;
+        }
+
+        /* Restore a 44px tap target without changing the drawn size. */
+        .dcv-close-btn::before,
+        .dcv-add-btn::before,
+        .tab-help-btn::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 44px;
+          height: 44px;
+        }
+      }
+
+      .tab-help-btn {
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+        max-width: 24px;
+        max-height: 24px;
+      }
+
+      .card-view-mode .dcv-close-btn,
+      .table-view-mode .dcv-close-btn {
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
+        /* !important is required: the coarse-pointer rule in
+           dacum-responsive.css also uses a plain declaration, but it is
+           more specific by media context on phones. */
+        min-height: 22px !important;
+        max-width: 22px;
+        max-height: 22px;
+        border-radius: 50% !important;
+        line-height: 1 !important;
+        font-size: 12px !important;
+      }
+
+      /* Toolbar icon buttons: same inherited-padding problem, same fix.
+         Only the icon-only variants are constrained — buttons that
+         still show a text label must stay free to size to their text. */
+      #dacumTopToolbar .dtb-lens,
+      #dacumTopToolbar .dtb-hamburger,
+      #dacumTopToolbar .dtb-undo,
+      #dacumTopToolbar .dtb-redo {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        padding: 0 !important;
+        flex: 0 0 auto !important;
+        box-sizing: border-box !important;
+        aspect-ratio: 1 / 1;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        line-height: 1 !important;
+      }
+
+      @media (max-width: 600px) {
+        #dacumTopToolbar .dtb-lens,
+        #dacumTopToolbar .dtb-hamburger,
+        #dacumTopToolbar .dtb-undo,
+        #dacumTopToolbar .dtb-redo {
+          width: 34px !important;
+          height: 34px !important;
+          min-width: 34px !important;
+          min-height: 34px !important;
+        }
+      }
+
+      /* Post-refine flash on changed duties/tasks (2.5s) */
+      .refined-highlight {
+        background-color: rgba(16, 185, 129, 0.15) !important;
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
+      }
+
+      /* ══════════════════════════════════════════════════════════
+         SHARED CARD HEADER  (Card View + Wall View)
+         Adapted from DACUM Lite's .cv-duty-card-top /
+         .cv-task-card-top: drag handle + label on the left, action
+         buttons on the right, all INSIDE the card. Replaces the old
+         approach of absolutely positioning the handle over the label
+         and hanging the ✕ off the card corner — that needed
+         padding-left / padding-top spacing hacks and still got
+         clipped inside overflow:hidden ancestors.
+         ══════════════════════════════════════════════════════════ */
+      .dcv-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+        flex-shrink: 0;
+        /* Never let the header push past the card's own width — if it
+           does, the label and buttons spill over the textarea below
+           and hide the task text. */
+        max-width: 100%;
+        overflow: hidden;
+      }
+      .dcv-card-top-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        overflow: hidden;
+      }
+      .dcv-card-top-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+
+      /* Labels sit inline in the header now, so the padding-right
+         dacum-styles.css reserves for the old floating ✕ is dead
+         space — and the bottom margin is owned by .dcv-card-top. */
+      .dcv-card-top .dcv-duty-label,
+      .dcv-card-top .dcv-task-label {
+        margin: 0;
+        padding-right: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* ── Drag handles — inline dot-grid, both views ─────────── */
+      .dcv-duty-drag-handle,
+      .dcv-task-drag-handle {
+        display: inline-flex;
+        position: static;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        flex-shrink: 0;
+        padding: 0;
+        background: none;
+        cursor: grab;
+        user-select: none;
+        transition: color 0.15s;
+      }
+      .dcv-duty-drag-handle:active,
+      .dcv-task-drag-handle:active { cursor: grabbing; }
+
+      /* Card View tones (blue duty card / yellow task card) */
+      .card-view-mode .dcv-duty-drag-handle       { color: rgba(30,64,175,0.40); }
+      .card-view-mode .dcv-duty-drag-handle:hover { color: rgba(30,64,175,0.75); }
+      .card-view-mode .dcv-task-drag-handle       { color: rgba(133,77,14,0.40); }
+      .card-view-mode .dcv-task-drag-handle:hover { color: rgba(133,77,14,0.75); }
+
+      /* ── ✕ close button — inline, not floating ─────────────────
+         Neutralises dacum-styles.css's
+         `.dcv-close-btn { position:absolute; top:-8px; right:-8px }`
+         for both views. Stays a small red circle (Lite keeps the
+         circular delete too) — it just lives in the header row. */
+      .card-view-mode .dcv-close-btn,
+      .wall-view-mode .dcv-close-btn {
+        position: static !important;
+        top: auto !important;
+        right: auto !important;
+        /* z-index only has effect on positioned elements, but clear it
+           anyway so a stale/partially-cached stylesheet can't leave the
+           button floating above the sticky duty card. */
+        z-index: auto !important;
+        flex-shrink: 0;
+      }
+      .card-view-mode .dcv-close-btn {
+        width: 20px;
+        height: 20px;
+        min-width: 20px;
+        border: none;
+        font-size: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+      }
+
+      /* ── ＋ add button — Wall View only (Card View uses the
+         inline "＋ Task" pill at the end of the strip instead) ── */
+      .dcv-add-btn { display: none; }
+
+      /* ══════════════════════════════════════════════════════════
+         CARD VIEW LAYOUT — DACUM Lite structure, Pro colours
+         ──────────────────────────────────────────────────────────
+         Three changes adapted from Lite's .cv-duty-row model:
+           1. The ROW is the single horizontal scroller (was: the
+              task strip scrolled on its own inside a static row).
+           2. The duty card is `position:sticky; left:0`, so it stays
+              pinned in view while the tasks scroll past it — you
+              never lose track of which duty you're reading. This
+              only works because the duty card is a direct child of
+              the scrolling element, which the existing DOM already
+              satisfies.
+           3. The row reads as one continuous surface: soft grey bed,
+              rounded outer corners, duty card squared off on its
+              right edge so it merges into the strip.
+         Colours deliberately unchanged — same blue/yellow gradients
+         from dacum-styles.css. Structure only.
+         The .dcv-tasks-scroll element is kept (with overflow now
+         visible) rather than removed, because drag_drop.js wires its
+         task-level Sortable to that exact selector.
+         ══════════════════════════════════════════════════════════ */
+
+      #dutiesContainer.card-view-mode {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .card-view-mode .dcv-row {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        padding: 0;
+        border-bottom: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+        background: #f8fafc;
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        scrollbar-width: thin;
+        scrollbar-color: #93c5fd #e0f2fe;
+      }
+      .card-view-mode .dcv-row::-webkit-scrollbar       { height: 6px; }
+      .card-view-mode .dcv-row::-webkit-scrollbar-track { background: #e0f2fe; border-radius: 4px; }
+      .card-view-mode .dcv-row::-webkit-scrollbar-thumb { background: #60a5fa; border-radius: 4px; }
+
+      /* Duty card pinned to the left edge while tasks scroll.
+         z-index must beat dacum-styles.css's `.dcv-close-btn
+         { z-index: 20 }` — otherwise a task card's ✕ paints THROUGH
+         the sticky duty card as the strip scrolls underneath it
+         (the card body itself is fine at any z-index, but a
+         positioned descendant with a higher one is not). 30 clears
+         it with room to spare. */
+      .card-view-mode .dcv-duty-card {
+        position: sticky;
+        left: 0;
+        z-index: 30;
+        padding: 10px 12px 12px;
+        border-radius: 14px 0 0 14px;
+        border-right-width: 2px;
+      }
+
+      /* The strip: parent row owns the scrolling now */
+      .card-view-mode .dcv-tasks-area {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        overflow: visible;
+        margin-left: 0;
+      }
+      .card-view-mode .dcv-tasks-scroll {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px 12px;
+        flex: 1;
+        min-width: 0;
+        overflow: visible;
+      }
+
+      /* "＋ Task" — inline green pill at the end of the strip
+         (Lite's .cv-add-task), vertically centred beside the cards */
+      .card-view-mode .dcv-add-task-btn {
+        align-self: center;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        background: #10b981;
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 0.85em;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(16,185,129,0.22);
+        transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      }
+      .card-view-mode .dcv-add-task-btn:hover {
+        background: #059669;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16,185,129,0.32);
+      }
+
+      /* ── Mobile (≤768px) ──────────────────────────────────────
+         dacum-responsive.css stacks .dcv-row vertically with
+         !important at this breakpoint (duty card on top, tasks
+         below). A vertical row can't be a horizontal scroller and
+         sticky-left is meaningless there, so hand scrolling back to
+         the task strip — i.e. the original pre-Lite behaviour, which
+         is the right shape for a stacked phone layout. */
+      @media (max-width: 768px) {
+        .card-view-mode .dcv-row {
+          overflow-x: hidden;
+          background: transparent;
+          box-shadow: none;
+          border-radius: 0;
+        }
+        .card-view-mode .dcv-duty-card {
+          position: static;
+          border-radius: 14px;
+        }
+        .card-view-mode .dcv-tasks-scroll {
+          overflow-x: auto;
+          padding: 10px 2px;
+          scrollbar-width: thin;
+          scrollbar-color: #93c5fd #e0f2fe;
+        }
+      }
+
+      /* Duty-level drag visual feedback (blue tone, matches task drag) */
+      .duty-drag-ghost    { opacity: 0.35; outline: 2px dashed #667eea; background: #eef2ff !important; border-radius: 12px; }
+      .duty-drag-chosen   { transform: scale(1.015); box-shadow: 0 10px 30px rgba(102,126,234,0.28); z-index: 6; }
+      .duty-drag-dragging { opacity: 0.9; cursor: grabbing !important; }
+
+      /* Post-drop flash on the moved duty card (1.5s) */
+      .duty-moved-highlight {
+        box-shadow: 0 0 0 2px #667eea, 0 6px 18px rgba(102,126,234,0.30) !important;
+        outline: none !important;
+      }
+
+      /* ══════════════════════════════════════════════════════════
+         Segmented view switch (Card / Table / Wall)
+         ══════════════════════════════════════════════════════════ */
+      .view-segmented {
+        display: inline-flex;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        padding: 3px;
+        gap: 2px;
+      }
+      .view-seg-btn {
+        background: transparent;
+        border: none;
+        padding: 7px 14px;
+        font-size: 0.88em;
+        font-weight: 600;
+        color: #475569;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+        white-space: nowrap;
+      }
+      .view-seg-btn:hover { background: rgba(102,126,234,0.08); color: #4338ca; }
+      .view-seg-btn.is-active {
+        background: #ffffff;
+        color: #4338ca;
+        box-shadow: 0 1px 3px rgba(15,23,42,0.14), 0 0 0 1px rgba(102,126,234,0.25);
+      }
+
+      /* ══════════════════════════════════════════════════════════
+         WALL VIEW — read-only DACUM workshop display
+         ══════════════════════════════════════════════════════════
+         - Default (not fullscreen): sidebar + top toolbar STAY visible.
+           The wall content sits to the right of the sidebar and fills
+           the remaining viewport.  User can still switch projects.
+         - Fullscreen: sidebar + top toolbar + all tabs HIDE.  Only the
+           wall toolbar + rows remain.  Scrollbars appear on .wall-rows
+           when zoomed content overflows the viewport.
+         - Read-only: no editing inputs, no drag, no add/remove buttons.
+         ══════════════════════════════════════════════════════════ */
+
+      /* Break out of the container's max-width while Wall is active,
+         but DO NOT remove the sidebar margin — the sidebar stays. */
+      body.wall-view-active .container {
+        max-width: none !important;
+        width: auto !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        padding-top: 8px !important;
+      }
+
+      /* Collapse the residual whitespace above the toggle row.  In Wall
+         View the AI block, Clear-This-Tab, and Refine card are all
+         hidden, so we shrink the toggle row's own top margin too. */
+      body.wall-view-active #duties-tab {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+      }
+      body.wall-view-active #duties-tab > div:has(> .view-segmented) {
+        margin-top: 0 !important;
+        margin-bottom: 8px !important;
+      }
+
+      /* Hide non-Duties chrome inside the duties tab so the wall is clean,
+         but leave the sidebar + top toolbar alone for navigation.
+         NOTE: #btnAddDutyCard is intentionally NOT hidden here — Wall
+         View is interactive now (sticky-note redesign), so the floating
+         "＋ Add Duty" button stays visible, same as Card View. The
+         legacy table-view #btnAddDuty stays hidden either way. */
+      body.wall-view-active .tab-buttons,
+      body.wall-view-active .tab-content:not(#duties-tab),
+      body.wall-view-active #refineResultsSection,
+      body.wall-view-active #scopeMissingWarning,
+      body.wall-view-active #duties-tab > h2,
+      body.wall-view-active #duties-tab > [data-action="clear-tab"],
+      body.wall-view-active #duties-tab > div:has([data-action="clear-tab"]),
+      body.wall-view-active #duties-tab > div:has(> #aiGenerateBtn),
+      body.wall-view-active #btnAddDuty,
+      body.wall-view-active #duties-tab > div:last-child {
+        display: none !important;
+      }
+
+      /* Default custom-properties (overridden per render in JS) */
+      .wall-view-mode {
+        --wv-font:     13px;
+        --wv-card-w:   130px;
+        --wv-duty-w:   220px;
+        --wv-duty-h:   220px;   /* kept equal to --wv-duty-w by duties.js */
+        --wv-task-gap: 8px;
+
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      /* Toolbar — sticks to the top of the duties tab viewport */
+      .wall-toolbar {
+        position: sticky;
+        top: 60px;               /* below the 60px top app toolbar */
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 12px;
+        margin-bottom: 14px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+        flex-wrap: wrap;
+      }
+      .wall-toolbar .wv-left,
+      .wall-toolbar .wv-center,
+      .wall-toolbar .wv-right {
+        display: flex; align-items: center; gap: 6px;
+      }
+      .wall-toolbar .wv-btn {
+        background: #f8fafc;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 0.85em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.14s, border-color 0.14s, color 0.14s;
+        white-space: nowrap;
+      }
+      .wall-toolbar .wv-btn:hover { background:#eef2ff; border-color:#a5b4fc; color:#4338ca; }
+      .wall-toolbar .wv-btn-exit  {
+        background: #fef2f2; color: #991b1b; border-color: #fecaca;
+      }
+      .wall-toolbar .wv-btn-exit:hover { background:#fee2e2; border-color:#fca5a5; color:#7f1d1d; }
+      .wall-toolbar .wv-zoom-pct {
+        display: inline-block; min-width: 44px; text-align: center;
+        font-size: 0.85em; font-weight: 700; color: #475569;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Scrollable wrapper for rows — gives horizontal/vertical scrollbars
+         when zoomed content overflows.  Height is max so small content stays
+         top-aligned. */
+      .wall-rows-scroll {
+        width: 100%;
+        overflow: auto;
+        max-height: calc(100vh - 160px);   /* fits below toolbars */
+        border-radius: 8px;
+      }
+      .wall-rows {
+        display: flex;
+        flex-direction: column;
+        /* Was 10px on top of each .duty-row's own 20px card padding.
+           With the card removed the rows need to carry that separation
+           themselves, or duties run together on the wall. */
+        gap: 16px;
+        min-width: min-content;   /* ensures horizontal scroll when rows are wider than viewport */
+      }
+
+      /* ── Wall View sticky-note cards ───────────────────────────
+         Wall View renders the SAME .dcv-row / .dcv-duty-card /
+         .dcv-tasks-area / .dcv-tasks-scroll / .dcv-task-card /
+         .dcv-duty-drag-handle / .dcv-close-btn class names Card View
+         uses (see duties.js _makeWallDutyCard / _makeWallTaskCard),
+         so events.js delegation + drag_drop.js's SortableJS wiring
+         keep working unchanged. But the visual skin here is entirely
+         Wall-View-specific — indigo/cream sticky notes with an inline
+         header row (drag-dots + title on the left, small square ＋ / ✕
+         icon buttons on the right) — matching the reference "after"
+         screenshot, NOT Card View's own lighter gradient cards with
+         absolute floating circular buttons. Everything below is
+         scoped under .wall-view-mode, so Card View is never touched. */
+
+      /* ── Open layout: no box around the duty row ───────────────
+         dacum-styles.css wraps every .duty-row in a light-blue card
+         (background + 2px border + 20px padding). That reads fine in
+         the editing views, but on a projector or smartboard it wastes
+         a frame's worth of space per duty and boxes in what should
+         read as one continuous wall. Stripped here so the duty and its
+         notes sit directly on the surface. */
+      .wall-view-mode .duty-row {
+        background: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+      }
+
+      .wall-view-mode .dcv-row {
+        padding: 0;
+        border-bottom: none;
+        gap: var(--wv-task-gap);
+        /* align-items:flex-start, not stretch: a stretched duty card
+           grows to the height of the tallest task row and leaves the
+           dead space visible in the screenshot. Sizing it to its own
+           content lets the row close up. */
+        align-items: flex-start;
+      }
+
+      /* ── Header row: drag handle + title (left) ── ＋ / ✕ (right) ──
+         Tighter gaps than Card View — wall cards are ~132px wide, so
+         every pixel of horizontal room matters. */
+      .wall-view-mode .dcv-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        margin-bottom: calc(var(--wv-font) * 0.4);
+      }
+      .wall-view-mode .dcv-card-top-left {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        flex: 1 1 auto;
+        overflow: hidden;
+      }
+      .wall-view-mode .dcv-card-top-right {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        flex: 0 0 auto;
+      }
+
+      /* Drag handles — dot-grid SVG, inline in the header (not
+         absolutely positioned like Card View's duty handle).
+         `position: static !important` is essential: dacum-styles.css /
+         the Card View block above position these absolutely at
+         top:6px;left:8px, which would stack the dots ON TOP of the
+         "Duty A" / "Task A1" label instead of beside it. */
+      .wall-view-mode .dcv-duty-drag-handle,
+      .wall-view-mode .dcv-task-drag-handle {
+        display: inline-flex !important;
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        align-items: center;
+        justify-content: center;
+        width: calc(var(--wv-font) * 1.05);
+        min-width: 12px;
+        height: auto;
+        flex-shrink: 0;
+        padding: 0;
+        background: none !important;
+        border-radius: 0;
+        cursor: grab;
+        transition: color 0.15s, opacity 0.15s;
+      }
+      .wall-view-mode .dcv-duty-drag-handle:active,
+      .wall-view-mode .dcv-task-drag-handle:active { cursor: grabbing; }
+      .wall-view-mode .dcv-duty-drag-handle { color: rgba(255,255,255,0.55); }
+      .wall-view-mode .dcv-duty-drag-handle:hover { color: rgba(255,255,255,0.9); }
+      .wall-view-mode .dcv-task-drag-handle { color: rgba(79,70,229,0.32); }
+      .wall-view-mode .dcv-task-drag-handle:hover { color: rgba(79,70,229,0.62); }
+
+      .wall-view-mode .dcv-duty-label,
+      .wall-view-mode .dcv-task-label {
+        margin: 0;
+        /* dacum-styles.css reserves padding-right:20px on these labels
+           to clear the old floating ✕ — no longer needed now that the
+           buttons live in their own header column. */
+        padding-right: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        /* Was 0.82 — too small to read from the back of a room once
+           the auto-zoom shrinks --wv-font on a dense chart. */
+        font-size: calc(var(--wv-font) * 0.95);
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      /* Small square icon buttons — these fully replace Card View's
+         absolutely-positioned floating circular ✕ inside Wall View.
+         The !important flags neutralise dacum-styles.css's
+         `.dcv-close-btn { position:absolute; top:-8px; right:-8px;
+         border-radius:50% }`, which otherwise keeps rendering the old
+         red circle hanging off the card corner. */
+      .wall-view-mode .dcv-add-btn,
+      .wall-view-mode .dcv-close-btn {
+        display: flex !important;
+        position: static !important;
+        top: auto !important;
+        right: auto !important;
+        align-items: center;
+        justify-content: center;
+        width: calc(var(--wv-font) * 1.55);
+        height: calc(var(--wv-font) * 1.55);
+        /* 18px floor (was 22px): two buttons + gaps must still leave
+           room for the "Task A1" label inside a 132px card. */
+        min-width: 18px;
+        min-height: 18px;
+        border: none !important;
+        border-radius: 6px !important;
+        font-size: calc(var(--wv-font) * 0.85);
+        font-weight: 800;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: none !important;
+        padding: 0;
+        transition: filter 0.15s, transform 0.1s;
+      }
+      .wall-view-mode .dcv-add-btn:hover,
+      .wall-view-mode .dcv-close-btn:hover  { filter: brightness(1.08); transform: translateY(-1px); }
+      .wall-view-mode .dcv-add-btn:active,
+      .wall-view-mode .dcv-close-btn:active { transform: scale(0.94); }
+
+      /* Duty card (indigo bg) — light/translucent button skin */
+      .wall-view-mode .dcv-duty-card .dcv-add-btn   { background: rgba(255,255,255,0.20); color: #ffffff; }
+      .wall-view-mode .dcv-duty-card .dcv-close-btn { background: rgba(248,113,113,0.32); color: #fecaca; }
+
+      /* Task card (cream bg) — light lavender / light rose button skin */
+      .wall-view-mode .dcv-task-card .dcv-add-btn   { background: #e7e5f7; color: #4338ca; }
+      .wall-view-mode .dcv-task-card .dcv-close-btn { background: #fee2e2; color: #dc2626; }
+
+      /* ── Duty card — solid indigo gradient (matches the reference) ── */
+      .wall-view-mode .dcv-duty-card {
+        /* !important on width: dacum-responsive.css forces fixed
+           widths on .dcv-duty-card / .dcv-task-card at tablet & phone
+           breakpoints, which would override the --wv-* auto-zoom
+           sizing and break the wall layout on those screens. */
+        width: var(--wv-duty-w) !important;
+        min-width: var(--wv-duty-w) !important;
+        /* Square by default: --wv-duty-h is set to the same pixel value
+           as --wv-duty-w in duties.js, as a MIN-height rather than a
+           fixed one. So a short duty title gives a clean square block,
+           and a long one grows downward — naturally lining the card up
+           with a second row of task notes instead of leaving the gap
+           that a fixed height would force. */
+        min-height: var(--wv-duty-h, var(--wv-duty-w));
+        align-self: flex-start;
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 8px 10px 10px;
+        box-shadow: 0 2px 6px rgba(79,70,229,0.28);
+      }
+      .wall-view-mode .dcv-duty-label { color: #ffffff !important; }
+
+      /* Duty text on the indigo card.
+         dacum-typography.css sets `.dcv-duty-input { color:#1e3a8a
+         !important; font-weight:700 !important }` — dark navy on a dark
+         indigo card, which is what made the title hard to read. Both
+         have to be overridden with !important to win, and the size is
+         raised a little since the card is the anchor of the row. */
+      .wall-view-mode .dcv-duty-input {
+        font-size: calc(var(--wv-font) * 1.05) !important;
+        /* Fill whatever height the square leaves below the header, so
+           clicking anywhere in the card lands in the text field. */
+        flex: 1 1 auto;
+        min-height: calc(var(--wv-font) * 2.4);
+        resize: none;
+        padding: 4px 6px;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        font-style: normal;
+        text-shadow: 0 1px 2px rgba(30, 27, 75, 0.35);
+      }
+      .wall-view-mode .dcv-duty-input::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+        font-style: italic;
+      }
+      .wall-view-mode .dcv-duty-input::placeholder { color: rgba(255,255,255,0.55); }
+
+      /* Tasks wrap onto multiple lines within the row instead of
+         horizontally scrolling — keeps the "see the whole chart at
+         once" wall spirit while staying the same draggable strip
+         drag_drop.js already wires (Sortable works fine wrapped). */
+      .wall-view-mode .dcv-tasks-area  { overflow: visible; margin-left: var(--wv-task-gap); }
+      .wall-view-mode .dcv-tasks-scroll {
+        flex-wrap: wrap;
+        overflow: visible;
+        align-items: flex-start;
+        padding: 2px 2px 2px 0;
+        gap: var(--wv-task-gap);
+      }
+
+      /* ── Task card — pale cream sticky note (matches the reference) ── */
+      .wall-view-mode .dcv-task-card {
+        /* max() enforces a hard floor even when the user zooms out
+           manually with 🔍− (which multiplies --wv-card-w below the
+           auto-computed floor in _computeWallAutoZoom). Under ~130px
+           the header's handle + label + ＋/✕ chrome leaves no room
+           for the task text. */
+        width: max(var(--wv-card-w), 132px) !important;
+        min-width: max(var(--wv-card-w), 132px) !important;
+        min-height: 0;
+        align-self: flex-start;
+        background: #fffdf0;
+        border: 1px solid #fde68a;
+        border-radius: 8px;
+        padding: 6px 8px 7px;
+        box-shadow:
+          0 1px 2px rgba(161,98,7,0.10),
+          0 4px 8px rgba(161,98,7,0.06);
+        transition: transform 0.12s, box-shadow 0.12s;
+      }
+      .wall-view-mode .dcv-task-card:hover {
+        transform: translateY(-2px) rotate(-0.3deg);
+        box-shadow:
+          0 2px 4px rgba(161,98,7,0.18),
+          0 10px 18px rgba(161,98,7,0.14);
+        z-index: 1;
+      }
+      .wall-view-mode .dcv-task-label { color: #78350f; }
+      .wall-view-mode .dcv-task-input {
+        font-size: calc(var(--wv-font) * 1.05) !important;
+        min-height: calc(var(--wv-font) * 2.2);
+        padding: 3px 5px;
+        color: #422006 !important;
+        font-weight: 600 !important;
+        font-style: normal;
+      }
+      .wall-view-mode .dcv-task-input::placeholder { color: rgba(66,32,6,0.45); }
+
+      /* Cursor affordances, matching Card View's drag feel — drag
+         starts from the handle/card body, never from the ＋ / ✕
+         buttons or the textarea itself. */
+      .wall-view-mode .dcv-task-card                 { cursor: grab; }
+      .wall-view-mode .dcv-task-card:active           { cursor: grabbing; }
+      .wall-view-mode .dcv-task-card .dcv-task-input  { cursor: text; }
+
+      /* Empty-state */
+      .wall-empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+      }
+      .wall-empty-state .wall-empty-icon { font-size: 3.4em; opacity: 0.5; margin-bottom: 8px; }
+      .wall-empty-state h3 { margin: 8px 0; color: #334155; font-size: 1.25em; }
+      .wall-empty-state p  { margin: 0 0 18px; font-size: 0.95em; }
+      .wall-empty-state .wall-btn-primary {
+        background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+        color: #ffffff;
+        border: none;
+        padding: 10px 22px;
+        font-size: 0.95em;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(79,70,229,0.25);
+      }
+      .wall-empty-state .wall-btn-primary:hover { opacity: 0.92; }
+
+      /* Print-only header (hidden by default) */
+      .wall-print-header { display: none; }
+
+      /* ─── Responsive: stack duty card above tasks on narrow viewports ─── */
+      @media (max-width: 720px) {
+        .wall-view-mode { --wv-duty-w: 100%; }
+        .wall-view-mode .dcv-row { flex-direction: column; }
+        .wall-view-mode .dcv-duty-card {
+          width: 100%;
+          min-width: 0;
+          /* A square is meaningless once the card spans the full width
+             of a phone — let it hug its text again. */
+          min-height: 0;
+        }
+      }
+
+      /* ══════════════════════════════════════════════════════════
+         FULLSCREEN mode — strip everything except wall + toolbar
+         Scrollbars appear on .wall-rows-scroll when zoomed content
+         exceeds viewport, so the user can pan horizontally/vertically.
+         ══════════════════════════════════════════════════════════ */
+      :fullscreen body.wall-view-active #dacumTopToolbar,
+      :fullscreen body.wall-view-active #dacumProjectsSidebar,
+      :fullscreen body.wall-view-active .tab-buttons,
+      :fullscreen body.wall-view-active #refineResultsSection,
+      :fullscreen body.wall-view-active #scopeMissingWarning,
+      :fullscreen body.wall-view-active #dutiesViewHeading,
+      :fullscreen body.wall-view-active .view-segmented,
+      :fullscreen body.wall-view-active #btnToggleDutiesView,
+      :fullscreen body.wall-view-active #duties-tab > div:has([data-action="clear-tab"]),
+      :fullscreen body.wall-view-active [data-action="clear-tab"],
+      body.wall-view-fullscreen #dacumTopToolbar,
+      body.wall-view-fullscreen #dacumProjectsSidebar,
+      body.wall-view-fullscreen .tab-buttons,
+      body.wall-view-fullscreen #refineResultsSection,
+      body.wall-view-fullscreen #scopeMissingWarning,
+      body.wall-view-fullscreen #dutiesViewHeading,
+      body.wall-view-fullscreen .view-segmented,
+      body.wall-view-fullscreen #btnToggleDutiesView,
+      body.wall-view-fullscreen #duties-tab > div:has([data-action="clear-tab"]),
+      body.wall-view-fullscreen [data-action="clear-tab"] {
+        display: none !important;
+      }
+      /* Fullscreen: collapse all vertical spacing above the toolbar
+         so the wall content starts right at the top edge of the screen. */
+      :fullscreen body.wall-view-active,
+      body.wall-view-fullscreen {
+        margin: 0 !important;
+      }
+      :fullscreen body.wall-view-active #dacumAppWrapper,
+      body.wall-view-fullscreen #dacumAppWrapper {
+        margin-left: 0 !important;
+        padding: 0 !important;
+      }
+      :fullscreen body.wall-view-active .container,
+      body.wall-view-fullscreen .container {
+        margin: 0 !important;
+        padding: 6px !important;
+        padding-top: 0 !important;
+      }
+      :fullscreen body.wall-view-active #duties-tab,
+      body.wall-view-fullscreen #duties-tab {
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+      }
+      :fullscreen body.wall-view-active .wall-view-mode,
+      body.wall-view-fullscreen .wall-view-mode {
+        margin-top: 0 !important;
+      }
+      :fullscreen body.wall-view-active .wall-toolbar,
+      body.wall-view-fullscreen .wall-toolbar {
+        top: 0;            /* no 60px top bar anymore */
+        margin-top: 0;     /* sits flush with the top edge */
+        border-radius: 0 0 10px 10px;   /* only bottom corners rounded */
+      }
+      :fullscreen body.wall-view-active .wall-rows-scroll,
+      body.wall-view-fullscreen .wall-rows-scroll {
+        max-height: calc(100vh - 60px);
+      }
+
+      /* Smooth scrollbars (optional cosmetic) */
+      .wall-rows-scroll::-webkit-scrollbar        { width: 10px; height: 10px; }
+      .wall-rows-scroll::-webkit-scrollbar-thumb  { background: #cbd5e1; border-radius: 6px; }
+      .wall-rows-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+      /* ══════════════════════════════════════════════════════════
+         PRINT — Wall View only
+         ══════════════════════════════════════════════════════════ */
+      @media print {
+        /* ── Page margins ──────────────────────────────────────────
+           Declared ONCE, here. There used to be a second @page rule at
+           the end of this block that only set the footer counter;
+           re-declaring @page like that drops the margin in some
+           engines, which is why pages after the first printed with
+           cards flush against the paper edge. Margin and footer now
+           live in the same rule so they cannot come apart. */
+        @page {
+          margin: 12mm 10mm 14mm 10mm;
+          /* Browser date/title headers are user-controlled — user can
+             disable them in print dialog under "Headers and footers". */
+          @bottom-center {
+            content: "Page " counter(page) " of " counter(pages);
+            font-size: 9pt;
+            color: #64748b;
+          }
+        }
+
+        body.wall-view-active {
+          background: #ffffff !important;
+        }
+        /* Hide everything except the wall print header and rows */
+        body.wall-view-active #dacumTopToolbar,
+        body.wall-view-active #dacumProjectsSidebar,
+        body.wall-view-active .wall-toolbar,
+        body.wall-view-active .tab-buttons,
+        body.wall-view-active #dutiesViewHeading,
+        body.wall-view-active .view-segmented,
+        body.wall-view-active #btnToggleDutiesView,
+        body.wall-view-active [data-action="clear-tab"],
+        body.wall-view-active #btnAddDuty,
+        body.wall-view-active #btnAddDutyCard,
+        body.wall-view-active #refineResultsSection,
+        body.wall-view-active #scopeMissingWarning,
+        body.wall-view-active #aiGenerateBtn,
+        body.wall-view-active #duties-tab > div:has(> #aiGenerateBtn),
+        body.wall-view-active #duties-tab > div:first-of-type,
+        body.wall-view-active #duties-tab > div:last-child {
+          display: none !important;
+        }
+        body.wall-view-active .container,
+        body.wall-view-active #dacumAppWrapper,
+        body.wall-view-active #duties-tab {
+          margin: 0 !important; padding: 0 !important; box-shadow: none !important;
+        }
+
+        /* Belt and braces: an explicit inner margin on the rows
+           themselves. @page margins are honoured inconsistently across
+           browsers and print-to-PDF backends, so this guarantees white
+           space around the cards on EVERY page even where the page
+           margin is ignored — the symptom being cards printed hard
+           against the paper edge from page 2 onward. */
+        body.wall-view-active .wall-rows-scroll {
+          padding: 5mm !important;
+          box-sizing: border-box !important;
+        }
+        /* Never let a card sit across the fold. */
+        body.wall-view-active .duty-row {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        /* Print header (block-level, on first page only via CSS) */
+        body.wall-view-active .wall-print-header {
+          display: block !important;
+          text-align: center;
+          margin: 0 0 10mm 0;
+          padding-bottom: 4mm;
+          border-bottom: 1px solid #94a3b8;
+          page-break-after: avoid;
+          break-after: avoid;
+        }
+        body.wall-view-active .wall-print-header h1 {
+          font-size: 18pt;
+          font-weight: 700;
+          color: #1e293b;
+          margin: 0 0 3mm 0;
+        }
+        body.wall-view-active .wall-print-header p {
+          font-size: 11pt;
+          color: #475569;
+          margin: 0;
+        }
+        /* Rows: shrink and layout for print */
+        .wall-view-mode {
+          --wv-font:     10px;
+          --wv-card-w:   100px;
+          --wv-duty-w:   150px;
+          --wv-task-gap: 4px;
+        }
+        .wall-rows-scroll {
+          overflow: visible !important;
+          max-height: none !important;
+        }
+        body.wall-view-active .duty-row { page-break-inside: avoid; break-inside: avoid; }
+        body.wall-view-active .dcv-task-card {
+          box-shadow: none !important;
+          border: 1px solid #d6d3d1;
+          background: #fef9c3 !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        body.wall-view-active .dcv-duty-card {
+          box-shadow: none !important;
+          background: linear-gradient(145deg, #bfdbfe, #93c5fd) !important;
+          border-color: #60a5fa !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        /* Interactive controls have no place on a printed chart —
+           the wall's editing affordances (✕ remove, ＋ add, drag
+           handles) are screen-only. */
+        body.wall-view-active .dcv-close-btn,
+        body.wall-view-active .dcv-add-btn,
+        body.wall-view-active .dcv-duty-drag-handle,
+        body.wall-view-active .dcv-task-drag-handle,
+        body.wall-view-active #btnAddDutyCard {
+          display: none !important;
+        }
+        /* Textareas should read as plain printed text, not form fields */
+        body.wall-view-active .dcv-duty-input,
+        body.wall-view-active .dcv-task-input {
+          pointer-events: none;
+        }
+      }
+    </style>
+</head>
+<body>
+    <!-- ══ STALE CACHE GUARD ════════════════════════════════════
+         This inline script runs synchronously before any content
+         renders. It detects when the old cached HTML is served by
+         an outdated SW and forces a hard reload to get fresh HTML.
+         Key signals of OLD index.html:
+           • has <h1> with DACUM branding (removed in new version)
+           • .tabs div has no id (new version adds id="dacumMainTabsHidden")
+         This script is safe to run on new HTML — it finds neither
+         signal and exits immediately.
+    ═══════════════════════════════════════════════════════════ -->
+    <script>
+    (function () {
+      // Only heal once per session to prevent reload loops
+      var _KEY = '_dacum_fresh_v8';
+      if (sessionStorage.getItem(_KEY)) return;
+
+      // Signal 1: old HTML had <h1> with visible DACUM branding
+      var hasOldH1 = !!document.querySelector('h1');
+
+      // Signal 2: old HTML had .tabs without id="dacumMainTabsHidden"
+      var tabsEl = document.querySelector('.tabs');
+      var hasOldTabs = tabsEl && tabsEl.id !== 'dacumMainTabsHidden';
+
+      if (hasOldH1 || hasOldTabs) {
+        console.warn('[DACUM] Stale HTML detected — forcing hard reload');
+        sessionStorage.setItem(_KEY, '1');
+        // Hard reload bypasses SW cache for HTML
+        window.location.reload(true);
+      }
+    })();
+    </script>
+
+    <div class="container">
+        
+        <!-- Tabs kept in DOM (hidden) so tab-switching logic works unchanged.
+             Visual navigation has moved into the sidebar (dacum_projects.js). -->
+        <div class="tabs" id="dacumMainTabsHidden" style="display:none!important;pointer-events:none!important;position:absolute!important;visibility:hidden!important;">
+            <div class="tab active" data-tab="info-tab">📋 Chart Info</div>
+            <div class="tab" data-tab="duties-tab">✅ Duties & Tasks</div>
+            <div class="tab" data-tab="additional-info-tab">📚 Additional Info</div>
+            <div class="tab" data-tab="verification-tab">🎯 Task Verification</div>
+            <div class="tab" data-tab="clustering-tab">🎯 Competency Clusters</div>
+            <div class="tab" data-tab="learning-outcomes-tab">🎓 Learning Outcomes</div>
+            <div class="tab" data-tab="module-mapping-tab">📦 Module Mapping</div>
+            <div class="tab" data-tab="contact-tab">❓ Help</div>
+        </div>
+        
+        <div class="tab-content active" id="info-tab">
+            <div class="tab-header-row">
+                <h2>DACUM Research Chart Information</h2>
+                <button data-action="clear-tab" data-tab-id="info-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ Clear This Tab
+                </button>
+            </div>
+            
+            <div class="mb-20">
+                <div class="mb-10">
+                    <label for="dacumDate">📅 DACUM Date:</label>
+                    <input type="date" id="dacumDate" style="cursor: pointer;">
+                </div>
+                
+                <div class="mb-10">
+                    <label for="venue">📍 Venue:</label>
+                    <input type="text" id="venue" placeholder="e.g., Conference Center, City">
+                </div>
+                
+                <div class="mb-10">
+                    <label for="producedFor">🏢 Produced For:</label>
+                    <input type="text" id="producedFor" placeholder="e.g., Company/Organization Name">
+                    <div class="image-upload-container">
+                        <div class="image-preview" id="producedForImagePreview">
+                            <span style="color: #999; font-size: 0.9em;">No image</span>
+                        </div>
+                        <div>
+                            <button class="btn-add-image" onclick="document.getElementById('producedForImageInput').click()">
+                                🖼️ Add Logo
+                            </button>
+                            <button class="btn-remove-image" id="removeProducedForImage" id="removeProducedForImage" style="display: none;">
+                                🗑️ Remove
+                            </button>
+                            <input type="file" id="producedForImageInput" accept=".jpg,.jpeg,.png,.bmp" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-10">
+                    <label for="producedBy">🎓 Produced By:</label>
+                    <input type="text" id="producedBy" placeholder="e.g., Training Institution Name">
+                    <div class="image-upload-container">
+                        <div class="image-preview" id="producedByImagePreview">
+                            <span style="color: #999; font-size: 0.9em;">No image</span>
+                        </div>
+                        <div>
+                            <button class="btn-add-image" onclick="document.getElementById('producedByImageInput').click()">
+                                🖼️ Add Logo
+                            </button>
+                            <button class="btn-remove-image" id="removeProducedByImage" id="removeProducedByImage" style="display: none;">
+                                🗑️ Remove
+                            </button>
+                            <input type="file" id="producedByImageInput" accept=".jpg,.jpeg,.png,.bmp" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-10">
+                    <label for="occupationTitle">💼 Occupation Title:</label>
+                    <input type="text" id="occupationTitle" placeholder="e.g., Automotive Technician">
+                </div>
+
+                <div class="mb-10">
+                    <label for="scopeOfWork">📋 Scope of Work / Occupational Definition:</label>
+                    <div style="font-size:0.82em; color:#6b7280; margin:-4px 0 6px 0; line-height:1.5;">
+                        A concise paragraph describing what the occupation covers and where its boundaries lie.
+                        Used in exports and can be referenced by AI generation to improve duty/task quality.
+                    </div>
+                    <textarea id="scopeOfWork" rows="5"
+                              placeholder="Defines the key responsibilities and boundaries of this occupation within its work context. Includes typical tasks, tools, and work environments, and excludes roles or functions that fall under other occupations or specializations."
+                              style="min-height: 110px; font-family: inherit; resize: vertical; width:100%;"></textarea>
+                </div>
+
+                <div class="mb-10">
+                    <label for="jobTitle">👔 Job Title:</label>
+                    <input type="text" id="jobTitle" placeholder="e.g., Service Technician Level 2">
+                </div>
+                
+                <div class="mb-10">
+                    <label for="sector">🏭 Sector (Optional):</label>
+                    <input type="text" id="sector" placeholder="e.g., Automotive, Healthcare, IT">
+                </div>
+                
+                <div class="mb-10">
+                    <label for="context">🌍 Country / Context (Optional):</label>
+                    <input type="text" id="context" placeholder="e.g., Iraq, Middle East">
+                </div>
+                
+                <div class="mb-10">
+                    <label for="facilitators">👥 Facilitators:</label>
+                    <textarea id="facilitators" placeholder="Enter facilitator names (one per line)" style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+                
+                <div class="mb-10">
+                    <label for="observers">👁️ Observers:</label>
+                    <textarea id="observers" placeholder="Enter observer names (one per line)" style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+                
+                <div class="mb-10">
+                    <label for="panelMembers">🎯 Panel Members:</label>
+                    <textarea id="panelMembers" placeholder="Enter panel member names (one per line)" style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+                
+                <div style="margin-top: 30px; text-align: right;">
+                    <button onclick="window.switchTab('duties-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        Proceed to Duties & Tasks →
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="duties-tab">
+            <div class="tab-header-row">
+                <div class="tab-title-with-help">
+                    <h2 id="dutiesViewHeadingLegacy">Duties and Tasks</h2>
+                    <button type="button" id="dutiesHelpBtn" class="tab-help-btn"
+                            title="How do I write duty and task statements?"
+                            aria-label="How do I write duty and task statements?"
+                            aria-haspopup="dialog">?</button>
+                </div>
+                <button data-action="clear-tab" data-tab-id="duties-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ Clear This Tab
+                </button>
+            </div>
+            
+            <!-- AI Generation Section -->
+            <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ AI-Powered DACUM Generation</h3>
+                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;">Generate complete duties and tasks automatically based on occupation details</p>
+                <button class="btn-ai-generate" id="aiGenerateBtn"  style="background: white; color: #667eea; padding: 12px 30px; font-size: 1.05em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    🤖 Generate AI Draft
+                </button>
+                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 Fill Occupation Title in Chart Info. Adding Scope of Work &amp; Job Title improves results.</p>
+            </div>
+
+            <!-- Missing-Scope soft warning (hidden until user clicks Generate without Scope) -->
+            <div id="scopeMissingWarning" style="display:none; margin: -10px 0 22px 0;">
+                <div style="display:flex; align-items:flex-start; gap:14px; padding:14px 18px;
+                            background:#fffbeb; border:1.5px solid #fbbf24; border-radius:10px;">
+                    <span style="font-size:1.2em; flex-shrink:0; line-height:1.3;">💡</span>
+                    <div style="flex:1; min-width:0;">
+                        <p style="margin:0 0 3px; font-size:0.88em; font-weight:700; color:#92400e;">
+                            No Scope of Work provided
+                        </p>
+                        <p style="margin:0 0 10px; font-size:0.8em; color:#78350f; line-height:1.5;">
+                            Generation works without it, but results are more accurate and stay within the right boundaries when you provide a short Scope paragraph in Chart Info.
+                        </p>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button id="btnGenerateAnyway" type="button"
+                                    style="padding:7px 14px; background:#ffffff; color:#92400e;
+                                           border:1.5px solid #fbbf24; border-radius:7px;
+                                           font-size:0.82em; font-weight:600; cursor:pointer;
+                                           white-space:nowrap; transition:background 0.15s, border-color 0.15s;"
+                                    onmouseover="this.style.background='#fef3c7';this.style.borderColor='#f59e0b';"
+                                    onmouseout="this.style.background='#ffffff';this.style.borderColor='#fbbf24';">
+                                ⚡ Generate Anyway
+                            </button>
+                            <button id="btnAddScopeFirst" type="button"
+                                    style="padding:7px 14px; background:transparent; color:#78350f;
+                                           border:1.5px solid transparent; border-radius:7px;
+                                           font-size:0.82em; font-weight:600; cursor:pointer;
+                                           white-space:nowrap; transition:background 0.15s;"
+                                    onmouseover="this.style.background='rgba(251,191,36,0.15)';"
+                                    onmouseout="this.style.background='transparent';">
+                                I'll add Scope first
+                            </button>
+                        </div>
+                    </div>
+                    <button id="btnDismissScopeWarning"
+                            title="Dismiss"
+                            aria-label="Dismiss scope warning"
+                            style="flex-shrink:0; background:transparent; border:none; font-size:1.2em;
+                                   color:#92400e; cursor:pointer; padding:2px 8px; border-radius:4px;
+                                   opacity:0.6; transition:opacity 0.15s, background 0.15s;"
+                            onmouseover="this.style.opacity='1';this.style.background='rgba(251,191,36,0.2)';"
+                            onmouseout="this.style.opacity='0.6';this.style.background='transparent';">
+                        ×
+                    </button>
+                </div>
+            </div>
+
+            <!-- Refine Results (hidden until AI generates) -->
+            <div id="refineResultsSection" style="display:none; margin: -10px 0 22px 0;">
+                <div style="display:flex; align-items:center; gap:14px; padding:13px 18px;
+                            background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px;">
+                    <span style="font-size:1.1em; flex-shrink:0;">&#x2728;</span>
+                    <div style="flex:1; min-width:0;">
+                        <p style="margin:0 0 2px; font-size:0.86em; font-weight:700; color:#374151;">Refine AI Results</p>
+                        <p style="margin:0; font-size:0.78em; color:#6b7280; line-height:1.4;">
+                            Clean duplicates, normalize wording, remove result clauses &amp; fragments.
+                            <strong style="color:#4b5563;">Reversible with Ctrl+Z.</strong>
+                        </p>
+                    </div>
+                    <button id="btnRefineResults"
+                            style="flex-shrink:0; padding:8px 18px; background:#ffffff; color:#374151;
+                                   border:1.5px solid #d1d5db; border-radius:8px; font-size:0.84em;
+                                   font-weight:600; cursor:pointer; white-space:nowrap;"
+                            onmouseover="this.style.background='#f0f4ff';this.style.borderColor='#a5b4fc';"
+                            onmouseout="this.style.background='#fff';this.style.borderColor='#d1d5db';">
+                        &#x1F9F9; Refine Results
+                    </button>
+                </div>
+            </div>
+
+            <!-- View toggle — sits between AI section and the duties area -->
+            <div style="display:flex; align-items:center; justify-content:space-between; margin: 18px 0 10px 0; flex-wrap:wrap; gap:10px;">
+              <span id="dutiesViewHeading" style="font-size:1.05em; font-weight:700; color:#374151;">Card View — Duties &amp; Tasks</span>
+              <div class="view-segmented" role="tablist" aria-label="Switch duties view">
+                <button data-view-switch="card"  class="view-seg-btn is-active" role="tab" aria-selected="true">🃏 Card</button>
+                <button data-view-switch="table" class="view-seg-btn"           role="tab" aria-selected="false">📋 Table</button>
+                <button data-view-switch="wall"  class="view-seg-btn"           role="tab" aria-selected="false" title="DACUM Workshop display — read-only wall view">🧱 Wall</button>
+              </div>
+              <!-- Legacy hidden button kept for backward compat (still wired in events.js) -->
+              <button id="btnToggleDutiesView" class="dcv-toggle-btn is-card" style="display:none;" aria-hidden="true">📋 Table View</button>
+            </div>
+
+            <!-- Print-only header for Wall View printouts.  Populated by duties.js
+                 before window.print() is called.  Hidden on-screen, visible only in print. -->
+            <div id="wallPrintHeader" class="wall-print-header" aria-hidden="true">
+                <h1 id="wallPrintTitle"></h1>
+                <p id="wallPrintSubtitle"></p>
+            </div>
+
+            <div id="dutiesContainer"></div>
+            <button class="btn-add" id="btnAddDuty">➕ Add Duty</button>
+            
+            <div class="step-nav-row">
+                <button type="button" class="btn-back-step" data-nav-back="info-tab"
+                        title="Return to Chart Info to review or edit">
+                    ← Back to Chart Info
+                </button>
+                <button onclick="window.switchTab('additional-info-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Proceed to Additional Info →
+                </button>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="additional-info-tab">
+            <div class="tab-header-row">
+                <div class="tab-title-with-help">
+                    <h2>Additional Information</h2>
+                    <button type="button" id="addInfoHelpBtn" class="tab-help-btn"
+                            title="Why does this section matter?"
+                            aria-label="Why does this section matter?"
+                            aria-haspopup="dialog">?</button>
+                </div>
+                <button data-action="clear-tab" data-tab-id="additional-info-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ Clear This Tab
+                </button>
+            </div>
+
+            <!-- AI Generation Section — mirrors the card in the Duties tab -->
+            <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ AI-Powered Supporting Information</h3>
+                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;">Generate Knowledge, Skills, Behaviors, Tools, Trends, Acronyms and Career Path automatically</p>
+                <button class="btn-ai-generate" id="aiGenerateInfoBtn" style="background: white; color: #667eea; padding: 12px 30px; font-size: 1.05em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    🤖 Generate Supporting Info
+                </button>
+                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 Uses Occupation Title from Chart Info. If duties &amp; tasks already exist, they are used as the evidence base for far more accurate results. Custom sections you added are never overwritten.</p>
+            </div>
+            
+            <div class="section-container">
+                <div class="section-header-editable">
+                    <h3 id="knowledgeHeading" contenteditable="false">Knowledge Requirements</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-format" data-action="format-list" data-input-id="knowledgeInput" data-format-type="number" title="Add numbering">🔢 Number</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="knowledgeInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="knowledgeHeading">✏️ Rename</button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="knowledgeInput" data-heading-id="knowledgeHeading" data-default-heading="Knowledge Requirements">🗑️ Clear</button>
+                    </div>
+                </div>
+                <textarea id="knowledgeInput" placeholder="Enter each knowledge requirement on a new line&#10;Example:&#10;• Understanding of electrical systems&#10;• Knowledge of safety protocols"></textarea>
+            </div>
+            
+            <div class="section-container">
+                <div class="section-header-editable">
+                    <h3 id="skillsHeading" contenteditable="false">Skills Requirements</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-format" data-action="format-list" data-input-id="skillsInput" data-format-type="number" title="Add numbering">🔢 Number</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="skillsInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="skillsHeading">✏️ Rename</button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="skillsInput" data-heading-id="skillsHeading" data-default-heading="Skills Requirements">🗑️ Clear</button>
+                    </div>
+                </div>
+                <textarea id="skillsInput" placeholder="Enter each skill requirement on a new line&#10;Example:&#10;• Ability to read technical diagrams&#10;• Proficiency in using hand tools"></textarea>
+            </div>
+            
+            <div class="section-container">
+                <div class="section-header-editable">
+                    <h3 id="behaviorsHeading" contenteditable="false">Worker Behaviors/Traits</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-format" data-action="format-list" data-input-id="behaviorsInput" data-format-type="number" title="Add numbering">🔢 Number</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="behaviorsInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="behaviorsHeading">✏️ Rename</button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="behaviorsInput" data-heading-id="behaviorsHeading" data-default-heading="Worker Behaviors/Traits">🗑️ Clear</button>
+                    </div>
+                </div>
+                <textarea id="behaviorsInput" placeholder="Enter each behavior or trait on a new line&#10;Example:&#10;• Attention to detail&#10;• Good communication skills"></textarea>
+            </div>
+            
+            <div class="section-container">
+                <div class="section-header-editable">
+                    <h3 id="toolsHeading" contenteditable="false">Tools, Equipment, Supplies and Materials</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-format" data-action="format-list" data-input-id="toolsInput" data-format-type="number" title="Add numbering">🔢 Number</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="toolsInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="toolsHeading">✏️ Rename</button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="toolsInput" data-heading-id="toolsHeading" data-default-heading="Tools, Equipment, Supplies and Materials">🗑️ Clear</button>
+                    </div>
+                </div>
+                <textarea id="toolsInput" placeholder="Enter each tool/equipment on a new line&#10;Example:&#10;• Digital multimeter&#10;• Pneumatic impact wrench"></textarea>
+            </div>
+            
+            <div class="section-container">
+                <div class="section-header-editable">
+                    <h3 id="trendsHeading" contenteditable="false">Future Trends and Concerns</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-format" data-action="format-list" data-input-id="trendsInput" data-format-type="number" title="Add numbering">🔢 Number</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="trendsInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="trendsHeading">✏️ Rename</button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="trendsInput" data-heading-id="trendsHeading" data-default-heading="Future Trends and Concerns">🗑️ Clear</button>
+                    </div>
+                </div>
+                <textarea id="trendsInput" placeholder="Enter each trend/concern on a new line&#10;Example:&#10;• Increased use of electric vehicles&#10;• Advanced driver assistance systems"></textarea>
+            </div>
+            
+            <div class="section-container">
+                <div class="section-header-editable">
+                    <h3 id="acronymsHeading" contenteditable="false">Acronyms</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-format" data-action="format-list" data-input-id="acronymsInput" data-format-type="number" title="Add numbering">🔢 Number</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="acronymsInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="acronymsHeading">✏️ Rename</button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="acronymsInput" data-heading-id="acronymsHeading" data-default-heading="Acronyms">🗑️ Clear</button>
+                    </div>
+                </div>
+                <textarea id="acronymsInput" placeholder="Enter acronyms and their definitions on separate lines&#10;Example:&#10;• OBD - On-Board Diagnostics&#10;• ECU - Engine Control Unit&#10;• TPMS - Tire Pressure Monitoring System&#10;• ABS - Anti-lock Braking System"></textarea>
+            </div>
+            
+            <div class="section-container">
+                <div class="section-header-editable">
+                    <h3 id="careerPathHeading" contenteditable="false">Career Path</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-format" data-action="format-list" data-input-id="careerPathInput" data-format-type="number" title="Add numbering">🔢 Number</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="careerPathInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="careerPathHeading">✏️ Rename</button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="careerPathInput" data-heading-id="careerPathHeading" data-default-heading="Career Path">🗑️ Clear</button>
+                    </div>
+                </div>
+                <textarea id="careerPathInput" placeholder="Enter career progression information on separate lines&#10;Example:&#10;• Entry Level: Technician Apprentice&#10;• Mid Level: Certified Technician&#10;• Advanced: Senior Technician / Specialist&#10;• Management: Shop Foreman / Service Manager"></textarea>
+            </div>
+            
+            <!-- Container for custom sections -->
+            <div id="customSectionsContainer"></div>
+            
+            <!-- Add Section Button -->
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="btn-add" id="btnAddCustomSection" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 24px; font-size: 1.05em;">
+                    ➕ Add Section
+                </button>
+            </div>
+            
+            <!-- ADDITIONAL INFO – Skills Level Matrix (Collapsible) -->
+            <div class="skills-level-accordion">
+                <div class="skills-level-header" id="btnToggleSkillsLevel">
+                    <div class="skills-level-title">📊 Skills Level Matrix (click to expand)</div>
+                    <div class="skills-level-toggle">▼</div>
+                </div>
+                <div class="skills-level-content" id="skillsLevelContent">
+                    <div class="skills-level-info-box">
+                        <h3>Employability Competencies by Occupational Level</h3>
+                        <p>Select the minimum required skills level for this occupation.</p>
+                        <ul style="margin-top: 10px;">
+                            <li><strong>Craftsman/Supervisor</strong> - Advanced level requiring comprehensive skills</li>
+                            <li><strong>Skilled</strong> - Proficient level requiring specialized skills</li>
+                            <li><strong>Semi-skilled</strong> - Intermediate level requiring basic competencies</li>
+                            <li><strong>Foundation skills</strong> - Entry level requiring minimal competencies</li>
+                        </ul>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0;">Edit Employability Competencies</h3>
+                        <button class="btn-reset-skills" id="btnResetSkillsLevel">🗑️ Reset All Selections</button>
+                    </div>
+
+                    <div id="skillsLevelContainer"></div>
+
+                    <div class="skills-level-buttons">
+                        <button class="btn-add-category" id="btnAddSkillsCategory">➕ Add Category</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step-nav-row">
+                <button type="button" class="btn-back-step" data-nav-back="duties-tab"
+                        title="Return to Duties & Tasks to review or edit">
+                    ← Back to Duties & Tasks
+                </button>
+                <button onclick="window.switchTab('verification-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Proceed to Task Verification →
+                </button>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="verification-tab">
+            <h2>🎯 Task Verification & Training Priority</h2>
+            
+            <!-- Instructions -->
+            <div class="verification-instructions">
+                <h4>📋 Instructions:</h4>
+                <p>Rate each task on three scales (0-3). Select the data collection mode first, then expand each duty to rate its tasks. Your ratings will be saved with the DACUM chart data.</p>
+                <p style="margin-top: 15px;"><strong>Rating Scales:</strong><br>
+                • <strong>Importance:</strong> 0=Not Important, 1=Somewhat, 2=Important, 3=Critical<br>
+                • <strong>Frequency:</strong> 0=Rarely, 1=Sometimes, 2=Often, 3=Daily<br>
+                • <strong>Difficulty:</strong> 0=Easy, 1=Moderate, 2=Challenging, 3=Very Difficult</p>
+            </div>
+            
+            <!-- Data Collection Mode Selector -->
+            <div class="verification-mode-selector">
+                <h3>📊 Data Collection Mode</h3>
+                <div class="mode-options">
+                    <div class="mode-option">
+                        <input type="radio" id="mode-workshop" name="collectionMode" value="workshop" checked>
+                        <label for="mode-workshop">👥 Workshop (Facilitated)</label>
+                    </div>
+                    <div class="mode-option">
+                        <input type="radio" id="mode-survey" name="collectionMode" value="survey">
+                        <label for="mode-survey">📝 Individual / Survey</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Workflow Mode Selector -->
+            <div class="verification-mode-selector" style="margin-top: 20px;">
+                <h3>⚙️ Workflow Mode</h3>
+                <div class="mode-options">
+                    <div class="mode-option">
+                        <input type="radio" id="workflow-standard" name="workflowMode" value="standard" checked>
+                        <label for="workflow-standard">📊 Standard (DACUM)</label>
+                    </div>
+                    <div class="mode-option">
+                        <input type="radio" id="workflow-extended" name="workflowMode" value="extended">
+                        <label for="workflow-extended">📈 Extended (DACUM)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Workshop Participants Count (Workshop mode only) -->
+            <div class="workshop-participants" id="workshopParticipantsSection" style="display: none;">
+                <h3 style="display: inline-block; margin: 0 15px 0 0;">👥 Number of Workshop Participants:</h3>
+                <input type="number" id="workshopParticipants" min="1" max="50" value="10" style="display: inline-block; width: 80px;">
+                <p style="color: white; margin: 10px 0 0 0; font-size: 0.9em;">
+                    Enter the total number of workshop participants (recommended: 8–20). This is the maximum number of responses per task.
+                </p>
+            </div>
+            
+            <!-- Priority Formula Selector (Standard mode only) -->
+            <div class="priority-formula-selector" id="priorityFormulaSection" style="display: none;">
+                <h4>📐 Priority Calculation Formula</h4>
+                <div class="formula-options">
+                    <div class="formula-option">
+                        <input type="radio" id="formula-if" name="priorityFormula" value="if" checked>
+                        <label for="formula-if">Importance × Frequency</label>
+                    </div>
+                    <div class="formula-option">
+                        <input type="radio" id="formula-ifd" name="priorityFormula" value="ifd">
+                        <label for="formula-ifd">Importance × Frequency × Difficulty</label>
+                    </div>
+                </div>
+                <p style="margin: 10px 0 0 0; color: #666; font-size: 0.9em;">
+                    Select the formula to calculate Priority Index for training priority ranking.
+                </p>
+            </div>
+            
+            <!-- Duties and Tasks Accordion Container -->
+            <div id="verificationAccordionContainer">
+                <!-- Will be populated dynamically -->
+            </div>
+            
+            <!-- Results Dashboard (Workshop Mode Only) -->
+            <div class="results-dashboard" id="resultsDashboard" style="display: none;">
+
+                <!-- ── Project selector ── -->
+                <div id="dashboardProjectSelectorWrap" style="display:none; align-items:center; gap:12px; padding:10px 16px 0; flex-wrap:wrap;">
+                  <label for="dashboardProjectSelector" style="font-size:0.88em; font-weight:700; color:#374151; white-space:nowrap;">
+                    📂 View results for:
+                  </label>
+                  <select id="dashboardProjectSelector" class="dpd-selector">
+                    <option value="__current__">📊 Current project</option>
+                  </select>
+                </div>
+
+                <div class="results-dashboard-header" id="btnToggleDashboard">
+                    <h3>📊 Workshop Results Dashboard</h3>
+                    <div class="results-dashboard-toggle">▼</div>
+                </div>
+                <div class="results-dashboard-content" id="dashboardContent">
+                    <div class="results-dashboard-inner">
+                        <!-- Summary Statistics -->
+                        <div class="dashboard-summary" id="dashboardSummary">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                        
+                        <!-- Results Table -->
+                        <div style="overflow-x: auto;">
+                            <table class="dashboard-table" id="dashboardTable">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Duty</th>
+                                        <th>Task</th>
+                                        <th>Mean<br>Importance</th>
+                                        <th>Mean<br>Frequency</th>
+                                        <th>Mean<br>Difficulty</th>
+                                        <th>Priority<br>Index</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboardTableBody">
+                                    <!-- Will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Duty-Level Summary Section -->
+                        <div style="margin-top: 30px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
+                            <div class="duty-level-header" id="btnToggleDutyLevelSummary" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f9fafb; border-radius: 8px; margin-bottom: 15px;">
+                                <h4 style="margin: 0; color: #667eea; font-size: 1.1em;">📋 Duty-Level Summary</h4>
+                                <div id="dutyLevelToggle" style="font-size: 1.2em; color: #667eea;">▼</div>
+                            </div>
+                            <div id="dutyLevelContent" style="display: block;">
+                                <!-- Training Load Method Selector -->
+                                <div style="margin-bottom: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; border: 2px solid #667eea;">
+                                    <h5 style="margin: 0 0 10px 0; color: #333; font-size: 1em;">Training Load Calculation Method:</h5>
+                                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                            <input type="radio" name="trainingLoadMethod" value="advanced" checked style="width: 16px; height: 16px;">
+                                            <span style="font-weight: 600;">Advanced</span> — Σ (Priority Index × Mean Difficulty) <span style="color: #667eea; font-style: italic;">(Recommended)</span>
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                            <input type="radio" name="trainingLoadMethod" value="simple" style="width: 16px; height: 16px;">
+                                            <span style="font-weight: 600;">Simple</span> — Average Priority × Tasks Count
+                                        </label>
+                                    </div>
+                                    <div id="trainingLoadMethodLabel" style="margin-top: 10px; padding: 8px; background: white; border-radius: 4px; font-size: 0.9em; color: #666;">
+                                        Current Method: <strong style="color: #667eea;">Advanced</strong>
+                                    </div>
+                                </div>
+                                
+                                <!-- Sort Selector -->
+                                <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                                    <label style="font-weight: 600; color: #333;">Sort By:</label>
+                                    <select id="dutySortSelector" onchange="window.updateDutyLevelSummary()" style="padding: 8px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 0.9em;">
+                                        <option value="priority">Average Priority Index</option>
+                                        <option value="trainingLoad">Training Load Score</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Duty-Level Table -->
+                                <div style="overflow-x: auto;">
+                                    <table class="dashboard-table" id="dutyLevelTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Duty Title</th>
+                                                <th>Total<br>Tasks</th>
+                                                <th>Valid<br>Tasks</th>
+                                                <th>Avg Mean<br>Importance</th>
+                                                <th>Avg Mean<br>Frequency</th>
+                                                <th>Avg Mean<br>Difficulty</th>
+                                                <th>Avg Priority<br>Index</th>
+                                                <th>High Priority<br>Tasks</th>
+                                                <th>Training Load<br>Score</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dutyLevelTableBody">
+                                            <!-- Will be populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Export Button -->
+                        <div style="text-align: center;">
+                            <button class="btn-export-dashboard" id="btnExportDashboard">
+                                📊 Export Dashboard as CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Load Duties Button -->
+            <div style="text-align: center; margin: 30px 0;">
+                <button class="btn-add" id="btnLoadDutiesForVerification" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; font-size: 1.05em;">
+                    🔄 Refresh Duties & Tasks
+                </button>
+                <p style="color: #666; margin-top: 10px; font-size: 0.9em;">Click to reload duties and tasks from the Duties & Tasks tab</p>
+            </div>
+            
+            <!-- ===== LIVE WORKSHOP MODULE (MVP INTEGRATION) ===== -->
+            <div id="liveWorkshopSection" style="display: none; margin-top: 40px; padding-top: 40px; border-top: 3px solid #667eea;">
+                <h2 style="color: #667eea; text-align: center; margin-bottom: 20px;">🎯 Live Workshop Voting System</h2>
+                
+                <!-- Step 1: Finalize for Live Workshop -->
+                <div id="lwStep1-finalize" style="margin: 30px 0;">
+                    <div style="background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%); padding: 25px; border-radius: 12px; border: 2px solid #667eea; margin-bottom: 20px;">
+                        <h3 style="color: #667eea; margin: 0 0 15px 0;">📋 Ready to Start Live Voting?</h3>
+                        <p style="color: #334155; margin: 0 0 15px 0; line-height: 1.6;">
+                            Finalize your duties and tasks to create a live voting session. After finalization:
+                        </p>
+                        <ul style="color: #334155; margin: 0 0 15px 0; padding-left: 25px; line-height: 1.8;">
+                            <li>✅ Duties and tasks will be <strong>locked</strong> (read-only)</li>
+                            <li>✅ A unique <strong>participant link</strong> will be generated</li>
+                            <li>✅ Participants can vote on all tasks (0-3 scales)</li>
+                            <li>✅ Results will be <strong>aggregated</strong> and ranked by priority</li>
+                        </ul>
+                        <p style="color: #64748b; margin: 0; font-size: 0.9em; font-style: italic;">
+                            <strong>Note:</strong> Make sure all duties and tasks are complete before finalizing.
+                        </p>
+                    </div>
+                    
+                    <div style="text-align: center; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;">
+                        <button class="btn-primary"  id="btnLWFinalize" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            🔒 Finalize & Create Live Voting Session
+                        </button>
+                        <button class="btn-bypass-verification"  id="btnBypassToClustering" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            ⚡ Proceed to Competency Clustering Without Verification
+                        </button>
+                        <button  id="btnResetDecision" style="display: none; background: #ef4444; color: white; padding: 15px 30px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            🔄 Reset Decision
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Session Active (Hidden until session created) -->
+                <div id="lwStep2-session" style="display: none; margin: 30px 0;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <span style="background: #10b981; color: white; padding: 10px 20px; border-radius: 25px; font-weight: 600; font-size: 1.1em; display: inline-block;">
+                            ✅ FINALIZED & LOCKED
+                        </span>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                        <h3 style="color: white; margin: 0 0 15px 0; font-size: 1.3em;">📢 Live Voting Session Active</h3>
+                        <p style="margin: 0 0 20px 0; opacity: 0.95;">Share this link with participants to start voting:</p>
+                        <div style="background: white; padding: 20px; border-radius: 8px; margin: 0 0 15px 0;">
+                            <div id="lwParticipantLink" 
+                                 data-full-url=""
+                                 style="color: #10b981; 
+                                        font-family: 'Segoe UI', system-ui, sans-serif; 
+                                        font-size: 0.95em; 
+                                        padding: 12px 16px; 
+                                        background: #f0fdf4; 
+                                        border-radius: 6px; 
+                                        border: 1px solid #86efac;
+                                        display: inline-block;
+                                        user-select: all;
+                                        cursor: text;
+                                        font-weight: 500;"></div>
+                            <button id="btnLWCopyLink" 
+                                    style="background: #10b981; 
+                                           color: white; 
+                                           border: none; 
+                                           padding: 12px 24px; 
+                                           font-weight: 600; 
+                                           border-radius: 6px; 
+                                           cursor: pointer;
+                                           margin-left: 12px;
+                                           font-size: 0.9em;
+                                           transition: background 0.2s;"
+                                    onmouseover="this.style.background='#059669'"
+                                    onmouseout="this.style.background='#10b981'">
+                                📋 Copy Link
+                            </button>
+                            <button id="btnLWShowQR" 
+                                    style="background: #6366f1; 
+                                           color: white; 
+                                           border: none; 
+                                           padding: 12px 24px; 
+                                           font-weight: 600; 
+                                           border-radius: 6px; 
+                                           cursor: pointer;
+                                           margin-left: 12px;
+                                           font-size: 0.9em;
+                                           transition: background 0.2s;"
+                                    onmouseover="this.style.background='#4f46e5'"
+                                    onmouseout="this.style.background='#6366f1'">
+                                📱 Show QR Code
+                            </button>
+                            <span id="lwCopyFeedback" 
+                                  style="color: #10b981; 
+                                         margin-left: 12px; 
+                                         font-weight: 600; 
+                                         font-size: 0.9em;
+                                         display: none;">✓ Copied!</span>
+                        </div>
+                        <p style="margin: 20px 0 0 0; font-size: 0.9em; opacity: 0.9;">
+                            Session ID: <span id="lwSessionId" style="font-family: monospace; font-weight: 600;"></span>
+                        </p>
+                        <p id="lwProjectInfo" style="margin: 8px 0 0 0; font-size: 0.88em; opacity: 0.85; display:none;">
+                            📁 <span id="lwProjectName" style="font-weight:700;"></span>
+                            &nbsp;·&nbsp; <span id="lwProjectStats"></span>
+                        </p>
+                    </div>
+
+                    <div style="text-align: center; margin: 30px 0; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <button id="btnLWFetchResults" class="btn-primary"  style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 15px 40px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            🔄 Refresh Voting Results
+                        </button>
+                        <button id="btnLWCloseVoting" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 15px 40px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            🔒 Close Voting (Lock Submissions)
+                        </button>
+                    </div>
+
+                    <!-- Results Container -->
+                    <div id="lwResultsContainer" style="margin-top: 30px;">
+                        <!-- Results will be displayed here -->
+                    </div>
+
+                    <!-- Export Buttons (shown after results) -->
+                    <div id="lwExportButtons" style="display: none; margin-top: 30px; padding: 25px; background: #f9fafb; border-radius: 12px; border: 2px solid #e5e7eb;">
+                        <h3 style="color: #667eea; margin: 0 0 20px 0; text-align: center;">📥 Export Voting Results</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <button id="btnLWExportJSON" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em;">
+                                📄 Export JSON<br><span style="font-size: 0.85em; opacity: 0.9;">(With Voting Data)</span>
+                            </button>
+                            <button id="btnLWExportCSV" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em;">
+                                📊 Export CSV<br><span style="font-size: 0.85em; opacity: 0.9;">(Tasks & Scores)</span>
+                            </button>
+                            <button id="btnLWExportSnapshot" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em;">
+                                💾 Download Snapshot<br><span style="font-size: 0.85em; opacity: 0.9;">(Pre-Voting Backup)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Verification Export Options -->
+            <div style="max-width: 800px; margin: 30px auto 20px auto; padding: 20px; background: white; border: 2px solid #e5e7eb; border-radius: 12px;">
+                <h3 style="color: #667eea; margin: 0 0 15px 0; font-size: 1.1em;">📊 Task Verification Export Options</h3>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="radio" id="tvExportAppendix" name="tvExportMode" value="appendix" checked style="width: 18px; height: 18px; cursor: pointer;">
+                        <span style="font-weight: 600; color: #333;">Include in DACUM Report (Appendix)</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="radio" id="tvExportStandalone" name="tvExportMode" value="standalone" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span style="font-weight: 600; color: #333;">Export as Standalone Report</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="step-nav-row">
+                <button type="button" class="btn-back-step" data-nav-back="additional-info-tab"
+                        title="Return to Additional Info to review or edit">
+                    ← Back to Additional Info
+                </button>
+                <button id="btnProceedToClustering" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Proceed to Competency Clustering →
+                </button>
+            </div>
+
+        </div>
+        
+        <div class="tab-content" id="clustering-tab">
+            <div class="tab-header-row">
+                <div class="tab-title-with-help">
+                    <h2>🎯 Competency Clusters</h2>
+                    <button type="button" id="clusteringHelpBtn" class="tab-help-btn"
+                            title="How should I group tasks into clusters?"
+                            aria-label="How should I group tasks into clusters?"
+                            aria-haspopup="dialog">?</button>
+                </div>
+                <button data-action="clear-tab" data-tab-id="clustering-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ Clear This Tab
+                </button>
+            </div>
+            
+            <!-- AI Generation Section — mirrors the card in the Duties tab -->
+            <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ AI Clustering Assistant</h3>
+                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;">Two separate steps — review the clusters before generating their criteria</p>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn-ai-generate" id="aiSuggestClustersBtn" style="background: white; color: #667eea; padding: 12px 22px; font-size: 1em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        🤖 Suggest Competency Clusters
+                    </button>
+                    <button id="aiGenCriteriaBtn" style="background: rgba(255,255,255,0.18); color: white; border: 1.5px solid rgba(255,255,255,0.55); padding: 12px 22px; font-size: 1em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                        📐 Generate Range &amp; Criteria
+                    </button>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 Step 1 groups tasks across duties by shared purpose, process or skills. Step 2 writes the Range and observable, measurable criteria for whichever clusters exist — including ones you built by hand.</p>
+            </div>
+
+            <!-- Available Tasks Section -->
+            <div class="clustering-section">
+                <h3>📋 Available Tasks</h3>
+                <p style="color: #666; margin-bottom: 15px;">Select tasks to group into a cluster, then click "Create Cluster".</p>
+                <div class="available-tasks-list" id="availableTasksList">
+                    <div class="no-tasks-message">No tasks available. Please complete duties and tasks first.</div>
+                </div>
+                <button class="btn-create-cluster" id="btnCreateCluster"  disabled>
+                    ✨ Create Cluster
+                </button>
+            </div>
+
+            <!-- Created Clusters Section -->
+            <div class="clustering-section">
+                <div class="section-header-row">
+                    <h3>📦 Created Clusters</h3>
+                    <button type="button" id="clusterNamingHelpBtn" class="tab-help-btn"
+                            title="How should I name a cluster?"
+                            aria-label="How should I name a cluster?"
+                            aria-haspopup="dialog">?</button>
+                </div>
+                <div class="clusters-container" id="clustersContainer">
+                    <div class="no-clusters-message">No clusters created yet.</div>
+                </div>
+            </div>
+            
+            <div class="step-nav-row">
+                <button type="button" class="btn-back-step" data-nav-back="verification-tab"
+                        title="Return to Task Verification to review or edit">
+                    ← Back to Task Verification
+                </button>
+                <button onclick="window.switchTab('learning-outcomes-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Proceed to Learning Outcomes →
+                </button>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="learning-outcomes-tab">
+            <!-- The design-patterns guidance that used to sit here as a
+                 permanent card now lives behind the "?" button, matching
+                 the other tabs. It freed a full screen of vertical space
+                 above the Performance Criteria list the user actually
+                 works in. -->
+            <div class="tab-header-row">
+                <div class="tab-title-with-help">
+                    <h2>🎓 Learning Outcomes</h2>
+                    <button type="button" id="loHelpBtn" class="tab-help-btn"
+                            title="Learning Outcome design patterns"
+                            aria-label="Learning Outcome design patterns"
+                            aria-haspopup="dialog">?</button>
+                </div>
+            </div>
+
+            <!-- AI Generation Section — mirrors the card in the Duties tab -->
+            <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ Generate Learning Outcomes</h3>
+                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;">Choose the design pattern — you can use a different one for each cluster</p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button id="loGenPatternABtn" style="background: rgba(255,255,255,0.18); color: white; border: 1.5px solid rgba(255,255,255,0.55); padding: 11px 18px; font-size: 0.95em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                        🎯 Pattern A — One-to-One
+                    </button>
+                    <button id="loGenPatternBBtn" style="background: rgba(255,255,255,0.18); color: white; border: 1.5px solid rgba(255,255,255,0.55); padding: 11px 18px; font-size: 0.95em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                        🧩 Pattern B — Many-to-One
+                    </button>
+                    <button class="btn-ai-generate" id="loGenPatternCBtn" style="background: white; color: #667eea; padding: 11px 18px; font-size: 0.95em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        ⚖️ Pattern C — Hybrid
+                    </button>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 Tick criteria below to generate from just those; with none ticked, all unused criteria are used. New outcomes are added — existing ones are never replaced.</p>
+            </div>
+
+            <!-- Section 2: Performance Criteria Source List -->
+            <div class="clustering-section">
+                <h3>📋 Performance Criteria (Source)</h3>
+                <p style="color: #666; margin-bottom: 15px;">Select Performance Criteria to create a Learning Outcome.</p>
+                <div class="pc-source-list" id="pcSourceList">
+                    <div class="no-tasks-message">No Performance Criteria available. Please create Competency Clusters with Performance Criteria first.</div>
+                </div>
+            </div>
+
+            <!-- Section 3: Create Learning Outcome Button -->
+            <button class="btn-create-lo" id="btnCreateLO"  disabled>
+                ✨ Create Learning Outcome from Selected Criteria
+            </button>
+
+            <!-- Section 4: Learning Outcome Blocks -->
+            <div class="clustering-section">
+                <h3>📖 Learning Outcomes</h3>
+                <div class="lo-blocks-container" id="loBlocksContainer">
+                    <div class="no-clusters-message">No Learning Outcomes created yet.</div>
+                </div>
+            </div>
+            
+            <!-- Step navigation: back on the left, forward on the right —
+                 the conventional order, so "Proceed" keeps the position
+                 users already know from the other tabs. -->
+            <div class="step-nav-row">
+                <button type="button" class="btn-back-step" data-nav-back="clustering-tab"
+                        title="Return to Competency Clusters to edit clusters or criteria">
+                    ← Back to Competency Clusters
+                </button>
+                <button onclick="window.switchTab('module-mapping-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Proceed to Module Mapping →
+                </button>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="module-mapping-tab">
+            <!-- The Purpose card and the Module Grouping Strategy block
+                 that used to sit here are now behind the "?" button, in
+                 line with the other tabs. See events.js
+                 _showModuleMappingHelp() for the content. -->
+            <div class="tab-header-row">
+                <div class="tab-title-with-help">
+                    <h2>📦 Module Mapping</h2>
+                    <button type="button" id="mmHelpBtn" class="tab-help-btn"
+                            title="Purpose and module grouping strategies"
+                            aria-label="Purpose and module grouping strategies"
+                            aria-haspopup="dialog">?</button>
+                </div>
+            </div>
+
+            <!-- AI Generation Section — mirrors the card in the Duties tab -->
+            <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ Automatic Module Generation</h3>
+                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;">Build modules from your Learning Outcomes, or keep grouping them manually below</p>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                    <button id="mmGenOneToOneBtn" style="background: rgba(255,255,255,0.18); color: white; border: 1.5px solid rgba(255,255,255,0.55); padding: 12px 22px; font-size: 1em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
+                        ⚡ One Module per Outcome
+                    </button>
+                    <button class="btn-ai-generate" id="mmGenAIBtn" style="background: white; color: #667eea; padding: 12px 22px; font-size: 1em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        🤖 AI Group &amp; Sequence Modules
+                    </button>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">⚡ Instant and offline — one module per outcome. 🤖 Groups related outcomes, names each module, and orders them foundational → advanced. Both replace existing modules; your Learning Outcomes are never changed.</p>
+            </div>
+
+            <!-- Available Learning Outcomes -->
+            <div class="clustering-section">
+                <h3>🎓 Available Learning Outcomes</h3>
+                <p style="color: #666; margin-bottom: 15px;">Select Learning Outcomes to create a module.</p>
+                <div class="module-lo-list" id="moduleLoList">
+                    <div class="no-tasks-message">No Learning Outcomes available. Please create Learning Outcomes first.</div>
+                </div>
+            </div>
+
+            <!-- Create Module Button -->
+            <button class="btn-create-module" id="btnCreateModule"  disabled>
+                ✨ Create New Module
+            </button>
+
+            <!-- Modules Container -->
+            <div class="clustering-section">
+                <h3>📦 Modules</h3>
+                <div class="modules-container" id="modulesContainer">
+                    <div class="no-clusters-message">No modules created yet.</div>
+                </div>
+            </div>
+
+            <!-- Export Module Mapping Button -->
+            <div style="margin-top: 30px; text-align: center;">
+                <button class="btn-export-json" id="btnExportModuleMapping">
+                    📦 Export Module Mapping (JSON)
+                </button>
+            </div>
+
+            <!-- Module Builder Call-to-Action Banner -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 16px; margin-top: 40px; text-align: center; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);">
+                <h3 style="color: white; margin: 0 0 20px 0; font-size: 1.5em; font-weight: 600;">
+                    ✨ Ready to build detailed training modules?
+                </h3>
+                <button id="btnOpenModuleBuilder" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 16px 40px; font-size: 1.2em; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); transition: all 0.3s ease; margin-bottom: 15px;">
+                    🚀 Proceed to Module Builder
+                </button>
+                <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 0.95em; font-style: italic;">
+                    Export your modules and continue with detailed curriculum development
+                </p>
+            </div>
+
+            <!-- Last step in the chain — back only, no "Proceed". -->
+            <div class="step-nav-row">
+                <button type="button" class="btn-back-step" data-nav-back="learning-outcomes-tab"
+                        title="Return to Learning Outcomes to review or edit">
+                    ← Back to Learning Outcomes
+                </button>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="contact-tab">
+
+            <!-- ── Help Center Header ──────────────────────────────────── -->
+            <div class="hc-header">
+                <div class="hc-header-icon">❓</div>
+                <div>
+                    <h2 class="hc-title">Help Center</h2>
+                    <p class="hc-subtitle">Everything you need to use DACUM Live Pro effectively</p>
+                </div>
+            </div>
+
+            <div class="hc-grid">
+
+                <!-- ── Section 1: Quick Start ─────────────────────────── -->
+                <div class="hc-card hc-card-full hc-card-warm">
+                    <div class="hc-card-head">
+                        <span class="hc-card-icon" style="background:#eff6ff;color:#3b82f6;">🚀</span>
+                        <h3 class="hc-card-title">Quick Start: How to Use DACUM Live Pro</h3>
+                    </div>
+
+                    <ol class="hc-steps">
+                        <li><span class="hc-step-num">1</span><div>Enter the occupation title and job title in Chart Info tab.</div></li>
+                        <li><span class="hc-step-num">2</span><div>Use AI Generation (in Duties &amp; Tasks tab) OR add duties and tasks manually.</div></li>
+                        <li><span class="hc-step-num">3</span><div>Add knowledge, skills, and behaviors (optional).</div></li>
+                        <li><span class="hc-step-num">4</span><div>Optionally verify tasks in Task Verification tab using workshop voting or individual ratings.</div></li>
+                        <li><span class="hc-step-num">5</span><div><strong>Competency Clusters:</strong> Group related tasks into competency clusters, define performance criteria and range.</div></li>
+                        <li><span class="hc-step-num">6</span><div><strong>Learning Outcomes:</strong> Map performance criteria to learning outcomes for training design.</div></li>
+                        <li><span class="hc-step-num">7</span><div><strong>Module Mapping:</strong> Organize learning outcomes into training modules.</div></li>
+                        <li><span class="hc-step-num">8</span><div>Export as PDF or Word document.</div></li>
+                    </ol>
+
+                    <div class="hc-tips-block">
+                        <p><span class="hc-tip-icon">🤖</span> <strong>AI-Powered:</strong> <em>Automatically generate complete DACUM drafts with duties and tasks</em></p>
+                        <p><span class="hc-tip-icon">📝</span> <strong>Format for tasks:</strong> <em>Action Verb + Task/Activity (What) + Context (Where/How/Why if relevant)</em></p>
+                        <p><span class="hc-tip-icon">💡</span> <strong>Example:</strong> <em>"Calibrate testing equipment according to manufacturer specifications"</em></p>
+                    </div>
+                </div>
+
+                <!-- ── Section 2: User Guide ──────────────────────────── -->
+                <div class="hc-card">
+                    <div class="hc-card-head">
+                        <span class="hc-card-icon" style="background:#f0fdf4;color:#16a34a;">📘</span>
+                        <h3 class="hc-card-title">User Guide</h3>
+                    </div>
+                    <p class="hc-card-desc">Access the full documentation for DACUM Live Pro — includes detailed instructions, screenshots, and best practices.</p>
+
+                    <div class="hc-btn-row">
+                        <a href="https://hshamjawad.github.io/DACUM-Live-Pro-V3.1/DACUM_Live_Pro_User_Guide.html"
+                           target="_blank" rel="noopener" class="hc-btn hc-btn-primary">
+                            📖 Open User Guide
+                        </a>
+                        <a href="https://hshamjawad.github.io/DACUM-Live-Pro-V3.1/DACUM_Live_Pro_User_Guide.html"
+                           target="_blank" rel="noopener" class="hc-btn hc-btn-secondary">
+                            🔗 View in New Tab
+                        </a>
+                    </div>
+
+                    <div class="hc-qr-wrap">
+                        <img src="https://hshamjawad.github.io/DACUM-Live-Pro-V3.1/qr-code_DACUM_Live_Pro_User_Guide.png"
+                             alt="QR code — User Guide"
+                             class="hc-qr-img"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                        <div class="hc-qr-placeholder" style="display:none;">
+                            <span>📱</span><span>QR Code</span>
+                        </div>
+                        <p class="hc-qr-caption">Scan to open the User Guide on your mobile device.</p>
+                    </div>
+                </div>
+
+                <!-- ── Section 3: About / Contact ─────────────────────── -->
+                <div class="hc-card">
+                    <div class="hc-card-head">
+                        <span class="hc-card-icon" style="background:#faf5ff;color:#7c3aed;">👨‍💻</span>
+                        <h3 class="hc-card-title">About the Creator</h3>
+                    </div>
+
+                    <div class="hc-creator">
+                        <div class="hc-creator-avatar">HJ</div>
+                        <div>
+                            <p class="hc-creator-name">Husham Jawad Kadhim</p>
+                            <p class="hc-creator-role">Creator of DACUM Live Pro</p>
+                            <p class="hc-creator-sub">TVET Curriculum Developer &amp; Educational Technology Innovator</p>
+                        </div>
+                    </div>
+
+                    <div class="hc-contact-links">
+                        <a href="/cdn-cgi/l/email-protection#fb9388939a9a96ccccbb9c969a9297d5989496" class="hc-contact-item">
+                            <span class="hc-contact-icon">📧</span>
+                            <div>
+                                <span class="hc-contact-label">Email</span>
+                                <span class="hc-contact-value"><span class="__cf_email__" data-cfemail="335b405b52525e040473545e525a5f1d505c5e">[email&#160;protected]</span></span>
+                            </div>
+                        </a>
+                        <a href="https://www.linkedin.com/in/husham-jawad-kadhim-954006200/"
+                           target="_blank" rel="noopener" class="hc-contact-item">
+                            <span class="hc-contact-icon">💼</span>
+                            <div>
+                                <span class="hc-contact-label">LinkedIn</span>
+                                <span class="hc-contact-value">husham-jawad-kadhim</span>
+                            </div>
+                        </a>
+                    </div>
+
+                    <div class="hc-callout">
+                        <span class="hc-callout-icon">💡</span>
+                        <div>
+                            <strong>Get in Touch</strong>
+                            <p>For questions, feedback, suggestions, or collaboration opportunities, please reach out using the contact information above.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /.hc-grid -->
+
+            <!-- Copyright & disclaimer — Help tab only.
+                 Previously this sat at .container level, so it rendered
+                 beneath every tab. Moved inside #contact-tab so the
+                 working tabs stay clean while the legal text remains
+                 reachable in the Help Center. -->
+            <div class="copyright">
+                <p style="margin-bottom: 8px; font-size: 1em;">© 2026 DACUM Live Pro | by Husham Jawad Kadhim | Version <span id="dacumFooterVersion">3.3</span> | All Rights Reserved</p>
+                <p style="font-size: 0.85em; color: #999; font-style: italic;">
+                    <strong>Disclaimer:</strong> DACUM Live Pro is a facilitation and analysis tool provided "as is" without warranty of any kind.
+                    The developer assumes no responsibility for any inaccuracies, errors, omissions, or inconsistencies in the generated documents.
+                    Users and facilitating institutions are solely responsible for verifying, validating, and making final decisions on all content before use.
+                </p>
+            </div>
+        </div><!-- /#contact-tab -->
+        
+        <input type="file" id="loadFileInput" accept=".json" multiple style="display: none;">
+
+        <div id="status" class="status" style="display:none;"></div>
+        
+    </div>
+
+
+    <!-- Loading Modal -->
+    <div id="loadingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99999;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 50px; border-radius: 16px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <div class="spinner"></div>
+            <p style="margin-top: 25px; font-size: 1.2em; color: #333; font-weight: 600;">🤖 Processing AI Request...</p>
+            <p style="margin-top: 10px; font-size: 0.95em; color: #666;">Please wait while we generate your DACUM draft</p>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════
+         QR Code Modal — two-column redesign
+         ══════════════════════════════════════════════════════ -->
+    <div id="lwQRModal" style="display:none;">
+
+      <!-- Backdrop -->
+      <div class="qrm-backdrop" id="qrModalBackdrop"></div>
+
+      <!-- Dialog: QR left | panel right -->
+      <div class="qrm-dialog" role="dialog" aria-modal="true" aria-labelledby="qrmTitle">
+
+        <!-- LEFT: large QR code only -->
+        <div class="qrm-left">
+          <div class="qrm-code-wrap">
+            <div id="qrCodeContainer" class="qrm-container"></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: header + buttons + feedback -->
+        <div class="qrm-right">
+
+          <div class="qrm-header">
+            <div class="qrm-title-row">
+              <span class="qrm-icon">📱</span>
+              <h2 class="qrm-title" id="qrmTitle">Scan to Join</h2>
+            </div>
+            <p class="qrm-subtitle">Point your phone camera at the QR code to open the live voting session on any device.</p>
+          </div>
+
+          <div class="qrm-divider"></div>
+
+          <div class="qrm-btn-row">
+            <button id="btnLWDownloadQR" class="qrm-btn qrm-btn-green">
+              ⬇️ Download PNG
+            </button>
+            <button id="btnQRCopy" class="qrm-btn qrm-btn-blue">
+              📋 Copy to Clipboard
+            </button>
+            <button id="btnLWCloseQR" class="qrm-btn qrm-btn-neutral">
+              ✕ Close
+            </button>
+          </div>
+
+          <div class="qrm-feedback" id="qrmFeedback"></div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="qrcode.min.js"></script>
+    <script type="module" src="app.js"></script>
+    <script src="dacum-ui.js"></script>
+    <script src="dacum-mobile.js"></script>
+    <script src="dacum-fixes.js"></script>
+
+    <!-- ── Fixed Top Toolbar ──────────────────────────────────── -->
+    <div id="dacumTopToolbar">
+      <div class="dtb-left">
+        <!-- ── Sidebar toggle (always in HTML — never injected) ── -->
+        <button id="btnSidebarToggle" title="Toggle Projects Sidebar" aria-label="Toggle sidebar">
+          <svg viewBox="0 0 18 18" width="16" height="16" fill="none" aria-hidden="true">
+            <rect x="2" y="3.5"  width="14" height="1.8" rx="0.9" fill="currentColor"/>
+            <rect x="2" y="8.1"  width="14" height="1.8" rx="0.9" fill="currentColor"/>
+            <rect x="2" y="12.7" width="14" height="1.8" rx="0.9" fill="currentColor"/>
+          </svg>
+        </button>
+        <button class="dtb-btn dtb-snapshot" id="btnSaveSnapshot" title="Save Snapshot">
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#f59e0b"/><circle cx="9" cy="9" r="3" fill="#fff"/></svg>
+          <span>Snapshot</span>
+        </button>
+      </div>
+      <div class="dtb-center">
+        <button class="dtb-btn dtb-primary" id="btnSaveJSON" title="Export project as JSON file">
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#6366f1"/><path d="M9 5v8M6 10l3 3 3-3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Export</span>
+        </button>
+        <button class="dtb-btn dtb-secondary" id="btnLoadImport" title="Import project from JSON file"
+                onclick="document.getElementById('loadFileInput').click()">
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#10b981"/><path d="M9 13V5M6 8l3-3 3 3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Import</span>
+        </button>
+        <div class="dtb-divider"></div>
+        <button class="dtb-btn dtb-ghost" id="btnExportPDF" title="Export as PDF">
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#ef4444"/><text x="9" y="12.5" text-anchor="middle" font-size="6.5" font-weight="700" fill="#fff" font-family="Arial,sans-serif">PDF</text></svg>
+          <span>PDF</span>
+        </button>
+        <button class="dtb-btn dtb-ghost" id="btnExportWord" title="Export as Word DOCX">
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#2563eb"/><text x="9" y="12.5" text-anchor="middle" font-size="6" font-weight="700" fill="#fff" font-family="Arial,sans-serif">DOC</text></svg>
+          <span>Word</span>
+        </button>
+        <div class="dtb-divider"></div>
+        <button class="dtb-btn dtb-danger" id="btnClearAll" title="Clear all data">
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#ef4444"/><path d="M6 6l6 6M12 6l-6 6" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span>Clear All</span>
+        </button>
+      </div>
+      <div class="dtb-right">
+        <!-- ── Version badge ──────────────────────────────────
+             Shows which build is running (kept in sync by the SW
+             block at the top of this file). Turns into a clickable
+             "Update now" chip when a newer Service Worker is ready.
+             Title attribute carries the full version + release date
+             for anyone reporting a bug. -->
+        <button id="dacumVersionBadge" type="button"
+                title="Loading version…"
+                aria-label="Application version">
+          <span id="dacumVersionText">—</span>
+        </button>
+        <button class="dtb-undo" id="btnUndo" disabled title="Undo  (Ctrl+Z)">
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none"><path d="M3 8a5 5 0 1 0 1.5-3.5L3 6V3H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Undo
+        </button>
+        <button class="dtb-undo" id="btnRedo" disabled title="Redo  (Ctrl+Y)">
+          Redo
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none"><path d="M13 8a5 5 0 1 1-1.5-3.5L13 6V3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="dtb-lens" id="btnOpenSnapshots" title="Saved Snapshots">
+          <svg viewBox="0 0 18 18" width="15" height="15" fill="none"><circle cx="8" cy="8" r="4.5" stroke="#92570a" stroke-width="1.6"/><line x1="11.5" y1="11.5" x2="15" y2="15" stroke="#92570a" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Snapshot Modal ──────────────────────────────────── -->
+    <div id="snapModal" style="display:none;">
+      <div id="snapModalOverlay"></div>
+      <div id="snapModalBox">
+        <div id="snapModalHeader">
+          <span>📸 SAVED SNAPSHOTS</span>
+          <button id="snapModalClose">✕</button>
+        </div>
+        <div id="snapshotList"></div>
+        <div id="snapModalFoot">
+          <button id="snapModalSave">＋ Save Snapshot</button>
+        </div>
+      </div>
+    </div>
+
+    <!-
