@@ -610,6 +610,75 @@
         }
       }
 
+      /* ══════════════════════════════════════════════════════════
+         ROUND ICON BUTTONS — keep them round
+         ──────────────────────────────────────────────────────────
+         base.css styles EVERY <button> with `padding: 12px 24px`, and
+         dacum-responsive.css re-pads toolbar buttons to `7px 10px` on
+         phones. Both are asymmetric, and with the global
+         `box-sizing: border-box` a 22x22 button whose padding exceeds
+         its box gets pushed outward — more vertically than
+         horizontally, because the flex row it sits in also lets it
+         shrink sideways. The result is the vertical ellipse seen on
+         mobile instead of a circle.
+
+         Fixing it needs three things together: zero the padding, pin
+         min-* to the same value as width/height so nothing can grow
+         it, and forbid flex shrinking so nothing can squeeze it. */
+      .dcv-close-btn,
+      .dcv-add-btn {
+        padding: 0 !important;
+        flex: 0 0 auto !important;
+        box-sizing: border-box !important;
+        aspect-ratio: 1 / 1;
+      }
+
+      .card-view-mode .dcv-close-btn,
+      .table-view-mode .dcv-close-btn {
+        width: 22px !important;
+        height: 22px !important;
+        min-width: 22px !important;
+        min-height: 22px !important;
+        max-width: 22px;
+        max-height: 22px;
+        border-radius: 50% !important;
+        line-height: 1 !important;
+        font-size: 12px !important;
+      }
+
+      /* Toolbar icon buttons: same inherited-padding problem, same fix.
+         Only the icon-only variants are constrained — buttons that
+         still show a text label must stay free to size to their text. */
+      #dacumTopToolbar .dtb-lens,
+      #dacumTopToolbar .dtb-hamburger,
+      #dacumTopToolbar .dtb-undo,
+      #dacumTopToolbar .dtb-redo {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        padding: 0 !important;
+        flex: 0 0 auto !important;
+        box-sizing: border-box !important;
+        aspect-ratio: 1 / 1;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+        line-height: 1 !important;
+      }
+
+      @media (max-width: 600px) {
+        #dacumTopToolbar .dtb-lens,
+        #dacumTopToolbar .dtb-hamburger,
+        #dacumTopToolbar .dtb-undo,
+        #dacumTopToolbar .dtb-redo {
+          width: 34px;
+          height: 34px;
+          min-width: 34px;
+          min-height: 34px;
+        }
+      }
+
       /* Post-refine flash on changed duties/tasks (2.5s) */
       .refined-highlight {
         background-color: rgba(16, 185, 129, 0.15) !important;
