@@ -163,6 +163,7 @@ export function setupEvents() {
   _on('clusteringHelpBtn',    'click', () => _showClusteringHelp());
   _on('loHelpBtn',            'click', () => _showLearningOutcomesHelp());
   _on('mmHelpBtn',            'click', () => _showModuleMappingHelp());
+  _on('taskVerifyHelpBtn',    'click', () => _showTaskVerificationHelp());
 
   // ── Competency Clusters: AI assistance ──────────────────────
   // Two separate actions on purpose — see clustering_ai.js. Both save
@@ -812,6 +813,69 @@ function _showHelpModal({ id, icon, title, intro, items, note, bodyHtml, maxWidt
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
   document.addEventListener('keydown', function esc(e) {
     if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+  });
+}
+
+// Task Verification guidance.
+//
+// This content used to sit in a permanent instructions card at the top
+// of the tab. Moved into a modal for consistency with the other tabs,
+// and because a card that is always open is skimmed once and then
+// scrolled past forever — the scale definitions are exactly what a
+// facilitator needs to re-check mid-session, and they were pushed off
+// screen by the duty accordions.
+//
+// Expanded beyond the original card with the points a new user most
+// often gets wrong: that verification prioritises rather than filters,
+// that all three dimensions must be set before a task counts, and that
+// a high total is not by itself a call for intensive training.
+function _showTaskVerificationHelp() {
+  const P = 'margin:0 0 10px;font-size:0.86em;color:#475569;line-height:1.65;';
+
+  _showHelpModal({
+    id:    'taskVerificationHelpModal',
+    icon:  '🎯',
+    title: 'Why Task Verification Matters',
+    maxWidth: '560px',
+    intro: 'Verification turns the workshop panel\u2019s judgement into evidence you can ' +
+           'defend. Rate each task on three independent 0\u20133 scales. Nothing is added ' +
+           'to or removed from the DACUM chart at this stage \u2014 verification ' +
+           '<strong>prioritises, it does not filter</strong>.',
+    items: [
+      ['⭐', 'Importance',
+       '0 = Not Important, 1 = Somewhat, 2 = Important, 3 = Critical. Governs whether a ' +
+       'task is included and how strictly it is assessed later.'],
+      ['🔁', 'Frequency',
+       '0 = Rarely, 1 = Sometimes, 2 = Often, 3 = Daily. Guides sequencing and how often ' +
+       'a task is practised &mdash; not how long it is taught.'],
+      ['🧠', 'Learning Difficulty',
+       '0 = Easy, 1 = Moderate, 2 = Challenging, 3 = Very Difficult. The main driver of ' +
+       'instructional time and practice volume.'],
+      ['👥', 'Data collection mode',
+       'Choose this first. <em>Workshop</em> records how many panel members chose each ' +
+       'level and reports weighted means. <em>Individual / Survey</em> records one ' +
+       'respondent\u2019s rating.'],
+      ['✅', 'Complete a task fully',
+       'All three dimensions must be set before a task counts as Complete and before it ' +
+       'enters the Task Score, the Priority Index and the results chart.'],
+      ['📊', 'Results chart',
+       'The 📊 button opens a grouped bar chart per duty, tasks in DACUM order. The ' +
+       'dashed line is that duty\u2019s own average.'],
+    ],
+    bodyHtml:
+      '<p style="' + P + '"><strong style="color:#1e293b;">What this feeds into.</strong> ' +
+      'Verification is an input, not a decision. Its output flows in order into ' +
+      'Clustering &rarr; Learning Outcomes &rarr; Performance Criteria &rarr; Modules. ' +
+      'Tasks rating high here will generally need more detailed learning outcomes and ' +
+      'more precise assessment criteria &mdash; but that judgement belongs to those ' +
+      'later stages, not this one.</p>',
+    note:
+      'The three dimensions do not drive the same decision, so a high total is not by ' +
+      'itself a call for intensive training: a daily, critical but <em>easy</em> task ' +
+      'raises the score without needing much instructional time. And the duty average is ' +
+      '<strong>relative</strong> &mdash; in a duty where every task is critical, half ' +
+      'will still fall below it. A task below the line stays on the DACUM chart; only ' +
+      'the depth of its treatment changes.',
   });
 }
 

@@ -400,14 +400,34 @@ export function openVerificationChart(startIndex) {
           '<p class="tvc-title">\ud83d\udcca Task Verification Results</p>' +
           '<p class="tvc-duty" id="tvcDutyLabel"></p>' +
         '</div>' +
-        '<button type="button" class="tvc-close" id="tvcClose" aria-label="Close chart">\u2715</button>' +
+        // Icons are inline SVG, not text glyphs. A glyph is positioned by
+        // the font's own side bearings and baseline, which differ per
+        // font and per character, so ✕ / ◀ / ▶ sat visibly off-centre
+        // inside their buttons. An SVG path is centred by its viewBox,
+        // which is identical everywhere and on every platform.
+        '<button type="button" class="tvc-close" id="tvcClose" aria-label="Close chart">' +
+          '<svg viewBox="0 0 16 16" aria-hidden="true">' +
+            '<path d="M4 4 L12 12 M12 4 L4 12" stroke="currentColor" ' +
+              'stroke-width="1.9" stroke-linecap="round" fill="none"/>' +
+          '</svg>' +
+        '</button>' +
       '</div>' +
 
       '<div class="tvc-controls">' +
         '<div class="tvc-duty-nav">' +
-          '<button type="button" id="tvcPrevDuty" aria-label="Previous duty">\u25c0</button>' +
+          '<button type="button" id="tvcPrevDuty" aria-label="Previous duty">' +
+            '<svg viewBox="0 0 16 16" aria-hidden="true">' +
+              '<path d="M10.5 3 L5.5 8 L10.5 13" stroke="currentColor" stroke-width="2" ' +
+                'stroke-linecap="round" stroke-linejoin="round" fill="none"/>' +
+            '</svg>' +
+          '</button>' +
           '<span id="tvcDutyPos"></span>' +
-          '<button type="button" id="tvcNextDuty" aria-label="Next duty">\u25b6</button>' +
+          '<button type="button" id="tvcNextDuty" aria-label="Next duty">' +
+            '<svg viewBox="0 0 16 16" aria-hidden="true">' +
+              '<path d="M5.5 3 L10.5 8 L5.5 13" stroke="currentColor" stroke-width="2" ' +
+                'stroke-linecap="round" stroke-linejoin="round" fill="none"/>' +
+            '</svg>' +
+          '</button>' +
         '</div>' +
         '<div class="tvc-view-toggle" role="radiogroup" aria-label="Chart view">' +
           '<label><input type="radio" name="tvcView" value="full"' +

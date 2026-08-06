@@ -104,7 +104,7 @@
       // Bump these together with EXPECTED_SW / CACHE_VERSION on every
       // release, so a trainer can read the running build off the
       // screen instead of digging through DevTools.
-      var APP_VERSION = '3.8';
+      var APP_VERSION = '3.8.2';
       var APP_RELEASED = '2026-08-03';
 
       // Per-version reload guard — prevents infinite refresh loops
@@ -756,20 +756,35 @@
       }
       .tvc-title { margin: 0; font-size: 1em; font-weight: 800; color: #3730a3; }
       .tvc-duty  { margin: 3px 0 0; font-size: 0.86em; color: #4338ca; font-weight: 600; }
+      /* These three buttons held bare text glyphs (✕ ◀ ▶) with padding:0
+         and no flex centring. A <button> centres its label horizontally
+         but drops it on the text baseline vertically, so the mark sat
+         low; and each glyph carries its own uneven side bearings, so it
+         also drifted sideways — the offsets seen in the reported screens.
+         Fixed on both fronts: the icons are now inline SVG centred by
+         their viewBox, and the buttons are flex containers that centre on
+         both axes regardless of what they contain. */
       .tvc-close {
         flex: 0 0 auto;
         width: 30px; height: 30px;
         min-width: 30px; max-width: 30px;
         min-height: 30px; max-height: 30px;
         padding: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         border-radius: 50%;
         border: 1px solid #c7d2fe;
         background: #fff;
         color: #4338ca;
-        font-size: 13px;
-        line-height: 1;
+        line-height: 0;
         cursor: pointer;
+        -webkit-appearance: none;
+                appearance: none;
+        transition: background 0.15s, color 0.15s;
       }
+      .tvc-close:hover { background: #4338ca; color: #fff; }
+      .tvc-close svg { width: 15px; height: 15px; display: block; }
 
       /* ── Controls row ────────────────────────────────────────── */
       .tvc-controls {
@@ -786,14 +801,21 @@
         min-width: 32px; max-width: 32px;
         min-height: 32px; max-height: 32px;
         padding: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         border-radius: 8px;
         border: 1px solid #cbd5e1;
         background: #f8fafc;
         color: #334155;
-        font-size: 12px;
-        line-height: 1;
+        line-height: 0;
         cursor: pointer;
+        -webkit-appearance: none;
+                appearance: none;
+        transition: background 0.15s, border-color 0.15s;
       }
+      .tvc-duty-nav button:hover:not(:disabled) { background: #eef2ff; border-color: #a5b4fc; color: #4338ca; }
+      .tvc-duty-nav button svg { width: 15px; height: 15px; display: block; }
       .tvc-duty-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
       #tvcDutyPos { font-size: 0.82em; color: #64748b; font-weight: 700; min-width: 46px; text-align: center; }
 
@@ -2385,16 +2407,12 @@
         </div>
         
         <div class="tab-content" id="verification-tab">
-            <h2>🎯 Task Verification & Training Priority</h2>
-            
-            <!-- Instructions -->
-            <div class="verification-instructions">
-                <h4>📋 Instructions:</h4>
-                <p>Rate each task on three scales (0-3). Select the data collection mode first, then expand each duty to rate its tasks. Your ratings will be saved with the DACUM chart data.</p>
-                <p style="margin-top: 15px;"><strong>Rating Scales:</strong><br>
-                • <strong>Importance:</strong> 0=Not Important, 1=Somewhat, 2=Important, 3=Critical<br>
-                • <strong>Frequency:</strong> 0=Rarely, 1=Sometimes, 2=Often, 3=Daily<br>
-                • <strong>Difficulty:</strong> 0=Easy, 1=Moderate, 2=Challenging, 3=Very Difficult</p>
+            <div class="tab-title-with-help">
+                <h2>🎯 Task Verification &amp; Training Priority</h2>
+                <button type="button" id="taskVerifyHelpBtn" class="tab-help-btn"
+                        title="Why does task verification matter?"
+                        aria-label="Why does task verification matter?"
+                        aria-haspopup="dialog">?</button>
             </div>
             
             <!-- Data Collection Mode Selector -->
