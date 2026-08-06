@@ -104,7 +104,7 @@
       // Bump these together with EXPECTED_SW / CACHE_VERSION on every
       // release, so a trainer can read the running build off the
       // screen instead of digging through DevTools.
-      var APP_VERSION = '3.8.2';
+      var APP_VERSION = '3.8.3';
       var APP_RELEASED = '2026-08-03';
 
       // Per-version reload guard — prevents infinite refresh loops
@@ -1005,9 +1005,7 @@
          Only the icon-only variants are constrained — buttons that
          still show a text label must stay free to size to their text. */
       #dacumTopToolbar .dtb-lens,
-      #dacumTopToolbar .dtb-hamburger,
-      #dacumTopToolbar .dtb-undo,
-      #dacumTopToolbar .dtb-redo {
+      #dacumTopToolbar .dtb-hamburger {
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
@@ -1024,14 +1022,76 @@
 
       @media (max-width: 600px) {
         #dacumTopToolbar .dtb-lens,
-        #dacumTopToolbar .dtb-hamburger,
-        #dacumTopToolbar .dtb-undo,
-        #dacumTopToolbar .dtb-redo {
+        #dacumTopToolbar .dtb-hamburger {
           width: 34px;
           height: 34px;
           min-width: 34px;
           min-height: 34px;
         }
+      }
+
+      /* ── Undo / Redo ──────────────────────────────────────────
+         These were previously swept into the icon-only rule above,
+         which pinned them to a 36x36 square with `padding: 0`. But
+         unlike the lens and the hamburger they are PILLS: each holds
+         an icon AND a text label. Squeezed into a 36px box with no
+         padding, the label spilled past the border and ran into the
+         neighbouring control — the overlap that became obvious once
+         the version badge grew a third digit and tightened the row.
+
+         They are pills, so they are sized like pills: horizontal
+         padding, a real gap between icon and label, a fixed height to
+         match the icon buttons, and no aspect-ratio or width cap of
+         any kind. Only the height is pinned; the width follows the
+         text, which is the whole point. */
+      #dacumTopToolbar .dtb-undo,
+      #dacumTopToolbar .dtb-redo {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        flex: 0 0 auto !important;
+        box-sizing: border-box !important;
+        height: 36px;
+        min-height: 36px;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        aspect-ratio: auto !important;
+        padding: 0 14px !important;
+        line-height: 1 !important;
+        white-space: nowrap;
+      }
+      #dacumTopToolbar .dtb-undo svg,
+      #dacumTopToolbar .dtb-redo svg { flex-shrink: 0; display: block; }
+
+      /* Breathing room between toolbar controls. The base 4px was too
+         tight once three pills sat side by side. */
+      #dacumTopToolbar .dtb-center,
+      #dacumTopToolbar .dtb-right {
+        gap: 8px !important;
+        row-gap: 8px !important;
+      }
+
+      @media (max-width: 1200px) {
+        /* Labels are hidden at this width (dacum-responsive.css sets
+           font-size:0), so the pills collapse to icon-only and must
+           lose the horizontal padding that was sized for text. */
+        #dacumTopToolbar .dtb-undo,
+        #dacumTopToolbar .dtb-redo {
+          padding: 0 10px !important;
+          gap: 0 !important;
+        }
+      }
+
+      @media (max-width: 600px) {
+        #dacumTopToolbar .dtb-undo,
+        #dacumTopToolbar .dtb-redo {
+          height: 34px;
+          min-height: 34px;
+        }
+        #dacumTopToolbar .dtb-center,
+        #dacumTopToolbar .dtb-right { gap: 6px !important; }
       }
 
       /* Post-refine flash on changed duties/tasks (2.5s) */
@@ -3223,6 +3283,26 @@
           <span>Word</span>
         </button>
         <div class="dtb-divider"></div>
+        <!-- ── History & recovery group ────────────────────────
+             Moved here from .dtb-right. Undo, Redo and Saved
+             Snapshots are all ways of getting work BACK, so they
+             belong beside the one control that can destroy it —
+             the undo affordance now sits directly next to the thing
+             you would want to undo. It also leaves .dtb-right
+             holding nothing but the version badge, which is what
+             relieves the crowding on that side of the bar. -->
+        <button class="dtb-undo" id="btnUndo" disabled title="Undo  (Ctrl+Z)">
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none"><path d="M3 8a5 5 0 1 0 1.5-3.5L3 6V3H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Undo
+        </button>
+        <button class="dtb-undo dtb-redo" id="btnRedo" disabled title="Redo  (Ctrl+Y)">
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="none"><path d="M13 8a5 5 0 1 1-1.5-3.5L13 6V3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Redo
+        </button>
+        <button class="dtb-lens" id="btnOpenSnapshots" title="Saved Snapshots">
+          <svg viewBox="0 0 18 18" width="15" height="15" fill="none"><circle cx="8" cy="8" r="4.5" stroke="#92570a" stroke-width="1.6"/><line x1="11.5" y1="11.5" x2="15" y2="15" stroke="#92570a" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+        <div class="dtb-divider"></div>
         <button class="dtb-btn dtb-danger" id="btnClearAll" title="Clear all data">
           <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#ef4444"/><path d="M6 6l6 6M12 6l-6 6" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg>
           <span>Clear All</span>
@@ -3239,17 +3319,6 @@
                 title="Loading version…"
                 aria-label="Application version">
           <span id="dacumVersionText">—</span>
-        </button>
-        <button class="dtb-undo" id="btnUndo" disabled title="Undo  (Ctrl+Z)">
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="none"><path d="M3 8a5 5 0 1 0 1.5-3.5L3 6V3H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Undo
-        </button>
-        <button class="dtb-undo" id="btnRedo" disabled title="Redo  (Ctrl+Y)">
-          Redo
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="none"><path d="M13 8a5 5 0 1 1-1.5-3.5L13 6V3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button class="dtb-lens" id="btnOpenSnapshots" title="Saved Snapshots">
-          <svg viewBox="0 0 18 18" width="15" height="15" fill="none"><circle cx="8" cy="8" r="4.5" stroke="#92570a" stroke-width="1.6"/><line x1="11.5" y1="11.5" x2="15" y2="15" stroke="#92570a" stroke-width="1.6" stroke-linecap="round"/></svg>
         </button>
       </div>
     </div>
