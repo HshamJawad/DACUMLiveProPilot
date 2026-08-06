@@ -20,6 +20,7 @@ import { startAutoSave, checkCrashRecovery } from './autosave.js';
 import { initImageStore }     from './image_store.js';
 import { clearAiGeneratedFlag } from './refine.js';
 import { initDragDrop }        from './drag_drop.js';
+import { initVerificationCharts } from './verification_charts.js';
 
 // Expose switchTab globally (called from HTML onclick and live workshop guards)
 window.switchTab = switchTab;
@@ -87,6 +88,12 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Initialize Task Verification controls
   updateCollectionMode();
   updateWorkflowMode();
+
+  // Wire the verification results charts. Bound AFTER the two calls
+  // above because they render the accordion; the listener itself is
+  // delegated onto the permanent container, so it survives every
+  // later re-render when the collection or workflow mode changes.
+  initVerificationCharts();
 
   // Check Live Workshop section visibility
   const urlParams = new URLSearchParams(window.location.search);

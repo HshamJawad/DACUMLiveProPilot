@@ -1,0 +1,482 @@
+// ============================================================
+// /verification_charts.js
+// Task Verification Results — flat grouped bar chart, one per duty.
+//
+// Inspired by the "Task Verification Results" chart in Robert
+// Norton's DACUM Handbook: one chart per duty, tasks along the x
+// axis in DACUM order, rated dimensions as grouped bars. Only the
+// IDEA is borrowed — every number, scale, label and respondent
+// count here comes from the user's own project data. Nothing from
+// the handbook's worked example is hard-coded anywhere.
+//
+// Deliberately flat (no 3-D extrusion): a perspective projection
+// pushes bar tops away from the gridlines and hides rear bars, so
+// the reader can no longer compare heights accurately — the exact
+// failure mode of the era's 3-D bar charts.
+//
+// Rendered as hand-built SVG rather than a charting library, so
+// the PWA keeps working offline without adding a large dependency
+// to the service worker's precache list.
+// ============================================================
+
+import { appState } from './state.js';
+
+// ── Series definitions ────────────────────────────────────────
+// Colours echo the app's existing indigo/sky/amber accents.
+const SERIES = {
+  importance: { key: 'importance', label: 'Importance', color: '#4f46e5' },
+  frequency:  { key: 'frequency',  label: 'Frequency',  color: '#0ea5e9' },
+  difficulty: { key: 'difficulty', label: 'Difficulty', color: '#f59e0b' }
+};
+
+// Two views, named by the QUESTION they answer rather than by how
+// many bars they draw — the point of the toggle is methodological,
+// not cosmetic. "Curriculum decision" drops Frequency because a
+// rarely-performed task that is important and hard still needs
+// heavy training; giving frequency equal visual weight invites the
+// designer to under-train exactly those tasks.
+const VIEWS = {
+  full:       { id: 'full',       series: ['importance', 'frequency', 'difficulty'] },
+  curriculum: { id: 'curriculum', series: ['importance', 'difficulty'] }
+};
+
+const SCALE_MAX = 3;          // the app's own 0-3 scale
+const PLOT_H    = 250;
+const PAD       = { top: 20, right: 18, bottom: 46, left: 44 };
+const BAR_W     = 17;
+const BAR_GAP   = 4;
+const GROUP_GAP = 26;
+
+// ── Module state ──────────────────────────────────────────────
+let _view    = 'full';
+let _dutyIdx = 0;
+let _duties  = [];
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function _esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Values come from a different place in each collection mode, but
+// both yield three numbers per task, so the chart works in both.
+// What changes is the MEANING of a bar: one person's judgement in
+// survey mode, a panel mean in workshop mode. The meta line under
+// the title states which, so the reader is never left guessing.
+function _readValues(taskKey) {
+  const blank = { importance: null, frequency: null, difficulty: null, rated: false, n: null };
+
+  if (appState.collectionMode === 'workshop') {
+    const r = appState.workshopResults[taskKey];
+    if (!r || !r.valid) return blank;
+    const rc = r.responseCount || {};
+    const counts = [rc.importance, rc.frequency, rc.difficulty].filter(v => typeof v === 'number' && v > 0);
+    return {
+      importance: r.meanImportance,
+      frequency:  r.meanFrequency,
+      difficulty: r.meanDifficulty,
+      rated: true,
+      n: counts.length ? counts : null
+    };
+  }
+
+  const r = appState.verificationRatings[taskKey];
+  if (!r || r.importance === null || r.frequency === null || r.difficulty === null) return blank;
+  return {
+    importance: r.importance,
+    frequency:  r.frequency,
+    difficulty: r.difficulty,
+    rated: true,
+    n: null
+  };
+}
+
+// Read the duties straight out of the rendered accordion instead of
+// rebuilding them from state. That guarantees the chart shows the
+// same duties, the same tasks and the same DACUM ordering the user
+// is looking at, with no second source of truth to drift out of sync.
+function _collectDuties() {
+  const cont = document.getElementById('verificationAccordionContainer');
+  const out  = [];
+  if (!cont) return out;
+
+  cont.querySelectorAll('.duty-accordion').forEach(acc => {
+    const header = acc.querySelector('.duty-accordion-header');
+    const title  = (acc.querySelector('.duty-title')?.textContent || '').trim();
+    const tasks  = [];
+
+    acc.querySelectorAll('tbody tr[data-task-key]').forEach(tr => {
+      const key   = tr.getAttribute('data-task-key');
+      const label = (tr.querySelector('.task-text')?.textContent || '').trim();
+      const dot   = label.indexOf('.');
+      const code  = dot > -1 ? label.slice(0, dot).trim() : label;
+      const text  = dot > -1 ? label.slice(dot + 1).trim() : '';
+      tasks.push(Object.assign({ key, code, text }, _readValues(key)));
+    });
+
+    out.push({
+      id: header ? header.getAttribute('data-duty') : '',
+      title: title || 'Duty',
+      tasks
+    });
+  });
+
+  return out;
+}
+
+// Describes where the numbers came from. Respondent counts are read
+// from the project's own responseCount data and omitted entirely when
+// unavailable — never substituted with a placeholder figure.
+function _sourceLine(duty) {
+  if (appState.collectionMode !== 'workshop') {
+    return 'Individual / Survey mode — bars show one respondent\u2019s rating on the 0\u2013' +
+           SCALE_MAX + ' scale.';
+  }
+  const all = [];
+  duty.tasks.forEach(t => { if (t.rated && t.n) all.push.apply(all, t.n); });
+  if (!all.length) {
+    return 'Workshop mode — bars show weighted means on the 0\u2013' + SCALE_MAX + ' scale.';
+  }
+  const lo = Math.min.apply(null, all);
+  const hi = Math.max.apply(null, all);
+  const n  = lo === hi ? ('' + lo + ' response' + (lo === 1 ? '' : 's'))
+                       : ('' + lo + '\u2013' + hi + ' responses per task');
+  return 'Workshop mode — bars show weighted means of ' + n +
+         ', on the 0\u2013' + SCALE_MAX + ' scale.';
+}
+
+// ── SVG chart builder ─────────────────────────────────────────
+
+function _buildChartSVG(duty) {
+  const keys  = VIEWS[_view].series;
+  const tasks = duty.tasks;
+  const rated = tasks.filter(t => t.rated);
+
+  if (!tasks.length) {
+    return '<p class="tvc-empty">This duty has no tasks yet.</p>';
+  }
+  if (!rated.length) {
+    return '<p class="tvc-empty">No ratings recorded for this duty yet. ' +
+           'Rate at least one task to build the chart.</p>';
+  }
+
+  const groupW = keys.length * BAR_W + (keys.length - 1) * BAR_GAP;
+  const plotW  = tasks.length * groupW + (tasks.length - 1) * GROUP_GAP;
+  const width  = PAD.left + plotW + PAD.right;
+  const height = PAD.top + PLOT_H + PAD.bottom;
+  const yFor   = v => PAD.top + PLOT_H - (v / SCALE_MAX) * PLOT_H;
+
+  let svg = '<svg class="tvc-svg" viewBox="0 0 ' + width + ' ' + height + '" ' +
+            'width="' + width + '" height="' + height + '" ' +
+            'xmlns="http://www.w3.org/2000/svg" role="img" ' +
+            'aria-label="Grouped bar chart of task ratings for ' + _esc(duty.title) + '">';
+
+  svg += '<rect x="0" y="0" width="' + width + '" height="' + height + '" fill="#ffffff"/>';
+
+  // Gridlines: solid at whole numbers, hairline at halves. The halves
+  // matter in workshop mode, where means land between integers.
+  for (let v = 0; v <= SCALE_MAX * 2; v++) {
+    const val   = v / 2;
+    const y     = yFor(val);
+    const major = v % 2 === 0;
+    svg += '<line x1="' + PAD.left + '" y1="' + y + '" x2="' + (width - PAD.right) + '" y2="' + y +
+           '" stroke="' + (major ? '#cbd5e1' : '#eef2f7') + '" stroke-width="1"/>';
+    if (major) {
+      svg += '<text x="' + (PAD.left - 10) + '" y="' + (y + 4) + '" text-anchor="end" ' +
+             'font-family="Segoe UI, system-ui, sans-serif" font-size="11" fill="#64748b">' + val + '</text>';
+    }
+  }
+
+  // Duty average across every value actually drawn — a quick read of
+  // which tasks sit above the duty's own centre of gravity. Anchored to
+  // the right edge over an opaque plate: placed at the left it collided
+  // with the first bar groups and became unreadable.
+  let sum = 0, cnt = 0;
+  rated.forEach(t => keys.forEach(k => { sum += t[k]; cnt++; }));
+  const avg    = cnt ? sum / cnt : 0;
+  const avgY   = yFor(avg);
+  const avgTxt = 'Duty average ' + avg.toFixed(2);
+  const plateW = avgTxt.length * 5.4 + 10;
+  let avgMarkup = '';
+  avgMarkup += '<line x1="' + PAD.left + '" y1="' + avgY + '" x2="' + (width - PAD.right) + '" y2="' + avgY +
+         '" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6 4"/>';
+  avgMarkup += '<rect x="' + (width - PAD.right - plateW) + '" y="' + (avgY - 17) + '" width="' + plateW +
+         '" height="14" rx="3" fill="#ffffff" fill-opacity="0.92"/>';
+  avgMarkup += '<text x="' + (width - PAD.right - 5) + '" y="' + (avgY - 6.5) + '" text-anchor="end" ' +
+         'font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="700" ' +
+         'fill="#dc2626">' + avgTxt + '</text>';
+
+  // Bars
+  const showValues = tasks.length <= 9;
+  tasks.forEach((t, i) => {
+    const gx = PAD.left + i * (groupW + GROUP_GAP);
+
+    if (!t.rated) {
+      svg += '<rect x="' + gx + '" y="' + PAD.top + '" width="' + groupW + '" height="' + PLOT_H +
+             '" fill="#f8fafc"/>';
+      svg += '<text x="' + (gx + groupW / 2) + '" y="' + (PAD.top + PLOT_H / 2) +
+             '" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" ' +
+             'font-size="10" fill="#94a3b8">not rated</text>';
+    } else {
+      keys.forEach((k, j) => {
+        const s = SERIES[k];
+        const x = gx + j * (BAR_W + BAR_GAP);
+        const y = yFor(t[k]);
+        const h = Math.max(PAD.top + PLOT_H - y, t[k] > 0 ? 1.5 : 0);
+        svg += '<rect x="' + x + '" y="' + y + '" width="' + BAR_W + '" height="' + h +
+               '" fill="' + s.color + '"><title>' + _esc(t.code) + ' — ' + s.label + ': ' +
+               t[k].toFixed(2) + '</title></rect>';
+        if (showValues && t[k] > 0) {
+          svg += '<text x="' + (x + BAR_W / 2) + '" y="' + (y - 4) + '" text-anchor="middle" ' +
+                 'font-family="Segoe UI, system-ui, sans-serif" font-size="9.5" ' +
+                 'fill="#475569">' + t[k].toFixed(1) + '</text>';
+        }
+      });
+    }
+
+    svg += '<text x="' + (gx + groupW / 2) + '" y="' + (PAD.top + PLOT_H + 18) +
+           '" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" ' +
+           'font-size="11.5" font-weight="700" fill="#334155">' + _esc(t.code) + '</text>';
+  });
+
+  // Emitted after the bars: SVG has no z-index, so painting the
+  // average line last is the only way to keep it and its label on top.
+  svg += avgMarkup;
+
+  // Axes
+  svg += '<line x1="' + PAD.left + '" y1="' + (PAD.top + PLOT_H) + '" x2="' + (width - PAD.right) +
+         '" y2="' + (PAD.top + PLOT_H) + '" stroke="#334155" stroke-width="1.5"/>';
+  svg += '<line x1="' + PAD.left + '" y1="' + PAD.top + '" x2="' + PAD.left +
+         '" y2="' + (PAD.top + PLOT_H) + '" stroke="#334155" stroke-width="1.5"/>';
+  svg += '<text x="' + (PAD.left + plotW / 2) + '" y="' + (height - 12) + '" text-anchor="middle" ' +
+         'font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600" ' +
+         'fill="#64748b">Tasks (DACUM order)</text>';
+
+  svg += '</svg>';
+  return svg;
+}
+
+function _buildLegend() {
+  return VIEWS[_view].series.map(k =>
+    '<span class="tvc-legend-item"><i style="background:' + SERIES[k].color + '"></i>' +
+    SERIES[k].label + '</span>'
+  ).join('') +
+  '<span class="tvc-legend-item"><i class="tvc-legend-dash"></i>Duty average</span>';
+}
+
+// Task statements are listed under the chart rather than crammed onto
+// the x axis — the same split Norton uses, and the only way to keep
+// long TVET task statements readable at any width.
+function _buildTaskList(duty) {
+  if (!duty.tasks.length) return '';
+  return '<ol class="tvc-task-list">' + duty.tasks.map(t =>
+    '<li><span class="tvc-task-code">' + _esc(t.code) + '</span>' +
+    '<span class="tvc-task-text">' + _esc(t.text) + '</span>' +
+    (t.rated ? '' : '<span class="tvc-task-flag">not rated</span>') + '</li>'
+  ).join('') + '</ol>';
+}
+
+// ── Rendering into the open modal ─────────────────────────────
+
+function _renderBody() {
+  const duty = _duties[_dutyIdx];
+  if (!duty) return;
+
+  const label = document.getElementById('tvcDutyLabel');
+  if (label) label.textContent = duty.title;
+
+  const meta = document.getElementById('tvcSourceLine');
+  if (meta) meta.textContent = _sourceLine(duty);
+
+  const plot = document.getElementById('tvcPlot');
+  if (plot) plot.innerHTML = _buildChartSVG(duty);
+
+  const legend = document.getElementById('tvcLegend');
+  if (legend) legend.innerHTML = _buildLegend();
+
+  const list = document.getElementById('tvcTaskList');
+  if (list) list.innerHTML = _buildTaskList(duty);
+
+  const prev = document.getElementById('tvcPrevDuty');
+  const next = document.getElementById('tvcNextDuty');
+  if (prev) prev.disabled = _dutyIdx <= 0;
+  if (next) next.disabled = _dutyIdx >= _duties.length - 1;
+
+  const pos = document.getElementById('tvcDutyPos');
+  if (pos) pos.textContent = (_dutyIdx + 1) + ' / ' + _duties.length;
+}
+
+// ── PNG export ────────────────────────────────────────────────
+// The SVG carries no external CSS — every colour and font is an
+// attribute on the element — so it serialises to a canvas cleanly
+// without the styles dropping out.
+function _exportPNG() {
+  const svgEl = document.querySelector('#tvcPlot svg');
+  const duty  = _duties[_dutyIdx];
+  if (!svgEl || !duty) return;
+
+  const btn = document.getElementById('tvcExportPng');
+  const xml = new XMLSerializer().serializeToString(svgEl);
+  const w   = parseFloat(svgEl.getAttribute('width'));
+  const h   = parseFloat(svgEl.getAttribute('height'));
+  const img = new Image();
+
+  img.onload = function () {
+    const scale  = 2;                       // 2x for a crisp print/paste
+    const canvas = document.createElement('canvas');
+    canvas.width  = w * scale;
+    canvas.height = h * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    const a = document.createElement('a');
+    a.download = duty.title.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_').slice(0, 60) +
+                 '_verification_chart.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+
+    if (btn) { btn.textContent = '\u2713 Saved'; setTimeout(() => { btn.textContent = '\u2b07 Export PNG'; }, 1800); }
+  };
+  img.onerror = function () {
+    if (btn) { btn.textContent = '\u2715 Export failed'; setTimeout(() => { btn.textContent = '\u2b07 Export PNG'; }, 2200); }
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+}
+
+// ── Modal ─────────────────────────────────────────────────────
+
+function _closeModal() {
+  const m = document.getElementById('tvcModal');
+  if (m) m.remove();
+  document.removeEventListener('keydown', _onKeydown);
+}
+
+function _onKeydown(e) {
+  if (e.key === 'Escape')     { _closeModal(); return; }
+  if (e.key === 'ArrowRight') { _step(1); }
+  if (e.key === 'ArrowLeft')  { _step(-1); }
+}
+
+function _step(delta) {
+  const next = _dutyIdx + delta;
+  if (next < 0 || next >= _duties.length) return;
+  _dutyIdx = next;
+  _renderBody();
+}
+
+export function openVerificationChart(startIndex) {
+  _duties = _collectDuties();
+
+  if (!_duties.length) {
+    alert('No duties are loaded in Task Verification yet.\n\n' +
+          'Add duties and tasks first, then return to this tab.');
+    return;
+  }
+
+  if (typeof startIndex === 'number' && startIndex >= 0 && startIndex < _duties.length) {
+    _dutyIdx = startIndex;
+  } else {
+    // Global button: open on the first duty that actually has ratings,
+    // so the chart is never blank on first sight when data exists.
+    const firstRated = _duties.findIndex(d => d.tasks.some(t => t.rated));
+    _dutyIdx = firstRated > -1 ? firstRated : 0;
+  }
+
+  _closeModal();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'tvcModal';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Task Verification Results chart');
+  overlay.innerHTML =
+    '<div class="tvc-dialog">' +
+      '<div class="tvc-head">' +
+        '<div class="tvc-head-text">' +
+          '<p class="tvc-title">\ud83d\udcca Task Verification Results</p>' +
+          '<p class="tvc-duty" id="tvcDutyLabel"></p>' +
+        '</div>' +
+        '<button type="button" class="tvc-close" id="tvcClose" aria-label="Close chart">\u2715</button>' +
+      '</div>' +
+
+      '<div class="tvc-controls">' +
+        '<div class="tvc-duty-nav">' +
+          '<button type="button" id="tvcPrevDuty" aria-label="Previous duty">\u25c0</button>' +
+          '<span id="tvcDutyPos"></span>' +
+          '<button type="button" id="tvcNextDuty" aria-label="Next duty">\u25b6</button>' +
+        '</div>' +
+        '<div class="tvc-view-toggle" role="radiogroup" aria-label="Chart view">' +
+          '<label><input type="radio" name="tvcView" value="full"' +
+            (_view === 'full' ? ' checked' : '') + '> Full profile ' +
+            '<small>(Importance / Frequency / Difficulty)</small></label>' +
+          '<label><input type="radio" name="tvcView" value="curriculum"' +
+            (_view === 'curriculum' ? ' checked' : '') + '> Curriculum decision view ' +
+            '<small>(Importance \u00d7 Difficulty)</small></label>' +
+        '</div>' +
+      '</div>' +
+
+      '<p class="tvc-source" id="tvcSourceLine"></p>' +
+      '<p class="tvc-note">Switching the view changes the display only — Task Score and ' +
+        'Priority Index are always calculated from all three dimensions.</p>' +
+
+      '<div class="tvc-legend" id="tvcLegend"></div>' +
+      '<div class="tvc-plot-scroll"><div id="tvcPlot"></div></div>' +
+
+      '<p class="tvc-list-title">Task statements</p>' +
+      '<div id="tvcTaskList"></div>' +
+
+      '<div class="tvc-foot">' +
+        '<button type="button" class="tvc-btn-ghost" id="tvcCloseFoot">Close</button>' +
+        '<button type="button" class="tvc-btn-primary" id="tvcExportPng">\u2b07 Export PNG</button>' +
+      '</div>' +
+    '</div>';
+
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) _closeModal(); });
+  document.getElementById('tvcClose').addEventListener('click', _closeModal);
+  document.getElementById('tvcCloseFoot').addEventListener('click', _closeModal);
+  document.getElementById('tvcPrevDuty').addEventListener('click', () => _step(-1));
+  document.getElementById('tvcNextDuty').addEventListener('click', () => _step(1));
+  document.getElementById('tvcExportPng').addEventListener('click', _exportPNG);
+  overlay.querySelectorAll('input[name="tvcView"]').forEach(r => {
+    r.addEventListener('change', function () {
+      if (this.checked) { _view = this.value; _renderBody(); }
+    });
+  });
+  document.addEventListener('keydown', _onKeydown);
+
+  _renderBody();
+}
+
+// ── Wiring ────────────────────────────────────────────────────
+// One delegated listener on the accordion container, which is a
+// permanent element in index.html. Its children are rebuilt every
+// time the mode changes, so listeners bound to the per-duty buttons
+// themselves would be lost on each re-render.
+export function initVerificationCharts() {
+  const cont = document.getElementById('verificationAccordionContainer');
+  if (cont) {
+    // Capture phase, not bubble. The chart button sits INSIDE
+    // .duty-accordion-header, which carries its own click handler that
+    // expands/collapses the duty (attachAccordionListeners in tasks.js).
+    // On the bubble phase that handler would already have run by the
+    // time this one fires, so the accordion would toggle on every chart
+    // click. Capturing on the container lets this run first and stop
+    // the event before it ever reaches the header.
+    cont.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-action="show-duty-chart"]');
+      if (!btn) return;
+      e.stopPropagation();
+      e.preventDefault();
+      openVerificationChart(parseInt(btn.getAttribute('data-duty-index'), 10));
+    }, true);
+  }
+
+  const global = document.getElementById('btnTVChart');
+  if (global) global.addEventListener('click', () => openVerificationChart());
+}
