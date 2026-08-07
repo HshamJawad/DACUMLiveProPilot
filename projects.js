@@ -10,6 +10,7 @@ import { resetSkillsLevel, renderSkillsLevel } from './renderer.js';
 import { renderLearningOutcomes, renderPCSourceList, renderModules, renderModuleLoList,
   renderClusters, renderAvailableTasks } from './modules.js';
 import { checkUsageLimit, incrementUsage, showLoadingModal, hideLoadingModal } from './storage.js';
+import { loadDutiesForVerification } from './tasks.js';
 
 const BACKEND_URL = 'https://dacum-ai-backend-production.up.railway.app';
 
@@ -292,8 +293,17 @@ export function clearCurrentTab(tabId) {
     appState.verificationRatings = {};
     appState.workshopCounts      = {};
     appState.workshopResults     = {};
+    // Repopulate rather than leave the tab blank. Emptying the container
+    // was technically correct — the RATINGS are what "clear" means here —
+    // but it looked like the duties themselves had been deleted, and the
+    // only way back was the Refresh button further down the page. Now the
+    // duties reappear immediately with every rating reset to unanswered,
+    // which is what "clear this tab" actually means to the user.
     const verCont = document.getElementById('verificationAccordionContainer');
-    if (verCont) verCont.innerHTML = '';
+    if (verCont) {
+      verCont.innerHTML = '';
+      try { loadDutiesForVerification(); } catch (e) { /* no duties yet */ }
+    }
     const dbBody = document.getElementById('dashboardTableBody');
     const dbSum  = document.getElementById('dashboardSummary');
     if (dbBody) dbBody.innerHTML = '';
