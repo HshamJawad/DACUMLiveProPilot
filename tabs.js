@@ -7,6 +7,7 @@
 import { appState } from './state.js';
 import { addDuty } from './duties.js';
 import { initializeClusteringFromTasks } from './modules.js';
+import { syncVerificationTab } from './tasks.js';
 import { renderPCSourceList, renderLearningOutcomes,
   renderModuleLoList, renderModules,
   renderAvailableTasks, renderClusters } from './modules.js';
@@ -41,6 +42,14 @@ export function setupTabs() {
       if (tabId === 'clustering-tab') {
         renderAvailableTasks();
         renderClusters();
+      }
+
+      // Task Verification was the one tab missing from this
+      // re-render-on-entry list, which is why its duties only appeared
+      // after a manual Refresh. syncVerificationTab() is conditional —
+      // it rebuilds only when the duty/task set actually changed.
+      if (tabId === 'verification-tab') {
+        syncVerificationTab();
       }
 
       if (tabId === 'learning-outcomes-tab') {

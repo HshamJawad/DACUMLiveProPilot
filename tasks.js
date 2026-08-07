@@ -85,6 +85,148 @@ export function updateTrainingLoadMethod() {
   updateDutyLevelSummary();
 }
 
+// ── Verification tab freshness ────────────────────────────────
+//
+// The accordion is built by reading the Duties tab's DOM, not appState,
+// so it can go stale whenever duties or tasks change. Historically the
+// only cure was the manual "Refresh Duties & Tasks" button, which meant
+// a first-time user arrived at an empty tab with no idea why.
+//
+// Rebuilding on every entry is NOT the fix. A rebuild wipes the
+// container and re-reads it, which (a) collapses every open duty and
+// loses scroll position, (b) is expensive on a large chart, and (c) is
+// precisely the operation that can orphan ratings when task IDs change.
+// Doing it automatically would make that risk fire silently on every
+// visit instead of once, on a deliberate click.
+//
+// So entry is conditional, keyed on a signature of the duty/task set.
+// Unchanged signature means the existing accordion is already correct
+// and is left completely untouched.
+
+let _lastVerificationSignature = null;
+
+// Every duty id + text and task id + text, in DOM order. Task TEXT is
+// included on purpose: renaming a task does not orphan its rating (the
+// id is the key), but it does make the accordion's visible label wrong,
+// which is just as confusing as missing data.
+function _dutiesSignature() {
+  const parts = [];
+  document.querySelectorAll('input[data-duty-id], textarea[data-duty-id]').forEach(dutyInput => {
+    const dutyId   = dutyInput.getAttribute('data-duty-id');
+    const dutyText = (dutyInput.value || '').trim();
+    if (!dutyText) return;
+    parts.push('D:' + dutyId + '|' + dutyText);
+    document.querySelectorAll(
+      `input[data-task-id^="${dutyId}_"], textarea[data-task-id^="${dutyId}_"]`
+    ).forEach(taskInput => {
+      const taskText = (taskInput.value || '').trim();
+      if (taskText) parts.push('T:' + taskInput.getAttribute('data-task-id') + '|' + taskText);
+    });
+  });
+  return parts.join('\n');
+}
+
+function _liveTaskIds() {
+  const ids = new Set();
+  document.querySelectorAll('input[data-task-id], textarea[data-task-id]').forEach(el => {
+    if ((el.value || '').trim()) ids.add(el.getAttribute('data-task-id'));
+  });
+  return ids;
+}
+
+function _ratingHasData(r) {
+  if (!r) return false;
+  return r.importance !== null && r.importance !== undefined ||
+         r.frequency  !== null && r.frequency  !== undefined ||
+         r.difficulty !== null && r.difficulty !== undefined ||
+         r.criticality !== null && r.criticality !== undefined ||
+         r.performsTask === true ||
+         !!(r.comments && r.comments.trim());
+}
+
+function _countsHaveData(c) {
+  if (!c) return false;
+  return ['importanceCounts', 'frequencyCounts', 'difficultyCounts', 'criticalityCounts']
+    .some(k => c[k] && Object.keys(c[k]).some(v => (c[k][v] || 0) > 0));
+}
+
+// Ratings whose task no longer exists in the Duties tab. Rebuilding
+// leaves these stranded in appState: invisible, uneditable, and absent
+// from every chart and export — silent data loss unless we say so.
+function _findOrphanedRatings() {
+  const live = _liveTaskIds();
+  const seen = new Set();
+  const out  = [];
+
+  const consider = (key, hasData) => {
+    if (seen.has(key) || live.has(key) || !hasData) return;
+    seen.add(key);
+    const meta = appState.taskMetadata[key] || {};
+    out.push(meta.taskTitle || key);
+  };
+
+  Object.keys(appState.verificationRatings || {})
+    .forEach(k => consider(k, _ratingHasData(appState.verificationRatings[k])));
+  Object.keys(appState.workshopCounts || {})
+    .forEach(k => consider(k, _countsHaveData(appState.workshopCounts[k])));
+
+  return out;
+}
+
+// Returns false if the user cancelled.
+function _confirmIfOrphansWouldBeLost() {
+  const orphans = _findOrphanedRatings();
+  if (!orphans.length) return true;
+
+  const n = orphans.length;
+  return confirm(
+    '⚠️ ' + n + ' rating' + (n === 1 ? '' : 's') + ' will lose ' +
+    (n === 1 ? 'its task' : 'their tasks') + ' after this refresh.\n\n' +
+    'The task' + (n === 1 ? '' : 's') + ' ' + (n === 1 ? 'was' : 'were') +
+    ' renamed or removed in the Duties & Tasks tab, so the rating' +
+    (n === 1 ? '' : 's') + ' can no longer be shown, edited or exported.\n\n' +
+    'Continue with the refresh?\n' +
+    'Cancel to go back to Duties & Tasks and restore the task first.'
+  );
+}
+
+// Manual "Refresh Duties & Tasks" button, and the entry-point sync.
+export function refreshVerificationTab() {
+  if (!_confirmIfOrphansWouldBeLost()) {
+    showStatus('Refresh cancelled — no ratings were lost', 'success');
+    return false;
+  }
+  loadDutiesForVerification();
+  return true;
+}
+
+// Called on every entry to the Task Verification tab, from BOTH
+// switchTab() in projects.js and setupTabs() in tabs.js — the two must
+// stay in step or the tab's freshness would depend on which route the
+// user happened to take.
+export function syncVerificationTab() {
+  const container = document.getElementById('verificationAccordionContainer');
+  if (!container) return;
+
+  const signature = _dutiesSignature();
+
+  // Nothing built yet (first visit, project just loaded, or the tab was
+  // cleared). The placeholder counts as empty — it is what a new user
+  // was previously stuck staring at.
+  const isEmpty = !container.querySelector('.duty-accordion');
+
+  if (isEmpty) {
+    if (signature) loadDutiesForVerification();
+    return;
+  }
+
+  // Already built and nothing changed: leave open duties and scroll
+  // position exactly as the user left them.
+  if (signature === _lastVerificationSignature) return;
+
+  refreshVerificationTab();
+}
+
 // ── Load Duties for Verification ─────────────────────────────
 
 export function loadDutiesForVerification() {
@@ -98,8 +240,9 @@ export function loadDutiesForVerification() {
       <div class="no-duties-message">
         <h3>⚠️ No Duties Found</h3>
         <p>Please go to the "Duties & Tasks" tab and create duties with tasks first.</p>
-        <p style="margin-top:10px;">Once you've added duties and tasks, click the "Refresh Duties & Tasks" button above.</p>
+        <p style="margin-top:10px;">Add duties and tasks there, then come back — this tab updates itself.</p>
       </div>`;
+    _lastVerificationSignature = '';
     return;
   }
 
@@ -136,6 +279,10 @@ export function loadDutiesForVerification() {
   });
 
   attachAccordionListeners();
+  // Stamp the signature here rather than at the call sites, so EVERY
+  // path that rebuilds — the button, tab entry, and the collection /
+  // workflow mode switches — leaves the tracker consistent.
+  _lastVerificationSignature = _dutiesSignature();
   showStatus(`✓ Loaded ${totalDuties} duties with ${totalTasks} tasks for verification`, 'success');
 }
 
@@ -248,13 +395,7 @@ function createDutyAccordion(dutyId, dutyText, tasks, dutyIndex = 0) {
     <div class="duty-accordion">
       <div class="duty-accordion-header" data-duty="${dutyId}">
         <div class="duty-title">Duty ${dutyLetter}: ${escapeHtml(dutyText)}</div>
-        <div class="duty-header-actions">
-          <button type="button" class="tvc-open-btn"
-                  data-action="show-duty-chart" data-duty-index="${dutyIndex}"
-                  title="View verification results chart for this duty"
-                  aria-label="View verification results chart for this duty">📊</button>
-          <div class="duty-toggle">▼</div>
-        </div>
+        <div class="duty-toggle">▼</div>
       </div>
       <div class="duty-accordion-content">
         <div style="overflow-x:auto;width:100%;">

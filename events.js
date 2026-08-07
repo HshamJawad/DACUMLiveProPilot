@@ -18,7 +18,7 @@ import { pushHistoryState, undo, redo,
          resetHistoryToCurrentState }                  from './history.js';
 import { updateCollectionMode, updateWorkflowMode, updateParticipantCount,
   updatePriorityFormula, updateTVExportMode, updateTrainingLoadMethod,
-  loadDutiesForVerification, updateRating, updatePerformsTask, updateComments,
+  loadDutiesForVerification, refreshVerificationTab, updateRating, updatePerformsTask, updateComments,
   updateWorkshopCount, validateAndComputeTask, validateAndComputeWorkshopResults,
   toggleDashboard, refreshDashboard, toggleDutyLevelSummary, exportDashboard,
   renderDashboardProjectSelector,
@@ -256,7 +256,7 @@ export function setupEvents() {
   _onRadioGroup('tvExportMode',    () => updateTVExportMode());
   _onRadioGroup('trainingLoadMethod', () => updateTrainingLoadMethod());
   _on('workshopParticipants', 'change', () => updateParticipantCount());
-  _on('btnLoadDutiesForVerification', 'click', () => loadDutiesForVerification());
+  _on('btnLoadDutiesForVerification', 'click', () => refreshVerificationTab());
   _on('btnValidateAll',        'click', () => validateAndComputeWorkshopResults());
   _on('btnToggleDashboard',    'click', () => toggleDashboard());
   _on('btnRefreshDashboard',   'click', () => refreshDashboard());

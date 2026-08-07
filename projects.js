@@ -10,7 +10,7 @@ import { resetSkillsLevel, renderSkillsLevel } from './renderer.js';
 import { renderLearningOutcomes, renderPCSourceList, renderModules, renderModuleLoList,
   renderClusters, renderAvailableTasks } from './modules.js';
 import { checkUsageLimit, incrementUsage, showLoadingModal, hideLoadingModal } from './storage.js';
-import { loadDutiesForVerification } from './tasks.js';
+import { loadDutiesForVerification, syncVerificationTab } from './tasks.js';
 
 const BACKEND_URL = 'https://dacum-ai-backend-production.up.railway.app';
 
@@ -63,6 +63,9 @@ export function switchTab(tabId) {
     if (tabId === 'clustering-tab') {
       renderAvailableTasks();
       renderClusters();
+    }
+    if (tabId === 'verification-tab') {
+      syncVerificationTab();
     }
     if (tabId === 'learning-outcomes-tab') {
       renderPCSourceList();
