@@ -14,13 +14,8 @@
    dead toolbar scroll and the two-row rating scale all happened.
    ============================================================ */
 
-/* ── Safe-area insets (iPhone notch / home bar) ─────────── */
-body {
-  padding-left:   env(safe-area-inset-left);
-  padding-right:  env(safe-area-inset-right);
-  -webkit-tap-highlight-color: transparent;
-  -webkit-text-size-adjust: 100%;
-}
+/* Safe-area insets moved to dacum-styles.css (Phase 4) — not a media
+   query, so it does not belong in this sheet. */
 
 /* ── Touch targets ──────────────────────────────────────── */
 /* This selector MUST stay at element-level specificity (0,0,1).

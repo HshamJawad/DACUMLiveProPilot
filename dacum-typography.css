@@ -1,3 +1,14 @@
+/* PHASE 4 NOTE — THE CONTRACT FOR THIS FILE
+   This sheet may declare TYPE only: font-family, font-size, font-weight,
+   letter-spacing, line-height, text-*. It must never set padding,
+   background, border-radius, box-shadow or layout.
+
+   It used to. The .tab / .tabs / .tab.active rules re-skinned the whole
+   tab component from here, and because this file loads last they also
+   silently killed the mobile tab sizing in dacum-responsive.css. Those
+   rules now live with the component in dacum-styles.css.
+   ============================================================ */
+
 /* ============================================================
    dacum-typography.css
    Readability & visual hierarchy enhancements ONLY.
@@ -39,44 +50,9 @@
    TAB TITLES — Pill Style (modern + clean)
    ───────────────────────────────────────────── */
 
-.tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.tab {
-  font-size: 1.05em !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.01em;
-
-  color: #374151;
-  background-color: #f3f4f6; 
-
-  padding: 8px 14px;
-  border-radius: 999px; 
-
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.1s ease;
-
-  cursor: pointer;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
 
 
-.tab.active {
-  font-size: 1.05em !important;
-  font-weight: 700 !important;
 
-  color: #ffffff !important;
-  background-color: #667eea;
-
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
 
 /* Hover */
 @media (hover: hover) {

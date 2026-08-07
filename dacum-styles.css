@@ -5,6 +5,14 @@
 }
 
 body {
+    /* Safe-area insets for the iPhone notch / home bar. Moved here from
+       dacum-responsive.css (Phase 4): it is not a media query, and a
+       responsive sheet carrying base rules is a sheet whose load order
+       becomes load-bearing by accident. */
+    padding-left:  env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
@@ -81,13 +89,36 @@ button {
     gap: 8px;
 }
 
+/* PHASE 4: the lift used to be `transform: translateY(-2px)`, which is a
+   layout-affecting property and therefore clipped by any overflow:hidden
+   ancestor — the toolbar, card views, the accordion. dacum-fixes.css then
+   cancelled it globally with !important and re-created the effect with
+   filter + box-shadow, and dacum-responsive.css cancelled it again for the
+   toolbar. Three files arguing about one property.
+
+   The transform is gone at the source, so there is nothing left to cancel
+   and the !important arms race is over. filter and box-shadow do not
+   participate in layout, so they cannot be clipped. */
 button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    filter: brightness(1.04);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
 button:active {
-    transform: translateY(0);
+    transform: scale(0.97);   /* inward scale never clips */
+    filter: none;
+}
+
+/* A disabled button must not look pressable. */
+button[disabled]:hover,
+button:disabled:hover {
+    filter: none;
+    box-shadow: none;
+    transform: none;
+}
+button[disabled]:active,
+button:disabled:active {
+    transform: none;
 }
 
 .btn-add {
@@ -458,6 +489,13 @@ input[type="date"]:focus {
   transition: background 0.15s, transform 0.12s;
   padding: 0;
   z-index: 20;   /* above card, never clipped */
+  /* Pinned so the touch-target min-height in dacum-responsive.css cannot
+     stretch this circle into a vertical oval. */
+  min-width: 22px;
+  min-height: 22px;
+  box-sizing: border-box;
+  aspect-ratio: 1 / 1;
+  flex: 0 0 auto;
 }
 .dcv-close-btn:hover { background: #b91c1c; transform: scale(1.15); }
 
@@ -947,8 +985,12 @@ input[type="date"]:focus {
     gap: 4px;
     z-index: 600;          /* above sidebar z-index:300 */
     box-sizing: border-box;
+    /* Must not clip the hover shadow of its buttons. Note .dtb-center is
+       the exception — it owns overflow-x:auto so the middle group can
+       scroll to reach Clear All on a phone. */
+    overflow: visible;
 }
-.dtb-left  { display:flex; align-items:center; gap:5px; flex-shrink:0; }
+.dtb-left  { display:flex; align-items:center; gap:5px; flex-shrink:0; overflow:visible; }
 .dtb-center{
     display:flex; align-items:center; gap:4px;
     flex:1; min-width:0;
@@ -958,7 +1000,7 @@ input[type="date"]:focus {
     scrollbar-width: none;
 }
 .dtb-center::-webkit-scrollbar { display: none; }
-.dtb-right { display:flex; align-items:center; gap:4px; flex-shrink:0; margin-left:auto; }
+.dtb-right { display:flex; align-items:center; gap:4px; flex-shrink:0; margin-left:auto; overflow:visible; }
 .dtb-divider {
     width: 1px; height: 28px;
     background: #d9d9db; margin: 0 4px;
@@ -1198,23 +1240,43 @@ body { padding-top: 60px; box-sizing: border-box; }
     display: none;
 }
 
+/* PHASE 4: the tab component was defined twice — here, and again in
+   dacum-typography.css which re-skinned it completely (pill radius, grey
+   palette, its own padding). Typography loaded later so it won, which
+   made most of the original definition below dead code.
+
+   Worse, typography also loaded AFTER dacum-responsive.css, so its
+   base-level `font-size: 1.05em !important` beat the !important tab
+   font-sizes inside all three mobile breakpoints — those overrides had
+   silently stopped working. Consolidating here, ahead of the responsive
+   sheet, brings them back to life.
+
+   The values below are the ones that were actually rendering. */
 .tabs {
     display: flex;
     margin-bottom: 30px;
     border-bottom: 3px solid #e0e0e0;
-    gap: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .tab {
-    padding: 15px 30px;
+    padding: 8px 14px;
     cursor: pointer;
     border: none;
-    background: #f5f5f5;
-    border-radius: 12px 12px 0 0;
-    font-size: 1.15em;
+    background-color: #f3f4f6;
+    border-radius: 999px;
+    font-size: 1.05em;
     font-weight: 600;
-    color: #666;
-    transition: all 0.3s ease;
+    letter-spacing: 0.01em;
+    color: #374151;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.1s ease;
 }
 
 .tab:hover {
@@ -1223,9 +1285,17 @@ body { padding-top: 60px; box-sizing: border-box; }
 }
 
 .tab.active {
+    /* The shorthand sets background-image; the background-color line that
+       follows overrides only the colour layer, which the gradient paints
+       over. Both are kept because that is exactly what was rendering when
+       the declarations lived in two separate files. */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background-color: #667eea;
+    color: #ffffff;
     border: none;
+    font-size: 1.05em;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transform: translateY(3px);
 }
 
@@ -1613,19 +1683,39 @@ textarea {
     display: flex;
     gap: 15px;
     align-items: center;
+    /* One row, always. Wrapping split the 0-1-2-3 scale into two rows of
+       two, which reads as two separate controls and doubles the height of
+       every task row. It scrolls sideways instead; the bar is hidden here
+       and revealed on touch devices in dacum-responsive.css. */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
 }
+.rating-scale::-webkit-scrollbar { display: none; }
 
 .rating-option {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
+    flex: 0 0 auto;
 }
 
 .rating-option input[type="radio"] {
     width: 20px;
     height: 20px;
     cursor: pointer;
+    /* Every axis pinned. dacum-responsive.css gives all radios
+       min-height:44px for touch targets, which stretched a 20px radio
+       into a 20x44 oval and pushed every task row taller. The
+       .rating-option wrapper (radio + number label) already clears 44px,
+       so the tap target is unaffected. */
+    min-width: 20px;
+    min-height: 20px;
+    flex: 0 0 auto;
 }
 
 .rating-option label {

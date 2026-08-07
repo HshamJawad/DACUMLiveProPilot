@@ -49,21 +49,44 @@ const root    = args.find(a => !a.startsWith('--') && !/^\d+$/.test(a)) || '.';
 // therefore useless as a signal.
 function selectorsOf(css) {
   css = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  const base = new Set(), inMedia = new Set();
+  const base = new Set(), inMedia = new Set(), typeLayer = new Set();
   let buf = '';
   const stack = [];          // true = we are inside an at-rule block
 
-  for (const ch of css) {
+  for (let i = 0; i < css.length; i++) {
+    const ch = css[i];
     if (ch === '{') {
       const head = buf.trim();
       buf = '';
       if (head.startsWith('@')) { stack.push(true); continue; }
       const nested = stack.some(Boolean);
       stack.push(false);
+      // Read this block's body without consuming it, to classify it.
+      let d = 1, j = i + 1;
+      while (j < css.length && d) { if (css[j] === '{') d++; else if (css[j] === '}') d--; j++; }
+      const pendingBody = css.slice(i + 1, j - 1);
+      // A declaration block that sets ONLY type properties is a
+      // legitimate cross-cutting layer, not a competing owner: a
+      // typography sheet is *supposed* to set font-size on a component
+      // the layout sheet positions. Flagging that would make the count
+      // impossible to reach zero and therefore useless as a signal.
+      // A block that also sets padding, background or layout is
+      // re-skinning the component and IS a competing owner.
+      // `color` counts as type: text colour is part of a typographic
+      // scale, and a tokens sheet setting it is normal. The line is drawn
+      // at anything that changes SHAPE or LAYOUT — padding, background,
+      // border-radius, box-shadow, display. That is what .tab was doing
+      // from the typography sheet, and it is why it was correctly flagged.
+      const TYPE_ONLY = /^(font(-|$)|color$|letter-spacing|line-height|text-|word-|white-space|-webkit-font)/;
+      const propsHere = pendingBody
+        .split(';').map(d => d.split(':')[0].trim().toLowerCase()).filter(Boolean);
+      const typeOnly = propsHere.length > 0 && propsHere.every(pr => TYPE_ONLY.test(pr));
+
       head.split(',').forEach(sel => {
         sel = sel.trim().replace(/\s+/g, ' ');
         // Keyframe stops (from / to / 0% / 100%) are not selectors.
         if (!sel || /^(from|to|\d+%)$/.test(sel)) return;
+        if (typeOnly) { typeLayer.add(sel); return; }
         (nested ? inMedia : base).add(sel);
       });
     } else if (ch === '}') {
@@ -72,9 +95,10 @@ function selectorsOf(css) {
       buf += ch;
     }
   }
-  return { base, inMedia };
+  return { base, inMedia, typeLayer };
 }
 
+let typeOnlyCount = 0;
 const owners  = new Map();     // selector -> Set(file)  [base-level only]
 const overrides = new Map();   // selector -> Set(file)  [inside @media]
 const present = [];
@@ -83,7 +107,8 @@ for (const f of FILES) {
   const p = path.join(root, f);
   if (!fs.existsSync(p)) continue;
   present.push(f);
-  const { base, inMedia } = selectorsOf(fs.readFileSync(p, 'utf8'));
+  const { base, inMedia, typeLayer } = selectorsOf(fs.readFileSync(p, 'utf8'));
+  typeOnlyCount += typeLayer.size;
   for (const sel of base) {
     if (!owners.has(sel)) owners.set(sel, new Set());
     owners.get(sel).add(f);
@@ -104,6 +129,7 @@ console.log(`Stylesheets audited : ${present.length}  (${present.map(short).join
 console.log(`Base-level selectors: ${owners.size}`);
 console.log(`SPLIT OWNERSHIP     : ${split.length}   <- drive this to 0`);
 console.log(`Media overrides     : ${overrides.size}   (normal, not counted)`);
+console.log(`Type-layer rules    : ${typeOnlyCount}   (font-only, not counted)`);
 
 if (split.length) {
   const worst = split.filter(([, s]) => s.size >= 3);

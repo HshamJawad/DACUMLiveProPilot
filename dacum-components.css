@@ -799,27 +799,10 @@
         .tvc-duty-nav button { position: relative; }
       }
 
-      /* Rating radios: 0-1-2-3 on one row. Stretching a 20px radio to
-         44px tall pushed every task row taller and rendered oddly on
-         Android. The .rating-option wrapper (radio + number label)
-         already clears 44px, so the tap target is fine. */
-      .rating-option input[type="radio"] {
-        min-height: 20px !important;
-        height: 20px !important;
-        width: 20px !important;
-        min-width: 20px !important;
-        flex: 0 0 auto;
-      }
-      .rating-scale {
-        flex-wrap: nowrap !important;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        padding-bottom: 2px;
-      }
-      .rating-scale::-webkit-scrollbar { display: none; }
-      .rating-option { flex: 0 0 auto; }
+      /* Rating radio sizing merged into dacum-styles.css (Phase 4). */
+
+/* .rating-scale scroll behaviour and .rating-option sizing merged into
+         dacum-styles.css (Phase 4). */
 
       /* Sidebar hamburger contrast.
          dacum-mobile.js injects `color:#e2e8f0` with !important — a
@@ -855,7 +838,9 @@
          Fixing it needs three things together: zero the padding, pin
          min-* to the same value as width/height so nothing can grow
          it, and forbid flex shrinking so nothing can squeeze it. */
-      .dcv-close-btn,
+      /* .dcv-close-btn pinning merged into dacum-styles.css (Phase 4).
+         .dcv-add-btn keeps its own rule here since dacum-styles.css does
+         not define it. */
       .dcv-add-btn {
         padding: 0 !important;
         flex: 0 0 auto !important;
@@ -1908,39 +1893,9 @@
    then written out once, explicitly.
    ============================================================ */
 
-/* ── Button hover: lift without clipping ──────────────────────
-   dacum-styles.css gives every button `transform: translateY(-2px)`
-   on hover, which clips inside any overflow:hidden ancestor. The
-   lift is reproduced with filter + box-shadow, which do not
-   participate in layout and therefore cannot be clipped. */
-button:hover {
-  transform: none !important;
-  filter: brightness(1.04);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18) !important;
-}
-
-button:active {
-  transform: scale(0.97) !important;   /* scaling inward never clips */
-  filter: none;
-}
-
-/* A disabled button must not look pressable. This was previously
-   inconsistent: dacum-fixes.css gated the toolbar undo/redo hover on
-   :not([disabled]), but dacum-responsive.css carried an ungated copy
-   of the same rule, so a greyed-out Undo still lit up on hover. With
-   the duplicate gone, the gate finally holds — but the generic
-   `button:hover` above would still reach disabled buttons, so it is
-   cancelled explicitly here rather than left to chance. */
-button[disabled]:hover,
-button:disabled:hover {
-  filter: none;
-  box-shadow: none !important;
-  transform: none !important;
-}
-button[disabled]:active,
-button:disabled:active {
-  transform: none !important;
-}
+/* Button hover/active/disabled behaviour now lives at the SOURCE in
+   dacum-styles.css (Phase 4). The translateY that made an override
+   necessary was removed there, so nothing needs cancelling here. */
 
 /* Toolbar buttons take a subtler shadow and a slightly stronger
    brightness than the global rule above — this is the merged result
@@ -1960,18 +1915,8 @@ button:disabled:active {
   transform: scale(0.97) !important;
 }
 
-/* Toolbar containers must not clip the hover shadow.
-   .dtb-center is deliberately absent: it owns `overflow-x: auto` so
-   the middle button group can scroll to reach Clear All on a phone.
-   Forcing `overflow: visible` on it disabled that scroll while the
-   buttons still overflowed, making everything past the right edge
-   permanently unreachable. Nothing is left to clip anyway, since the
-   translateY above is gone. */
-#dacumTopToolbar,
-.dtb-left,
-.dtb-right {
-  overflow: visible !important;
-}
+/* Toolbar container overflow merged into dacum-styles.css (Phase 4),
+   where the containers themselves are defined. */
 
 /* ── Sidebar: drawer/rail transition and legacy hidden state ── */
 .dps-sidebar {
