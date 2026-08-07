@@ -310,7 +310,59 @@ function _downstreamWork(stage) {
   }
 }
 
+// Nothing to lose means nothing to warn about. Clearing an empty tab is
+// a no-op, so a modal asking the user to confirm an irreversible action
+// is simply false: it describes a consequence that cannot occur. Worse,
+// it teaches people to dismiss this exact dialog without reading — which
+// is the dialog that has to be read when the tab is NOT empty.
+//
+// The codebase already uses this idiom in the AI paths (clustering_ai.js
+// and learning_outcomes_ai.js both guard their overwrite prompts with
+// `if (existing.length && !confirm(...))`). The clear paths just never
+// adopted it.
+function _isTabEmpty(tabId) {
+  const s   = appState;
+  const val = id => (document.getElementById(id)?.value || '').trim();
+
+  switch (tabId) {
+    case 'info-tab':
+      return !['dacumDate','venue','producedFor','producedBy','occupationTitle','scopeOfWork',
+               'jobTitle','sector','context','facilitators','observers','panelMembers']
+               .some(val) && !s.producedForImage && !s.producedByImage;
+
+    case 'duties-tab':
+      return !(s.dutiesData || []).some(d => (d.title || '').trim() || (d.tasks || []).length);
+
+    case 'additional-info-tab':
+      return !['knowledgeInput','skillsInput','behaviorsInput','toolsInput',
+               'trendsInput','acronymsInput','careerPathInput'].some(val) &&
+             !document.getElementById('customSectionsContainer')?.children.length;
+
+    case 'verification-tab':
+      return !Object.keys(s.verificationRatings || {}).length &&
+             !Object.keys(s.workshopCounts      || {}).length &&
+             !Object.keys(s.workshopResults     || {}).length;
+
+    case 'clustering-tab':
+      return !(s.clusteringData?.clusters?.length);
+
+    case 'learning-outcomes-tab':
+      return !(s.learningOutcomesData?.outcomes?.length);
+
+    case 'module-mapping-tab':
+      return !(s.moduleMappingData?.modules?.length);
+
+    default:
+      return false;   // unknown tab: never suppress the warning
+  }
+}
+
 function _confirmClear(tabId) {
+  if (_isTabEmpty(tabId)) {
+    showStatus('This tab is already empty — nothing to clear', 'success');
+    return false;
+  }
+
   const affected = (_DOWNSTREAM_OF[tabId] || [])
     .map(_downstreamWork)
     .filter(Boolean);
@@ -472,7 +524,14 @@ async function _runAIGeneration(inputs) {
   existingDuties.forEach(inp => { if (inp.value.trim()) hasContent = true; });
 
   if (hasContent) {
-    if (!confirm('⚠️ AI GENERATION WILL REPLACE ALL EXISTING DUTIES AND TASKS\n\nClick OK to continue, or Cancel to keep your current work.')) {
+    // Only a real warning when there is real work to lose. On a blank
+    // chart this claimed it would "REPLACE ALL EXISTING DUTIES AND
+    // TASKS" when there were none — an alarming prompt in front of the
+    // first thing a new user is meant to do.
+    const hasWork = (appState.dutiesData || []).some(d =>
+      (d.title || '').trim() || (d.tasks || []).length
+    );
+    if (hasWork && !confirm('⚠️ AI GENERATION WILL REPLACE ALL EXISTING DUTIES AND TASKS\n\nClick OK to continue, or Cancel to keep your current work.')) {
       showStatus('AI generation cancelled. Your existing duties are preserved.', 'error');
       return;
     }

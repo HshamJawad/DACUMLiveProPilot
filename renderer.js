@@ -109,7 +109,18 @@ export function handleSkillsLevelChange(categoryIndex, competencyIndex, level, i
 }
 
 export function resetSkillsLevel(withConfirm = true) {
-  if (withConfirm && !confirm('Are you sure you want to reset all Skills Level data?')) return;
+  // "Already at defaults" means no tick anywhere and no user-added rows.
+  // Resetting that changes nothing, so it needs no warning.
+  if (withConfirm) {
+    const untouched = !(appState.skillsLevelData || []).some(cat =>
+      (cat.competencies || []).some(c => Object.values(c.levels || {}).some(Boolean))
+    );
+    if (untouched) {
+      showStatus('Skills Level is already at its defaults — nothing to reset', 'success');
+      return;
+    }
+    if (!confirm('Are you sure you want to reset all Skills Level data?')) return;
+  }
 
   appState.skillsLevelData.length = 0;
   const defaults = [
@@ -241,6 +252,12 @@ export function toggleEditHeading(headingId) {
 }
 
 export function clearSection(inputId, headingId, defaultHeading) {
+  const current = (document.getElementById(inputId)?.value || '').trim();
+  const heading = document.getElementById(headingId)?.textContent?.trim();
+  if (!current && (!heading || heading === defaultHeading)) {
+    showStatus('This section is already empty — nothing to clear', 'success');
+    return;
+  }
   if (confirm('Are you sure you want to clear this section?')) {
     document.getElementById(inputId).value = '';
     document.getElementById(headingId).textContent = defaultHeading;

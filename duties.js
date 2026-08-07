@@ -379,10 +379,20 @@ export function removeTask(taskDivId) {
 }
 
 export function clearDuty(dutyId) {
-  if (!confirm('Are you sure you want to clear this duty and all its tasks?')) return;
+  // Same reasoning as _confirmClear in projects.js: an empty duty has
+  // nothing to lose, so warning about losing it is false and trains the
+  // user to dismiss the prompt unread.
   syncAllFromDOM();
-  const duty = (appState.dutiesData || []).find(d => d.id === dutyId);
-  if (duty) { duty.title = ''; duty.tasks = []; }
+  const existing = (appState.dutiesData || []).find(d => d.id === dutyId);
+  const isBlank  = !existing || (!(existing.title || '').trim() && !(existing.tasks || []).length);
+
+  if (isBlank) {
+    showStatus('This duty is already empty — nothing to clear', 'success');
+    return;
+  }
+  if (!confirm('Are you sure you want to clear this duty and all its tasks?')) return;
+  existing.title = '';
+  existing.tasks = [];
   appState.taskCounts[dutyId] = 0;
   renderDutiesFromState();
   showStatus('Duty cleared! ✓', 'success');
