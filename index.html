@@ -104,7 +104,7 @@
       // Bump these together with EXPECTED_SW / CACHE_VERSION on every
       // release, so a trainer can read the running build off the
       // screen instead of digging through DevTools.
-      var APP_VERSION = '3.9.1';
+      var APP_VERSION = '3.9.2';
       var APP_RELEASED = '2026-08-03';
 
       // Per-version reload guard — prevents infinite refresh loops
@@ -965,6 +965,57 @@
         .tvc-dialog { box-shadow: none; max-height: none; width: 100%; }
         .tvc-controls, .tvc-foot, .tvc-close { display: none !important; }
       }
+
+      /* ══════════════════════════════════════════════════════════
+         TOOLBAR HORIZONTAL SCROLL
+         ──────────────────────────────────────────────────────────
+         The middle button group scrolls sideways when the toolbar
+         runs out of width. Without it, everything past the right
+         edge — Clear All included — is simply unreachable in the
+         PWA, because the toolbar is position:fixed and the page
+         scroll does not move it.
+
+         dacum-styles.css sets overflow-x:auto here and hides the
+         scrollbar; dacum-fixes.css was overriding it back to
+         visible (now corrected at source). These rules restore the
+         behaviour explicitly and, more importantly, make it
+         DISCOVERABLE: a hidden scrollbar on a desktop is fine
+         because the row is rarely overflowing, but on a phone it
+         always overflows and there is no hover to reveal anything.
+         A permanently visible slim bar is the honest signal.
+         ══════════════════════════════════════════════════════════ */
+      #dacumTopToolbar .dtb-center {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch;
+        /* Stops a sideways swipe from triggering the browser's
+           back-navigation gesture once the row hits its end. */
+        overscroll-behavior-x: contain;
+        scroll-padding-inline: 8px;
+      }
+
+      @media (hover: none) and (pointer: coarse) {
+        #dacumTopToolbar .dtb-center {
+          scrollbar-width: thin;
+          padding-bottom: 3px;
+        }
+        #dacumTopToolbar .dtb-center::-webkit-scrollbar {
+          display: block;
+          height: 3px;
+        }
+        #dacumTopToolbar .dtb-center::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        #dacumTopToolbar .dtb-center::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 99px;
+        }
+      }
+
+      /* The dividers are the one thing that must not shrink — a
+         collapsed divider makes the groups read as one long row. */
+      #dacumTopToolbar .dtb-divider { flex: 0 0 auto; }
 
       /* ══════════════════════════════════════════════════════════
          TOUCH-DEVICE SHAPE CONTRACT

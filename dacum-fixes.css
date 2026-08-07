@@ -40,10 +40,23 @@ button:active {
   transform: scale(0.97) !important;
 }
 
-/* Ensure parent containers in the toolbar never clip */
+/* Ensure parent containers in the toolbar never clip.
+
+   .dtb-center is deliberately NOT in this list. It carries
+   `overflow-x: auto` in dacum-styles.css so the middle button group can
+   scroll sideways when the toolbar runs out of room — which is the only
+   way to reach "Clear All" on a phone. Forcing `overflow: visible` here
+   silently disabled that: the buttons still overflowed, but the
+   container no longer scrolled, so anything past the right edge became
+   permanently unreachable.
+
+   This override was added to stop the `transform: translateY(-2px)`
+   hover lift being clipped — but FIX 2 directly above already removes
+   that transform on every button. Nothing is left to clip, so extending
+   the rule to the one container that must scroll costs reachability and
+   buys nothing. */
 #dacumTopToolbar,
 .dtb-left,
-.dtb-center,
 .dtb-right {
   overflow: visible !important;
 }
