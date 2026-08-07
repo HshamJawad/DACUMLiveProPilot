@@ -104,7 +104,7 @@
       // Bump these together with EXPECTED_SW / CACHE_VERSION on every
       // release, so a trainer can read the running build off the
       // screen instead of digging through DevTools.
-      var APP_VERSION = '3.9.7';
+      var APP_VERSION = '3.10';
       var APP_RELEASED = '2026-08-03';
 
       // Per-version reload guard — prevents infinite refresh loops
@@ -3102,6 +3102,9 @@
                             aria-label="Learning Outcome design patterns"
                             aria-haspopup="dialog">?</button>
                 </div>
+                <button data-action="clear-tab" data-tab-id="learning-outcomes-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ Clear This Tab
+                </button>
             </div>
 
             <!-- AI Generation Section — mirrors the card in the Duties tab -->
@@ -3171,6 +3174,9 @@
                             aria-label="Purpose and module grouping strategies"
                             aria-haspopup="dialog">?</button>
                 </div>
+                <button data-action="clear-tab" data-tab-id="module-mapping-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ Clear This Tab
+                </button>
             </div>
 
             <!-- AI Generation Section — mirrors the card in the Duties tab -->

@@ -259,8 +259,78 @@ function _doClear() {
 
 // ── Clear Current Tab ─────────────────────────────────────────
 
+// The DACUM stages form a chain, each built from the one before it:
+//
+//   Duties & Tasks → Verification → Clustering → Learning Outcomes → Modules
+//
+// Clearing a stage does not touch the stages after it, so the work
+// downstream survives as an orphan: clusters whose tasks no longer
+// exist, outcomes with no cluster behind them, modules assembled from
+// outcomes that were deleted. Nothing crashes, which is precisely the
+// problem — the damage is invisible until someone exports the chart and
+// finds the later stages no longer trace back to anything.
+//
+// So the confirmation names what else is at stake. Only downstream
+// stages that ACTUALLY hold data are listed: a warning that fires on
+// every clear, including the harmless ones, is a warning users learn to
+// click past, which would leave them less protected than before.
+const _DOWNSTREAM_OF = {
+  'duties-tab':            ['verification', 'clustering', 'outcomes', 'modules'],
+  'verification-tab':      ['clustering', 'outcomes', 'modules'],
+  'clustering-tab':        ['outcomes', 'modules'],
+  'learning-outcomes-tab': ['modules'],
+  'module-mapping-tab':    [],
+  'info-tab':              [],
+  'additional-info-tab':   [],
+};
+
+function _downstreamWork(stage) {
+  const s = appState;
+  switch (stage) {
+    case 'verification': {
+      const rated = Object.keys(s.verificationRatings || {}).filter(k => {
+        const r = s.verificationRatings[k];
+        return r && (r.importance !== null && r.importance !== undefined);
+      }).length + Object.keys(s.workshopResults || {}).length;
+      return rated ? `${rated} task rating${rated === 1 ? '' : 's'} in Task Verification` : null;
+    }
+    case 'clustering': {
+      const n = s.clusteringData?.clusters?.length || 0;
+      return n ? `${n} competency cluster${n === 1 ? '' : 's'}` : null;
+    }
+    case 'outcomes': {
+      const n = s.learningOutcomesData?.outcomes?.length || 0;
+      return n ? `${n} learning outcome${n === 1 ? '' : 's'}` : null;
+    }
+    case 'modules': {
+      const n = s.moduleMappingData?.modules?.length || 0;
+      return n ? `${n} training module${n === 1 ? '' : 's'}` : null;
+    }
+    default: return null;
+  }
+}
+
+function _confirmClear(tabId) {
+  const affected = (_DOWNSTREAM_OF[tabId] || [])
+    .map(_downstreamWork)
+    .filter(Boolean);
+
+  if (!affected.length) {
+    return confirm('Are you sure you want to clear this tab? This cannot be undone!');
+  }
+
+  return confirm(
+    'Clear this tab? This cannot be undone.\n\n' +
+    'Later DACUM stages were built from this one and will NOT be cleared, ' +
+    'so they will be left referring to data that no longer exists:\n\n' +
+    affected.map(a => '  • ' + a).join('\n') + '\n\n' +
+    'Review or clear those stages too, or cancel and rebuild from here downwards.\n\n' +
+    'Continue?'
+  );
+}
+
 export function clearCurrentTab(tabId) {
-  if (!confirm('Are you sure you want to clear this tab? This cannot be undone!')) return;
+  if (!_confirmClear(tabId)) return;
 
   if (tabId === 'info-tab') {
     ['dacumDate','venue','producedFor','producedBy','occupationTitle','scopeOfWork','jobTitle',
