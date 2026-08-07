@@ -4,7 +4,7 @@
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v30';
+const CACHE_VERSION = 'v31';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -27,6 +27,7 @@ const PRECACHE_URLS = [
   BASE + 'dacum-responsive.css',
   BASE + 'dacum-fixes.css',
   BASE + 'dacum-typography.css',
+  BASE + 'dacum-components.css',
 
   // ── ES modules (app.js import graph) ─────────────────────
   BASE + 'app.js',
@@ -121,6 +122,11 @@ self.addEventListener('activate', function (event) {
           BASE + 'dacum-mobile.js',
           BASE + 'dacum-styles.css',
           BASE + 'dacum-responsive.css',
+          // Added in Phase 1: index.html no longer carries its own
+          // <style> block, so it is useless without this file. It has to
+          // be warmed alongside the HTML or an updated page would paint
+          // unstyled until the next fetch cycle.
+          BASE + 'dacum-components.css',
           BASE + 'app.js',
         ];
         return caches.open(CACHE_NAME).then(function (cache) {
