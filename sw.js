@@ -4,7 +4,7 @@
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v33';
+const CACHE_VERSION = 'v35';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -126,6 +126,10 @@ self.addEventListener('activate', function (event) {
           // be warmed alongside the HTML or an updated page would paint
           // unstyled until the next fetch cycle.
           BASE + 'dacum-components.css',
+          // Added by preflight: index.html has no inline <style> of its
+          // own, so every stylesheet it links has to be warmed alongside
+          // the HTML or an updated page paints unstyled for one cycle.
+          BASE + 'dacum-typography.css',
           BASE + 'app.js',
         ];
         return caches.open(CACHE_NAME).then(function (cache) {
