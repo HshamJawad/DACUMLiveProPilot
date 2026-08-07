@@ -387,7 +387,13 @@ function createDutyAccordion(dutyId, dutyText, tasks, dutyIndex = 0) {
     <div class="duty-accordion">
       <div class="duty-accordion-header" data-duty="${dutyId}">
         <div class="duty-title">Duty ${dutyLetter}: ${escapeHtml(dutyText)}</div>
-        <div class="duty-toggle">▼</div>
+        <div class="duty-header-actions">
+          <button type="button" class="tvc-open-btn"
+                  data-action="show-duty-chart" data-duty-index="${dutyIndex}"
+                  title="View verification results chart for this duty"
+                  aria-label="View verification results chart for this duty">📊</button>
+          <div class="duty-toggle">▼</div>
+        </div>
       </div>
       <div class="duty-accordion-content">
         <div style="overflow-x:auto;width:100%;">

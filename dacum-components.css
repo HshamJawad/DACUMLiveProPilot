@@ -982,7 +982,21 @@
            does, the label and buttons spill over the textarea below
            and hide the task text. */
         max-width: 100%;
-        overflow: hidden;
+        /* No `overflow: hidden` here — deliberately removed.
+           It clipped the round delete button: in card view that button is
+           position:static inside this row, and its `transform: scale(1.15)`
+           on hover grew it past this container's edge, where the card's
+           14px border-radius sliced a curve out of the circle. It read as
+           the button sitting behind the card border rather than on top.
+
+           z-index on the button does NOT fix this: z-index orders paint
+           layers, overflow clips geometry — two different mechanisms.
+
+           Removing it is safe because the truncation it was meant to give
+           is already done one level down by .dcv-card-top-left, which
+           carries overflow:hidden + text-overflow:ellipsis + min-width:0.
+           The declaration here was duplicated and did no work beyond
+           cutting the button. */
       }
       .dcv-card-top-left {
         display: flex;
