@@ -870,7 +870,13 @@ function _applyState(s) {
   appState.priorityFormula          = s.priorityFormula          || 'if';
   appState.workshopCounts           = s.workshopCounts           || {};
   appState.workshopResults          = s.workshopResults          || {};
-  appState.tvExportMode             = s.tvExportMode             || 'appendix';
+  // Forced to 'appendix'. The radio pair that could set 'standalone' is
+  // gone, and that value makes exportToPDF/exportToWord return the
+  // verification report INSTEAD of the DACUM report. A project saved
+  // while the old radio was on "Standalone" would therefore have its
+  // main exports permanently hijacked, with no surviving control to
+  // switch it back. Standalone output now comes from its own buttons.
+  appState.tvExportMode             = 'appendix';
   appState.trainingLoadMethod       = s.trainingLoadMethod       || 'advanced';
   appState.clusteringData           = s.clusteringData           || { clusters: [], availableTasks: [], clusterCounter: 0 };
   appState.learningOutcomesData     = s.learningOutcomesData     || { outcomes: [], outcomeCounter: 0 };

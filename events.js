@@ -17,7 +17,7 @@ import { addDuty, addTask, removeDuty, removeTask, clearDuty,
 import { pushHistoryState, undo, redo,
          resetHistoryToCurrentState }                  from './history.js';
 import { updateCollectionMode, updateWorkflowMode, updateParticipantCount,
-  updatePriorityFormula, updateTVExportMode, updateTrainingLoadMethod,
+  updatePriorityFormula, updateTrainingLoadMethod,
   loadDutiesForVerification, refreshVerificationTab, updateRating, updatePerformsTask, updateComments,
   updateWorkshopCount, validateAndComputeTask, validateAndComputeWorkshopResults,
   toggleDashboard, refreshDashboard, toggleDutyLevelSummary, exportDashboard,
@@ -253,10 +253,27 @@ export function setupEvents() {
   _onRadioGroup('collectionMode',  () => { updateCollectionMode(); });
   _onRadioGroup('workflowMode',    () => updateWorkflowMode());
   _onRadioGroup('priorityFormula', () => updatePriorityFormula());
-  _onRadioGroup('tvExportMode',    () => updateTVExportMode());
   _onRadioGroup('trainingLoadMethod', () => updateTrainingLoadMethod());
   _on('workshopParticipants', 'change', () => updateParticipantCount());
   _on('btnLoadDutiesForVerification', 'click', () => refreshVerificationTab());
+
+  // Standalone verification report. These replace the old tvExportMode
+  // radios: the same two exporters, but invoked directly instead of by
+  // silently re-routing the main toolbar's PDF/Word buttons.
+  //
+  // When Live Workshop voting has been finalised, the verified dataset
+  // lives in lwFinalizedData / lwAggregatedResults and the generic
+  // exporters would miss it, so those runs are handed to the dedicated
+  // lwExportVerified* pair — the same delegation exportToPDF/Word used
+  // to perform internally.
+  _on('btnTVExportPDF',  'click', () => {
+    if (_hasVerifiedLiveWorkshopData()) lwExportVerifiedPDF();
+    else exportTaskVerificationPDF();
+  });
+  _on('btnTVExportDOCX', 'click', () => {
+    if (_hasVerifiedLiveWorkshopData()) lwExportVerifiedDOCX();
+    else exportTaskVerificationWord();
+  });
   _on('btnValidateAll',        'click', () => validateAndComputeWorkshopResults());
   _on('btnToggleDashboard',    'click', () => toggleDashboard());
   _on('btnRefreshDashboard',   'click', () => refreshDashboard());
@@ -734,6 +751,11 @@ function _onStaticInfoButtons() {
 //
 // _showHelpModal is generic so each tab only supplies its content;
 // the chrome, animations, and close behaviour are defined once.
+
+function _hasVerifiedLiveWorkshopData() {
+  return typeof appState.lwFinalizedData    !== 'undefined' && appState.lwFinalizedData &&
+         typeof appState.lwAggregatedResults !== 'undefined' && appState.lwAggregatedResults;
+}
 
 function _showHelpModal({ id, icon, title, intro, items, note, bodyHtml, maxWidth }) {
   const existing = document.getElementById(id);

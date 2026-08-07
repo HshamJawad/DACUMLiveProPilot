@@ -67,14 +67,6 @@ export function updatePriorityFormula() {
   showStatus(`Priority formula: ${appState.priorityFormula === 'if' ? 'I × F' : 'I × F × D'}`, 'success');
 }
 
-export function updateTVExportMode() {
-  const appendixRadio   = document.getElementById('tvExportAppendix');
-  const standaloneRadio = document.getElementById('tvExportStandalone');
-  if (appendixRadio && appendixRadio.checked)       appState.tvExportMode = 'appendix';
-  else if (standaloneRadio && standaloneRadio.checked) appState.tvExportMode = 'standalone';
-  showStatus(`Export mode: ${appState.tvExportMode === 'appendix' ? 'Include as Appendix' : 'Standalone Report'}`, 'success');
-}
-
 export function updateTrainingLoadMethod() {
   const advanced = document.querySelector('input[name="trainingLoadMethod"][value="advanced"]');
   appState.trainingLoadMethod = advanced && advanced.checked ? 'advanced' : 'simple';
