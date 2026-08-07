@@ -868,8 +868,11 @@ function _showTaskVerificationHelp() {
        '0 = Not Important, 1 = Somewhat, 2 = Important, 3 = Critical. Governs whether a ' +
        'task is included and how strictly it is assessed later.'],
       ['🔁', 'Frequency',
-       '0 = Rarely, 1 = Sometimes, 2 = Often, 3 = Daily. Guides sequencing and how often ' +
-       'a task is practised &mdash; not how long it is taught.'],
+       '0 = Rarely, 1 = Sometimes, 2 = Often, 3 = Daily. Count how often <em>the worker</em> ' +
+       'performs the task on the job &mdash; not how often a single unit, client or product ' +
+       'needs it. A car needs a new battery every few years, but a mechanic fits batteries ' +
+       'daily. Ask the panel &ldquo;how often do <em>you</em> do this?&rdquo; Frequency guides ' +
+       'sequencing and practice opportunities &mdash; not how long a task is taught.'],
       ['🧠', 'Learning Difficulty',
        '0 = Easy, 1 = Moderate, 2 = Challenging, 3 = Very Difficult. The main driver of ' +
        'instructional time and practice volume.'],
