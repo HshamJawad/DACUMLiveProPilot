@@ -1887,3 +1887,172 @@
           pointer-events: none;
         }
       }
+
+
+/* ============================================================
+   PHASE 2 — CONSOLIDATED OVERRIDE LAYER
+   ------------------------------------------------------------
+   Everything below was previously scattered across
+   dacum-fixes.css (now deleted) and the non-media section of
+   dacum-responsive.css. It is gathered here because this file
+   loads last, which is what an override layer needs.
+
+   IMPORTANT: these rules were NOT simply copied. The old copies
+   MERGED across files rather than one winning outright — a
+   toolbar button on hover took its transform and filter from
+   dacum-fixes.css but its box-shadow from dacum-responsive.css,
+   because the latter's #dacumTopToolbar selector outranked the
+   former's bare `button` selector on that one property. Moving
+   or deleting either file on its own would have silently changed
+   the hover appearance. The computed result was resolved first,
+   then written out once, explicitly.
+   ============================================================ */
+
+/* ── Button hover: lift without clipping ──────────────────────
+   dacum-styles.css gives every button `transform: translateY(-2px)`
+   on hover, which clips inside any overflow:hidden ancestor. The
+   lift is reproduced with filter + box-shadow, which do not
+   participate in layout and therefore cannot be clipped. */
+button:hover {
+  transform: none !important;
+  filter: brightness(1.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18) !important;
+}
+
+button:active {
+  transform: scale(0.97) !important;   /* scaling inward never clips */
+  filter: none;
+}
+
+/* A disabled button must not look pressable. This was previously
+   inconsistent: dacum-fixes.css gated the toolbar undo/redo hover on
+   :not([disabled]), but dacum-responsive.css carried an ungated copy
+   of the same rule, so a greyed-out Undo still lit up on hover. With
+   the duplicate gone, the gate finally holds — but the generic
+   `button:hover` above would still reach disabled buttons, so it is
+   cancelled explicitly here rather than left to chance. */
+button[disabled]:hover,
+button:disabled:hover {
+  filter: none;
+  box-shadow: none !important;
+  transform: none !important;
+}
+button[disabled]:active,
+button:disabled:active {
+  transform: none !important;
+}
+
+/* Toolbar buttons take a subtler shadow and a slightly stronger
+   brightness than the global rule above — this is the merged result
+   described in the header, now stated in one place. */
+#dacumTopToolbar button:hover,
+#dacumTopToolbar .dtb-btn:hover,
+#dacumTopToolbar .dtb-undo:not([disabled]):hover,
+#dacumTopToolbar .dtb-lens:hover,
+#dacumTopToolbar .dtb-hamburger:hover {
+  transform: none !important;
+  filter: brightness(1.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.10) !important;
+}
+
+#dacumTopToolbar button:active,
+#dacumTopToolbar .dtb-btn:active {
+  transform: scale(0.97) !important;
+}
+
+/* Toolbar containers must not clip the hover shadow.
+   .dtb-center is deliberately absent: it owns `overflow-x: auto` so
+   the middle button group can scroll to reach Clear All on a phone.
+   Forcing `overflow: visible` on it disabled that scroll while the
+   buttons still overflowed, making everything past the right edge
+   permanently unreachable. Nothing is left to clip anyway, since the
+   translateY above is gone. */
+#dacumTopToolbar,
+.dtb-left,
+.dtb-right {
+  overflow: visible !important;
+}
+
+/* ── Sidebar: drawer/rail transition and legacy hidden state ── */
+.dps-sidebar {
+  transition: width 0.25s cubic-bezier(.4, 0, .2, 1),
+              transform 0.28s cubic-bezier(.4, 0, .2, 1) !important;
+}
+
+/* dps-force-hidden: width→0, kept for legacy compatibility.
+   overflow:hidden is safe here because the element has no width. */
+.dps-sidebar.dps-force-hidden {
+  width: 0 !important;
+  min-width: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+#dacumAppWrapper.dps-force-hidden-wrapper > .container {
+  margin-left: 0 !important;
+}
+
+/* The collapse control now lives inside the sidebar header. */
+#dpsToggle { display: none !important; }
+
+/* Mobile sidebar backdrop. Starts below the 60px fixed toolbar so the
+   toolbar stays reachable while the drawer is open. */
+#dpsMobileBackdrop {
+  display: none;
+  position: fixed;
+  inset: 60px 0 0 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 299;
+  -webkit-backdrop-filter: blur(2px);
+          backdrop-filter: blur(2px);
+}
+#dpsMobileBackdrop.dps-backdrop-visible { display: block; }
+
+/* In PWA standalone the viewport can be any size, so the ≤1100px
+   breakpoint is not a reliable signal — standalone is touch-first, so
+   always offer the hamburger. */
+@media (display-mode: standalone) {
+  .dtb-hamburger { display: inline-flex !important; }
+  #dpsToggle     { display: none !important; }
+}
+
+/* ── PWA install button ───────────────────────────────────────
+   Single source of truth. Hidden until dacum-fixes.js adds
+   .dacum-install-visible on beforeinstallprompt. Its media query
+   lives with it rather than in the responsive sheet: a component that
+   owns all of its own styling, breakpoints included, is a component
+   that cannot be broken from a distance. */
+#dacumInstallBtn { display: none; }
+
+#dacumInstallBtn.dacum-install-visible {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #cba6f7, #89b4fa);
+  color: #1e1e2e;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 13px;
+  font-size: 0.82em;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 10px rgba(203, 166, 247, 0.3);
+  transition: opacity 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+#dacumInstallBtn.dacum-install-visible:hover {
+  opacity: 0.88;
+  transform: none !important;
+  filter: brightness(1.05);
+}
+
+#dacumInstallBtn.dacum-install-visible:active {
+  transform: scale(0.96) !important;
+}
+
+@media (max-width: 480px) {
+  #dacumInstallBtn.dacum-install-visible span.install-label { display: none; }
+}

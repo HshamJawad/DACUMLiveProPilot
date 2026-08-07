@@ -4,7 +4,7 @@
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v31';
+const CACHE_VERSION = 'v32';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -25,7 +25,6 @@ const PRECACHE_URLS = [
   // ── Stylesheets ──────────────────────────────────────────
   BASE + 'dacum-styles.css',
   BASE + 'dacum-responsive.css',
-  BASE + 'dacum-fixes.css',
   BASE + 'dacum-typography.css',
   BASE + 'dacum-components.css',
 

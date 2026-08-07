@@ -1,7 +1,17 @@
 /* ============================================================
-   dacum-responsive.css  v2
-   Responsive & PWA layer for DACUM Live Pro.
-   Loaded AFTER dacum-styles.css.
+   dacum-responsive.css  v3
+   Responsive layer for DACUM Live Pro — MEDIA QUERIES ONLY.
+
+   Phase 3 of the CSS ownership consolidation. Ten base rules that
+   had accumulated here were moved to the sheet that owns their
+   component. The one deliberate exception is the safe-area block
+   below, which is viewport-driven by nature.
+
+   THE CONTRACT: if a rule is not inside an @media block, it does
+   not belong in this file. A sheet named "responsive" that also
+   carries base styling is a sheet whose load order becomes
+   load-bearing by accident — which is how the oval buttons, the
+   dead toolbar scroll and the two-row rating scale all happened.
    ============================================================ */
 
 /* ── Safe-area insets (iPhone notch / home bar) ─────────── */
@@ -39,27 +49,10 @@ body {
   }
 }
 
-/* ══════════════════════════════════════════════════════════
-   FIX 1 — Toolbar button hover clipping
-   Global button:hover in dacum-styles.css adds
-   transform:translateY(-2px) which clips against the fixed
-   toolbar's top edge / viewport boundary.
-   ══════════════════════════════════════════════════════════ */
-#dacumTopToolbar {
-  overflow: visible !important;
-}
-#dacumTopToolbar button:hover,
-#dacumTopToolbar .dtb-btn:hover,
-#dacumTopToolbar .dtb-undo:hover,
-#dacumTopToolbar .dtb-lens:hover,
-#dacumTopToolbar .dtb-hamburger:hover {
-  transform: none !important;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.10) !important;
-}
-#dacumTopToolbar button:active,
-#dacumTopToolbar .dtb-btn:active {
-  transform: scale(0.97) !important;
-}
+/* Toolbar hover/active behaviour and container overflow moved to
+   dacum-components.css (Phase 2). They were duplicated here and in
+   dacum-fixes.css, and the two copies merged property-by-property,
+   which is exactly the failure mode this consolidation removes. */
 
 /* ══════════════════════════════════════════════════════════
    FIX 2 — Hamburger button base style
@@ -67,17 +60,7 @@ body {
    ══════════════════════════════════════════════════════════ */
 /* .dtb-hamburger button removed */
 
-/* Mobile sidebar overlay backdrop */
-#dpsMobileBackdrop {
-  display: none;
-  position: fixed;
-  inset: 60px 0 0 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 299;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-}
-#dpsMobileBackdrop.dps-backdrop-visible { display: block; }
+/* #dpsMobileBackdrop moved to dacum-components.css (Phase 3). */
 
 /* ════════════════════════════════════════════════════════
    1100 px — tablet landscape / small laptop
@@ -347,25 +330,7 @@ body {
   body { background: white !important; padding-top: 0 !important; }
 }
 
-/* ── Hide dpsToggle globally (collapse btn is now inside sidebar header) */
-#dpsToggle { display: none !important; }
-
-/* ═══════════════════════════════════════════════════════════
-   Sidebar: desktop transition base
-   ═══════════════════════════════════════════════════════════ */
-.dps-sidebar {
-  transition: width 0.25s cubic-bezier(.4,0,.2,1),
-              transform 0.28s cubic-bezier(.4,0,.2,1) !important;
-}
-
-/* dps-force-hidden: width→0 for legacy compatibility only.
-   overflow kept hidden since the sidebar has no width anyway. */
-.dps-sidebar.dps-force-hidden {
-  width: 0 !important;
-  min-width: 0 !important;
-  box-shadow: none !important;
-  overflow: hidden !important;   /* OK at width:0, no content visible */
-}
-#dacumAppWrapper.dps-force-hidden-wrapper > .container {
-  margin-left: 0 !important;
-}
+/* #dpsToggle, .dps-sidebar transition, .dps-force-hidden and the
+   wrapper margin moved to dacum-components.css (Phase 3): none of them
+   is a media query, and a "responsive" sheet that carries base rules is
+   a sheet nobody can reason about. */
