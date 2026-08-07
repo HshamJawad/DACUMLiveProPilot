@@ -104,7 +104,7 @@
       // Bump these together with EXPECTED_SW / CACHE_VERSION on every
       // release, so a trainer can read the running build off the
       // screen instead of digging through DevTools.
-      var APP_VERSION = '3.8.3';
+      var APP_VERSION = '3.8.4';
       var APP_RELEASED = '2026-08-03';
 
       // Per-version reload guard — prevents infinite refresh loops
@@ -692,6 +692,7 @@
         transition: background 0.15s, transform 0.12s;
       }
       .tvc-open-btn:hover { background: #ffffff; }
+      .tvc-open-btn { position: relative; }
 
       /* Global entry point above the accordion list */
       .tvc-global-bar {
@@ -964,6 +965,105 @@
         .tvc-dialog { box-shadow: none; max-height: none; width: 100%; }
         .tvc-controls, .tvc-foot, .tvc-close { display: none !important; }
       }
+
+      /* ══════════════════════════════════════════════════════════
+         TOUCH-DEVICE SHAPE CONTRACT
+         ──────────────────────────────────────────────────────────
+         dacum-responsive.css applies `min-height: 44px` to every
+         <button> on coarse-pointer devices. That is correct for
+         text buttons and wrong for anything with a fixed shape: a
+         32px circle becomes 32x44, a vertical oval. Because that
+         rule is element-level (0,0,1), ANY class rule declaring its
+         own min-height wins — so each fixed-shape control below
+         states its height explicitly, and the 44px tap area is
+         restored with a transparent ::after where it matters.
+
+         Declaring `height` alone is NOT enough: with no min-height
+         of its own, the inherited 44px still applies. This is the
+         single most repeated cause of the oval-button bug in this
+         file, so every axis is pinned every time.
+         ══════════════════════════════════════════════════════════ */
+
+      /* Toolbar pills: label hidden below 1200px, so they collapse to
+         icon-only and would otherwise be 38 wide by 44 tall. */
+      #dacumTopToolbar .dtb-btn {
+        min-height: 36px;
+        height: 36px;
+        box-sizing: border-box;
+        flex: 0 0 auto;
+      }
+      #dacumTopToolbar .dtb-btn .dtb-icon { flex-shrink: 0; }
+
+      @media (max-width: 600px) {
+        #dacumTopToolbar .dtb-btn { min-height: 34px; height: 34px; }
+      }
+
+      /* Chart trigger in the duty header and the modal's own controls.
+         These declare width/height above; the min-heights here are what
+         actually protect them from the inherited 44px. */
+      .tvc-open-btn,
+      .tvc-close,
+      .tvc-duty-nav button,
+      .tvc-open-btn:hover,
+      .tvc-close:hover { box-sizing: border-box; }
+
+      @media (hover: none) and (pointer: coarse) {
+        /* Transparent 44px tap zones — accessibility preserved without
+           inflating the visible circle. */
+        .tvc-open-btn::after,
+        .tvc-close::after,
+        .tvc-duty-nav button::after {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 44px;
+          height: 44px;
+          transform: translate(-50%, -50%);
+        }
+        .tvc-duty-nav button { position: relative; }
+      }
+
+      /* Rating radios: 0-1-2-3 on one row. Stretching a 20px radio to
+         44px tall pushed every task row taller and rendered oddly on
+         Android. The .rating-option wrapper (radio + number label)
+         already clears 44px, so the tap target is fine. */
+      .rating-option input[type="radio"] {
+        min-height: 20px !important;
+        height: 20px !important;
+        width: 20px !important;
+        min-width: 20px !important;
+        flex: 0 0 auto;
+      }
+      .rating-scale {
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+      }
+      .rating-scale::-webkit-scrollbar { display: none; }
+      .rating-option { flex: 0 0 auto; }
+
+      /* Sidebar hamburger contrast.
+         dacum-mobile.js injects `color:#e2e8f0` with !important — a
+         near-white icon that was designed for a dark toolbar. This
+         toolbar is white, so the three bars were nearly invisible.
+         The injected <style> is appended to <head> at runtime, i.e.
+         AFTER this block, so overriding it needs both !important and
+         higher specificity than its plain `#btnSidebarToggle`. */
+      #dacumTopToolbar #btnSidebarToggle {
+        color: #334155 !important;
+        background: #ffffff !important;
+        border: 1.5px solid #e2e2e4 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+      }
+      #dacumTopToolbar #btnSidebarToggle:hover {
+        background: #f0f0f2 !important;
+        color: #1a1a1a !important;
+      }
+      #dacumTopToolbar #btnSidebarToggle svg rect { fill: currentColor !important; }
 
       /* ══════════════════════════════════════════════════════════
          ROUND ICON BUTTONS — keep them round

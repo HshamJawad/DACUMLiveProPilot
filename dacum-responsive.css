@@ -13,17 +13,23 @@ body {
 }
 
 /* ── Touch targets ──────────────────────────────────────── */
-/* NOTE: `min-height: 44px` is an element-level selector, so it loses to
-   any class rule that declares min-height — but it wins by default
-   against class rules that only declare `height`. Small round icon
-   buttons are exactly that case: a 24x24 circle silently became 24x44,
-   a lengthwise oval, on every touch device. They are excluded here and
-   given a transparent 44px ::after tap area in index.html instead, so
-   the touch target stays compliant without deforming the shape.
-   Any new fixed-size round button must be added to this list. */
+/* This selector MUST stay at element-level specificity (0,0,1).
+   An earlier version excluded icon buttons with a chain of
+   :not(.tab-help-btn):not(.dcv-close-btn)… — which backfired badly.
+   `:not()` takes the specificity of its own argument, so seven of
+   them pushed this rule to (0,7,1), higher than any single class
+   selector. The result was the exact opposite of the intent: instead
+   of sparing the round buttons, it overrode every `min-height` those
+   buttons declared for themselves, and stretched ALL of them into
+   vertical ovals on touch devices.
+
+   The rule is therefore back to plain element selectors, and the
+   contract is inverted: any button that must keep a fixed shape
+   declares its own `min-height` in a class rule, which outranks this
+   one automatically. Nothing needs to be listed here, and a newly
+   added icon button is protected the moment it sizes itself. */
 @media (hover: none) and (pointer: coarse) {
-  button:not(.tab-help-btn):not(.dcv-close-btn):not(.dcv-add-btn):not(.dtb-lens):not(.dtb-hamburger):not(.dtb-undo):not(.dtb-redo),
-  a, input[type="radio"], input[type="checkbox"],
+  button, a, input[type="radio"], input[type="checkbox"],
   select, .tab, .mode-option, .formula-option {
     min-height: 44px;
   }
@@ -176,7 +182,16 @@ body {
   #verificationAccordionContainer, .workflow-extended { overflow-x: auto; }
   .verification-table th,
   .verification-table td { font-size: 0.82em; padding: 8px 6px !important; }
-  .rating-scale { gap: 8px !important; flex-wrap: wrap; }
+  /* One row, always. Wrapping split the 0-1-2-3 scale into two rows of
+     two, which reads as two separate controls and doubles the row
+     height of every task. The rating cells scroll horizontally with
+     the table instead. */
+  .rating-scale {
+    gap: 10px !important;
+    flex-wrap: nowrap !important;
+    justify-content: center;
+  }
+  .rating-option { flex: 0 0 auto; }
   .rating-option label { font-size: 0.75em !important; }
 
   .results-dashboard-inner { overflow-x: auto; }
