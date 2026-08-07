@@ -661,7 +661,19 @@ export function initProjectsSidebar() {
   }
 
   // ── Restore persisted collapsed state ──
-  if (localStorage.getItem('dps_sidebar_collapsed') === '1') {
+  // Guarded by viewport. `dps-collapsed` is the 68px desktop rail and
+  // is meaningless on mobile, where the sidebar is a drawer — applying
+  // it there produces a full-width panel with no labels. Without this
+  // guard, one stale '1' in localStorage reproduced the stuck-sidebar
+  // bug on every subsequent mobile launch, before the user touched
+  // anything. dacum-mobile.js re-asserts the correct state on resize,
+  // so crossing the breakpoint later is handled too.
+  const _wantsRail = localStorage.getItem('dps_sidebar_collapsed') === '1';
+  const _isNarrow  = window.DacumSidebar && typeof window.DacumSidebar.isMobile === 'function'
+    ? window.DacumSidebar.isMobile()
+    : window.innerWidth <= 1100;
+
+  if (_wantsRail && !_isNarrow) {
     const sb = document.getElementById('dacumProjectsSidebar');
     const wr = document.getElementById('dacumAppWrapper');
     if (sb) sb.classList.add('dps-collapsed');
@@ -1285,6 +1297,30 @@ function _toggleSidebar() {
   const sb      = document.getElementById('dacumProjectsSidebar');
   const wrapper = document.getElementById('dacumAppWrapper');
   if (!sb) return;
+
+  // Delegate to dacum-mobile.js, which is the only place that knows
+  // whether this viewport wants a drawer or an icon rail.
+  //
+  // The bug this fixes: this function used to toggle `dps-collapsed`
+  // unconditionally. That class means "68px icon rail" — a DESKTOP
+  // idea. On mobile the sidebar is an off-canvas drawer, and the
+  // mobile media query pins it at `width: 260px !important`, which
+  // beats the rail's plain `width: 68px`. So on a phone the class
+  // hid every label but could not shrink the panel: a full-width
+  // drawer showing nothing but icons, and tapping again only toggled
+  // the labels back — it never closed.
+  //
+  // It also wrote dps_sidebar_collapsed='1' from a mobile tap, which
+  // is why the desktop layout sometimes came back as a rail for no
+  // apparent reason: the two toggle paths were writing the same key
+  // with different meanings.
+  if (window.DacumSidebar && typeof window.DacumSidebar.toggle === 'function') {
+    window.DacumSidebar.toggle();
+    _updateCollapseIcon(sb.classList.contains('dps-collapsed'));
+    return;
+  }
+
+  // Fallback only if dacum-mobile.js failed to load.
   const collapsed = sb.classList.toggle('dps-collapsed');
   if (wrapper) wrapper.classList.toggle('dps-is-collapsed', collapsed);
   _updateCollapseIcon(collapsed);

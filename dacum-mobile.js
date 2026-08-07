@@ -266,6 +266,20 @@
     });
   }
 
+  /* ── Expose the viewport-aware API ──────────────────────
+     dacum_projects.js owns the collapse chevron INSIDE the sidebar
+     header, and it had its own _toggleSidebar() that only knew about
+     the desktop icon rail. Publishing these lets that button — and
+     any future caller — route through the one implementation that
+     knows the difference between a drawer and a rail, instead of
+     each file maintaining its own idea of what "collapsed" means. */
+  window.DacumSidebar = {
+    open:     openSidebar,
+    close:    closeSidebar,
+    toggle:   toggleSidebar,
+    isMobile: _isMobile
+  };
+
   /* ── Bootstrap ──────────────────────────────────────────── */
   function _boot() {
     if (document.getElementById('dacumProjectsSidebar')) { _wire(); return; }
