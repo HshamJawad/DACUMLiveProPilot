@@ -7,22 +7,130 @@ import { appState } from './state.js';
 import { showStatus, escapeHtml } from './renderer.js';
 import { getTaskCode, getDutyLetter } from './codes.js';
 
+// ── Verification dataset adapter ──────────────────────────────
+//
+// The standalone verification reports were written against the shape
+// of appState.workshopResults — meanImportance / meanFrequency /
+// meanDifficulty / priorityIndex / valid. Individual-Survey mode does
+// not produce that shape: it stores raw 0-3 integers in
+// appState.verificationRatings with no means and no priority index.
+//
+// Rather than block that mode outright (which is what the old guard
+// did — it refused BEFORE looking at any data, so even a fully
+// completed individual survey could never be exported), this adapter
+// normalises either source into the one shape the reports already
+// consume. A single respondent's rating IS its own mean, so the raw
+// value maps straight onto the mean field.
+//
+// priorityIndex is computed with the SAME formula tasks.js uses for
+// workshop mode, honouring appState.priorityFormula, so a given task
+// never shows one ranking on screen and a different one in the report.
+export function buildVerificationDataset() {
+  if (appState.collectionMode === 'workshop') {
+    return appState.workshopResults || {};
+  }
+
+  const out     = {};
+  const ratings = appState.verificationRatings || {};
+
+  Object.keys(ratings).forEach(taskKey => {
+    const r = ratings[taskKey];
+    if (!r) return;
+
+    // Same completeness test as the chart and the dashboard: all three
+    // dimensions set. Extended mode's criticality stays optional here,
+    // exactly as it is elsewhere.
+    if (r.importance === null || r.importance === undefined ||
+        r.frequency  === null || r.frequency  === undefined ||
+        r.difficulty === null || r.difficulty === undefined) return;
+
+    const meta = appState.taskMetadata[taskKey] || {};
+    const mI = r.importance, mF = r.frequency, mD = r.difficulty;
+
+    out[taskKey] = {
+      dutyId:     meta.dutyId || taskKey.split('_task_')[0],
+      dutyTitle:  meta.dutyTitle || '',
+      taskTitle:  meta.taskTitle || '',
+      meanImportance: mI,
+      meanFrequency:  mF,
+      meanDifficulty: mD,
+      meanCriticality: (r.criticality === null || r.criticality === undefined) ? 0 : r.criticality,
+      priorityIndex: appState.priorityFormula === 'ifd' ? mI * mF * mD : mI * mF,
+      valid: true,
+      // Deliberately absent: responseCount. There is no panel in this
+      // mode, and printing a fabricated count would misrepresent the
+      // evidence base of the report.
+      responseCount: null
+    };
+  });
+
+  return out;
+}
+
+// How much of the chart this report actually covers. A partial export
+// is legitimate mid-analysis, but handing a verification committee a
+// report that silently looks complete is not — so the reports print
+// this instead of leaving the reader to assume full coverage.
+export function getVerificationCoverage(results) {
+  const ratedKeys = Object.keys(results || {}).filter(k => results[k] && results[k].valid);
+
+  let totalTasks = 0;
+  const totalDuties = new Set();
+  document.querySelectorAll('input[data-duty-id], textarea[data-duty-id]').forEach(dutyInput => {
+    const dutyId = dutyInput.getAttribute('data-duty-id');
+    if (!(dutyInput.value || '').trim()) return;
+    totalDuties.add(dutyId);
+    document.querySelectorAll(
+      `input[data-task-id^="${dutyId}_"], textarea[data-task-id^="${dutyId}_"]`
+    ).forEach(t => { if ((t.value || '').trim()) totalTasks++; });
+  });
+
+  const ratedDuties = new Set();
+  ratedKeys.forEach(k => {
+    const r = results[k];
+    ratedDuties.add((r && r.dutyId) || k.split('_task_')[0]);
+  });
+
+  const ratedTasks = ratedKeys.length;
+  const complete   = totalTasks > 0 && ratedTasks >= totalTasks;
+
+  return {
+    ratedTasks,
+    totalTasks,
+    ratedDuties: ratedDuties.size,
+    totalDuties: totalDuties.size,
+    complete,
+    label: complete
+      ? `Complete: all ${ratedTasks} tasks rated across ${ratedDuties.size} duties.`
+      : `PARTIAL REPORT — ${ratedTasks} of ${totalTasks || ratedTasks} tasks rated, ` +
+        `covering ${ratedDuties.size} of ${totalDuties.size || ratedDuties.size} duties. ` +
+        `Unrated tasks are omitted from the tables below.`
+  };
+}
+
 export async function exportTaskVerificationWord() {
             try {
-                // Check if we have Task Verification data
-                if (appState.collectionMode !== 'workshop' || !appState.workshopResults || Object.keys(appState.workshopResults).length === 0) {
-                    alert('No Task Verification data available. Please complete workshop counts in the Task Verification tab first.');
-                    return;
-                }
-                
-                const validResults = Object.keys(appState.workshopResults).filter(key => 
-                    appState.workshopResults[key] && appState.workshopResults[key].valid
+                // Works in BOTH collection modes. The old guard rejected
+                // anything that was not workshop mode before inspecting
+                // the data at all, so Individual/Survey could never be
+                // exported however complete it was.
+                const tvResults = buildVerificationDataset();
+
+                const validResults = Object.keys(tvResults).filter(key =>
+                    tvResults[key] && tvResults[key].valid
                 );
-                
+
+                // One fully-rated task is enough. A partial export is a
+                // normal thing to want mid-analysis; the coverage line
+                // below states plainly how partial it is.
                 if (validResults.length === 0) {
-                    alert('No valid Task Verification results. Please ensure all required fields are completed.');
+                    alert('No task has been fully rated yet.\n\n' +
+                          'Rate Importance, Frequency and Learning Difficulty for at least ' +
+                          'one task in the Task Verification tab, then export again.');
                     return;
                 }
+
+                const tvCoverage = getVerificationCoverage(tvResults);
                 
                 if (typeof window.docx === 'undefined') {
                     showStatus('Error: Word export library not loaded. Please refresh the page.', 'error');
@@ -111,11 +219,32 @@ export async function exportTaskVerificationWord() {
                     bidirectional: false, // Force LTR
                 }));
                 
+                // Participant count only exists when there was a panel.
+                // Printing appState.workshopParticipants in Individual /
+                // Survey mode would state an evidence base that does not
+                // exist for these numbers.
+                if (appState.collectionMode === 'workshop') {
+                    children.push(new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `Number of Participants: ${appState.workshopParticipants}`,
+                                size: 22,
+                            }),
+                        ],
+                        spacing: { after: 100 },
+                        bidirectional: false, // Force LTR
+                    }));
+                }
+
+                // Coverage. Bold and red when partial, so a work-in-progress
+                // export can never be mistaken for a completed verification.
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: `Number of Participants: ${appState.workshopParticipants}`,
+                            text: `Coverage: ${tvCoverage.label}`,
                             size: 22,
+                            bold: !tvCoverage.complete,
+                            color: tvCoverage.complete ? '000000' : 'B91C1C',
                         }),
                     ],
                     spacing: { after: 100 },
@@ -160,7 +289,7 @@ export async function exportTaskVerificationWord() {
                 // Get and sort results
                 const sortedResults = [];
                 validResults.forEach(taskKey => {
-                    const result = appState.workshopResults[taskKey];
+                    const result = tvResults[taskKey];
                     
                     // Use stored duty and task titles (with backward compatibility)
                     let dutyText = result.dutyTitle;
@@ -268,8 +397,8 @@ export async function exportTaskVerificationWord() {
                 
                 // Aggregate duty-level data
                 const dutyMap = {};
-                Object.keys(appState.workshopResults).forEach(taskKey => {
-                    const result = appState.workshopResults[taskKey];
+                Object.keys(tvResults).forEach(taskKey => {
+                    const result = tvResults[taskKey];
                     if (result && result.valid) {
                         let dutyId = result.dutyId || taskKey.split('_task_')[0];
                         let dutyTitle = result.dutyTitle;
@@ -2212,20 +2341,21 @@ export async function exportToWord() {
 
 export function exportTaskVerificationPDF() {
     try {
-        // Check if we have Task Verification data
-        if (appState.collectionMode !== 'workshop' || !appState.workshopResults || Object.keys(appState.workshopResults).length === 0) {
-            alert('No Task Verification data available. Please complete workshop counts in the Task Verification tab first.');
-            return;
-        }
-        
-        const validResults = Object.keys(appState.workshopResults).filter(key => 
-            appState.workshopResults[key] && appState.workshopResults[key].valid
+        // See exportTaskVerificationWord: same adapter, same reasoning.
+        const tvResults = buildVerificationDataset();
+
+        const validResults = Object.keys(tvResults).filter(key =>
+            tvResults[key] && tvResults[key].valid
         );
-        
+
         if (validResults.length === 0) {
-            alert('No valid Task Verification results. Please ensure all required fields are completed.');
+            alert('No task has been fully rated yet.\n\n' +
+                  'Rate Importance, Frequency and Learning Difficulty for at least ' +
+                  'one task in the Task Verification tab, then export again.');
             return;
         }
+
+        const tvCoverage = getVerificationCoverage(tvResults);
         
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
@@ -2275,12 +2405,23 @@ export function exportTaskVerificationPDF() {
         pdf.setFont(undefined, 'normal');
         pdf.text(`Data Collection Mode: ${appState.collectionMode === 'workshop' ? 'Workshop (Facilitated)' : 'Individual/Survey'}`, margin, yPos);
         yPos += 6;
-        pdf.text(`Number of Participants: ${appState.workshopParticipants}`, margin, yPos);
-        yPos += 6;
+        // Only meaningful when a panel produced the numbers.
+        if (appState.collectionMode === 'workshop') {
+            pdf.text(`Number of Participants: ${appState.workshopParticipants}`, margin, yPos);
+            yPos += 6;
+        }
         pdf.text(`Workflow Mode: ${appState.workflowMode === 'standard' ? 'Standard (DACUM)' : 'Extended (DACUM)'}`, margin, yPos);
         yPos += 6;
         pdf.text(`Priority Formula: ${appState.priorityFormula === 'if' ? 'Importance × Frequency' : 'Importance × Frequency × Difficulty'}`, margin, yPos);
-        yPos += 12;
+        yPos += 6;
+
+        // Coverage, in red when partial — see the Word report for why.
+        if (!tvCoverage.complete) pdf.setTextColor(185, 28, 28);
+        const covLines = pdf.splitTextToSize(`Coverage: ${tvCoverage.label}`, pdf.internal.pageSize.getWidth() - margin * 2);
+        pdf.text(covLines, margin, yPos);
+        yPos += 6 * covLines.length;
+        pdf.setTextColor(0, 0, 0);
+        yPos += 6;
         
         // Priority Rankings Table
         pdf.setFontSize(14);
@@ -2291,7 +2432,7 @@ export function exportTaskVerificationPDF() {
         // Get and sort results
         const sortedResults = [];
         validResults.forEach(taskKey => {
-            const result = appState.workshopResults[taskKey];
+            const result = tvResults[taskKey];
             
             // Use stored duty and task titles (with backward compatibility)
             let dutyText = result.dutyTitle;
@@ -2389,8 +2530,8 @@ export function exportTaskVerificationPDF() {
         
         // Aggregate duty-level data
         const dutyMap = {};
-        Object.keys(appState.workshopResults).forEach(taskKey => {
-            const result = appState.workshopResults[taskKey];
+        Object.keys(tvResults).forEach(taskKey => {
+            const result = tvResults[taskKey];
             if (result && result.valid) {
                 let dutyId = result.dutyId || taskKey.split('_task_')[0];
                 let dutyTitle = result.dutyTitle;
