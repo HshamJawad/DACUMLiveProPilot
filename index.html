@@ -104,7 +104,7 @@
       // Bump these together with EXPECTED_SW / CACHE_VERSION on every
       // release, so a trainer can read the running build off the
       // screen instead of digging through DevTools.
-      var APP_VERSION = '3.9.6';
+      var APP_VERSION = '3.9.7';
       var APP_RELEASED = '2026-08-03';
 
       // Per-version reload guard — prevents infinite refresh loops
@@ -2277,12 +2277,25 @@
 
                 <div class="mb-10">
                     <label for="scopeOfWork">📋 Scope of Work / Occupational Definition:</label>
-                    <div style="font-size:0.82em; color:#6b7280; margin:-4px 0 6px 0; line-height:1.5;">
-                        A concise paragraph describing what the occupation covers and where its boundaries lie.
-                        Used in exports and can be referenced by AI generation to improve duty/task quality.
-                    </div>
+                    <!-- The helper line that used to sit here has been folded
+                         into the placeholder. Two explanations of the same
+                         field, one above it and one inside it, competed for
+                         attention and pushed the textarea down the page. The
+                         placeholder is the better host: it sits exactly where
+                         the user's attention already is when they start
+                         typing, and it disappears the moment it stops being
+                         useful — whereas a static line stays forever, long
+                         after it has been read.
+
+                         The old placeholder was a finished paragraph ABOUT
+                         the field ("Defines the key responsibilities..."),
+                         which reads like content already present and invites
+                         the user to leave the field alone. It is replaced by
+                         a prompt that states what to write and what to leave
+                         out, since drawing the boundary is the whole purpose
+                         of an occupational definition. -->
                     <textarea id="scopeOfWork" rows="5"
-                              placeholder="Defines the key responsibilities and boundaries of this occupation within its work context. Includes typical tasks, tools, and work environments, and excludes roles or functions that fall under other occupations or specializations."
+                              placeholder="Describe in one concise paragraph what this occupation covers and where its boundaries lie — its main responsibilities, typical tools and work environments, and which related roles or specializations it does NOT include."
                               style="min-height: 110px; font-family: inherit; resize: vertical; width:100%;"></textarea>
                 </div>
 
