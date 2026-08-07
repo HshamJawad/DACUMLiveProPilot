@@ -39,8 +39,8 @@ import { showStatus, toggleInfoBox, escapeHtml,
   updateSkillsCompetencyText, handleSkillsLevelChange, resetSkillsLevel,
   toggleEditHeading, clearSection, formatList,
   addCustomSection, removeCustomSection }                  from './renderer.js';
-import { exportToPDF, exportToWord,
-  exportTaskVerificationPDF, exportTaskVerificationWord }  from './exports.js';
+import { exportToPDF, exportTaskVerificationPDF }         from './exports_pdf.js';
+import { exportToWord, exportTaskVerificationWord }       from './exports_docx.js';
 import { clearAll, clearAllSilent, clearCurrentTab, generateAIDacum,
          switchTab } from './projects.js';
 import { handleImageUpload, removeImage }                  from './storage.js';
