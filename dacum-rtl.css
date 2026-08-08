@@ -415,3 +415,47 @@ html[dir="rtl"] .wall-print-header {
     margin-left: 0 !important;
   }
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   4. HELP MODALS + ADDITIONAL INFO
+   ───────────────────────────────────────────────────────────── */
+
+/* The modal builder writes inline styles, which beat any stylesheet.
+   Only properties it does NOT set inline can be corrected here — hence
+   the accent bar in events.js was changed to border-inline-start at
+   source rather than being fought with CSS. */
+[dir="rtl"] [role="dialog"] {
+  text-align: right;
+}
+
+/* Latin technical terms quoted inside Arabic help text (DACUM, Ctrl+Z,
+   product names) keep their own direction. */
+[dir="rtl"] [role="dialog"] em,
+[dir="rtl"] [role="dialog"] code {
+  unicode-bidi: isolate;
+}
+
+/* Section header rows: heading on one edge, button cluster on the other. */
+html[dir="rtl"] .section-header-editable {
+  flex-direction: row-reverse;
+}
+
+/* Textareas in Additional Info hold bulleted lists the facilitator types
+   by hand. Forcing RTL on the element (rather than relying on `auto`)
+   keeps the bullet glyph on the right even when a line opens with a
+   Latin acronym such as OBD or ECU. */
+html[dir="rtl"] .section-container textarea {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Skills Level Matrix accordion: the ▼ chevron and title swap sides. */
+html[dir="rtl"] .skills-level-header {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .skills-level-info-box ul {
+  padding-left: 0;
+  padding-right: 22px;
+}

@@ -625,116 +625,117 @@
         <div class="tab-content" id="additional-info-tab">
             <div class="tab-header-row">
                 <div class="tab-title-with-help">
-                    <h2>Additional Information</h2>
+                    <h2 data-i18n="h2AdditionalV2">Additional Information</h2>
                     <button type="button" id="addInfoHelpBtn" class="tab-help-btn"
                             title="Why does this section matter?"
+                            data-i18n="ttAddInfoHelp" data-i18n-attr="title"
                             aria-label="Why does this section matter?"
                             aria-haspopup="dialog">?</button>
                 </div>
                 <button data-action="clear-tab" data-tab-id="additional-info-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
-                    🗑️ Clear This Tab
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
 
             <!-- AI Generation Section — mirrors the card in the Duties tab -->
             <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
-                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ AI-Powered Supporting Information</h3>
-                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;">Generate Knowledge, Skills, Behaviors, Tools, Trends, Acronyms and Career Path automatically</p>
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ <span data-i18n="aiInfoTitle">AI-Powered Supporting Information</span></h3>
+                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;" data-i18n="aiInfoDesc">Generate Knowledge, Skills, Behaviors, Tools, Trends, Acronyms and Career Path automatically</p>
                 <button class="btn-ai-generate" id="aiGenerateInfoBtn" style="background: white; color: #667eea; padding: 12px 30px; font-size: 1.05em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                    🤖 Generate Supporting Info
+                    🤖 <span data-i18n="btnGenerateInfo">Generate Supporting Info</span>
                 </button>
-                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 Uses Occupation Title from Chart Info. If duties &amp; tasks already exist, they are used as the evidence base for far more accurate results. Custom sections you added are never overwritten.</p>
+                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 <span data-i18n="aiInfoHint">Uses Occupation Title from Chart Info. If duties &amp; tasks already exist, they are used as the evidence base for far more accurate results. Custom sections you added are never overwritten.</span></p>
             </div>
             
             <div class="section-container">
                 <div class="section-header-editable">
-                    <h3 id="knowledgeHeading" contenteditable="false">Knowledge Requirements</h3>
+                    <h3 id="knowledgeHeading" contenteditable="false" data-i18n="sectionKnowledge" data-i18n-once>Knowledge Requirements</h3>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn-format" data-action="format-list" data-input-id="knowledgeInput" data-format-type="number" title="Add numbering">🔢 Number</button>
-                        <button class="btn-format" data-action="format-list" data-input-id="knowledgeInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
-                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="knowledgeHeading">✏️ Rename</button>
-                        <button class="btn-clear-section" data-action="clear-section" data-input-id="knowledgeInput" data-heading-id="knowledgeHeading" data-default-heading="Knowledge Requirements">🗑️ Clear</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="knowledgeInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title">🔢 <span data-i18n="btnNumber">Number</span></button>
+                        <button class="btn-format" data-action="format-list" data-input-id="knowledgeInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title">• <span data-i18n="btnBullet">Bullet</span></button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="knowledgeHeading">✏️ <span data-i18n="btnRename">Rename</span></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="knowledgeInput" data-heading-id="knowledgeHeading" data-default-heading="Knowledge Requirements" data-default-heading-key="sectionKnowledge">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
-                <textarea id="knowledgeInput" placeholder="Enter each knowledge requirement on a new line&#10;Example:&#10;• Understanding of electrical systems&#10;• Knowledge of safety protocols"></textarea>
+                <textarea id="knowledgeInput" placeholder="Enter each knowledge requirement on a new line&#10;Example:&#10;• Understanding of electrical systems&#10;• Knowledge of safety protocols" data-i18n="phKnowledge" data-i18n-attr="placeholder"></textarea>
             </div>
             
             <div class="section-container">
                 <div class="section-header-editable">
-                    <h3 id="skillsHeading" contenteditable="false">Skills Requirements</h3>
+                    <h3 id="skillsHeading" contenteditable="false" data-i18n="sectionSkills" data-i18n-once>Skills Requirements</h3>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn-format" data-action="format-list" data-input-id="skillsInput" data-format-type="number" title="Add numbering">🔢 Number</button>
-                        <button class="btn-format" data-action="format-list" data-input-id="skillsInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
-                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="skillsHeading">✏️ Rename</button>
-                        <button class="btn-clear-section" data-action="clear-section" data-input-id="skillsInput" data-heading-id="skillsHeading" data-default-heading="Skills Requirements">🗑️ Clear</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="skillsInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title">🔢 <span data-i18n="btnNumber">Number</span></button>
+                        <button class="btn-format" data-action="format-list" data-input-id="skillsInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title">• <span data-i18n="btnBullet">Bullet</span></button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="skillsHeading">✏️ <span data-i18n="btnRename">Rename</span></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="skillsInput" data-heading-id="skillsHeading" data-default-heading="Skills Requirements" data-default-heading-key="sectionSkills">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
-                <textarea id="skillsInput" placeholder="Enter each skill requirement on a new line&#10;Example:&#10;• Ability to read technical diagrams&#10;• Proficiency in using hand tools"></textarea>
+                <textarea id="skillsInput" placeholder="Enter each skill requirement on a new line&#10;Example:&#10;• Ability to read technical diagrams&#10;• Proficiency in using hand tools" data-i18n="phSkills" data-i18n-attr="placeholder"></textarea>
             </div>
             
             <div class="section-container">
                 <div class="section-header-editable">
-                    <h3 id="behaviorsHeading" contenteditable="false">Worker Behaviors/Traits</h3>
+                    <h3 id="behaviorsHeading" contenteditable="false" data-i18n="sectionBehaviors" data-i18n-once>Worker Behaviors/Traits</h3>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn-format" data-action="format-list" data-input-id="behaviorsInput" data-format-type="number" title="Add numbering">🔢 Number</button>
-                        <button class="btn-format" data-action="format-list" data-input-id="behaviorsInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
-                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="behaviorsHeading">✏️ Rename</button>
-                        <button class="btn-clear-section" data-action="clear-section" data-input-id="behaviorsInput" data-heading-id="behaviorsHeading" data-default-heading="Worker Behaviors/Traits">🗑️ Clear</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="behaviorsInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title">🔢 <span data-i18n="btnNumber">Number</span></button>
+                        <button class="btn-format" data-action="format-list" data-input-id="behaviorsInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title">• <span data-i18n="btnBullet">Bullet</span></button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="behaviorsHeading">✏️ <span data-i18n="btnRename">Rename</span></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="behaviorsInput" data-heading-id="behaviorsHeading" data-default-heading="Worker Behaviors/Traits" data-default-heading-key="sectionBehaviors">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
-                <textarea id="behaviorsInput" placeholder="Enter each behavior or trait on a new line&#10;Example:&#10;• Attention to detail&#10;• Good communication skills"></textarea>
+                <textarea id="behaviorsInput" placeholder="Enter each behavior or trait on a new line&#10;Example:&#10;• Attention to detail&#10;• Good communication skills" data-i18n="phBehaviors" data-i18n-attr="placeholder"></textarea>
             </div>
             
             <div class="section-container">
                 <div class="section-header-editable">
-                    <h3 id="toolsHeading" contenteditable="false">Tools, Equipment, Supplies and Materials</h3>
+                    <h3 id="toolsHeading" contenteditable="false" data-i18n="sectionTools" data-i18n-once>Tools, Equipment, Supplies and Materials</h3>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn-format" data-action="format-list" data-input-id="toolsInput" data-format-type="number" title="Add numbering">🔢 Number</button>
-                        <button class="btn-format" data-action="format-list" data-input-id="toolsInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
-                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="toolsHeading">✏️ Rename</button>
-                        <button class="btn-clear-section" data-action="clear-section" data-input-id="toolsInput" data-heading-id="toolsHeading" data-default-heading="Tools, Equipment, Supplies and Materials">🗑️ Clear</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="toolsInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title">🔢 <span data-i18n="btnNumber">Number</span></button>
+                        <button class="btn-format" data-action="format-list" data-input-id="toolsInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title">• <span data-i18n="btnBullet">Bullet</span></button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="toolsHeading">✏️ <span data-i18n="btnRename">Rename</span></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="toolsInput" data-heading-id="toolsHeading" data-default-heading="Tools, Equipment, Supplies and Materials" data-default-heading-key="sectionTools">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
-                <textarea id="toolsInput" placeholder="Enter each tool/equipment on a new line&#10;Example:&#10;• Digital multimeter&#10;• Pneumatic impact wrench"></textarea>
+                <textarea id="toolsInput" placeholder="Enter each tool/equipment on a new line&#10;Example:&#10;• Digital multimeter&#10;• Pneumatic impact wrench" data-i18n="phTools" data-i18n-attr="placeholder"></textarea>
             </div>
             
             <div class="section-container">
                 <div class="section-header-editable">
-                    <h3 id="trendsHeading" contenteditable="false">Future Trends and Concerns</h3>
+                    <h3 id="trendsHeading" contenteditable="false" data-i18n="sectionTrends" data-i18n-once>Future Trends and Concerns</h3>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn-format" data-action="format-list" data-input-id="trendsInput" data-format-type="number" title="Add numbering">🔢 Number</button>
-                        <button class="btn-format" data-action="format-list" data-input-id="trendsInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
-                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="trendsHeading">✏️ Rename</button>
-                        <button class="btn-clear-section" data-action="clear-section" data-input-id="trendsInput" data-heading-id="trendsHeading" data-default-heading="Future Trends and Concerns">🗑️ Clear</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="trendsInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title">🔢 <span data-i18n="btnNumber">Number</span></button>
+                        <button class="btn-format" data-action="format-list" data-input-id="trendsInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title">• <span data-i18n="btnBullet">Bullet</span></button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="trendsHeading">✏️ <span data-i18n="btnRename">Rename</span></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="trendsInput" data-heading-id="trendsHeading" data-default-heading="Future Trends and Concerns" data-default-heading-key="sectionTrends">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
-                <textarea id="trendsInput" placeholder="Enter each trend/concern on a new line&#10;Example:&#10;• Increased use of electric vehicles&#10;• Advanced driver assistance systems"></textarea>
+                <textarea id="trendsInput" placeholder="Enter each trend/concern on a new line&#10;Example:&#10;• Increased use of electric vehicles&#10;• Advanced driver assistance systems" data-i18n="phTrends" data-i18n-attr="placeholder"></textarea>
             </div>
             
             <div class="section-container">
                 <div class="section-header-editable">
-                    <h3 id="acronymsHeading" contenteditable="false">Acronyms</h3>
+                    <h3 id="acronymsHeading" contenteditable="false" data-i18n="sectionAcronyms" data-i18n-once>Acronyms</h3>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn-format" data-action="format-list" data-input-id="acronymsInput" data-format-type="number" title="Add numbering">🔢 Number</button>
-                        <button class="btn-format" data-action="format-list" data-input-id="acronymsInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
-                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="acronymsHeading">✏️ Rename</button>
-                        <button class="btn-clear-section" data-action="clear-section" data-input-id="acronymsInput" data-heading-id="acronymsHeading" data-default-heading="Acronyms">🗑️ Clear</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="acronymsInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title">🔢 <span data-i18n="btnNumber">Number</span></button>
+                        <button class="btn-format" data-action="format-list" data-input-id="acronymsInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title">• <span data-i18n="btnBullet">Bullet</span></button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="acronymsHeading">✏️ <span data-i18n="btnRename">Rename</span></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="acronymsInput" data-heading-id="acronymsHeading" data-default-heading="Acronyms" data-default-heading-key="sectionAcronyms">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
-                <textarea id="acronymsInput" placeholder="Enter acronyms and their definitions on separate lines&#10;Example:&#10;• OBD - On-Board Diagnostics&#10;• ECU - Engine Control Unit&#10;• TPMS - Tire Pressure Monitoring System&#10;• ABS - Anti-lock Braking System"></textarea>
+                <textarea id="acronymsInput" placeholder="Enter acronyms and their definitions on separate lines&#10;Example:&#10;• OBD - On-Board Diagnostics&#10;• ECU - Engine Control Unit&#10;• TPMS - Tire Pressure Monitoring System&#10;• ABS - Anti-lock Braking System" data-i18n="phAcronyms" data-i18n-attr="placeholder"></textarea>
             </div>
             
             <div class="section-container">
                 <div class="section-header-editable">
-                    <h3 id="careerPathHeading" contenteditable="false">Career Path</h3>
+                    <h3 id="careerPathHeading" contenteditable="false" data-i18n="sectionCareerPath" data-i18n-once>Career Path</h3>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn-format" data-action="format-list" data-input-id="careerPathInput" data-format-type="number" title="Add numbering">🔢 Number</button>
-                        <button class="btn-format" data-action="format-list" data-input-id="careerPathInput" data-format-type="bullet" title="Add bullets">• Bullet</button>
-                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="careerPathHeading">✏️ Rename</button>
-                        <button class="btn-clear-section" data-action="clear-section" data-input-id="careerPathInput" data-heading-id="careerPathHeading" data-default-heading="Career Path">🗑️ Clear</button>
+                        <button class="btn-format" data-action="format-list" data-input-id="careerPathInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title">🔢 <span data-i18n="btnNumber">Number</span></button>
+                        <button class="btn-format" data-action="format-list" data-input-id="careerPathInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title">• <span data-i18n="btnBullet">Bullet</span></button>
+                        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="careerPathHeading">✏️ <span data-i18n="btnRename">Rename</span></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="careerPathInput" data-heading-id="careerPathHeading" data-default-heading="Career Path" data-default-heading-key="sectionCareerPath">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
-                <textarea id="careerPathInput" placeholder="Enter career progression information on separate lines&#10;Example:&#10;• Entry Level: Technician Apprentice&#10;• Mid Level: Certified Technician&#10;• Advanced: Senior Technician / Specialist&#10;• Management: Shop Foreman / Service Manager"></textarea>
+                <textarea id="careerPathInput" placeholder="Enter career progression information on separate lines&#10;Example:&#10;• Entry Level: Technician Apprentice&#10;• Mid Level: Certified Technician&#10;• Advanced: Senior Technician / Specialist&#10;• Management: Shop Foreman / Service Manager" data-i18n="phCareerPath" data-i18n-attr="placeholder"></textarea>
             </div>
             
             <!-- Container for custom sections -->
@@ -743,48 +744,49 @@
             <!-- Add Section Button -->
             <div style="margin-top: 20px; text-align: center;">
                 <button class="btn-add" id="btnAddCustomSection" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 24px; font-size: 1.05em;">
-                    ➕ Add Section
+                    ➕ <span data-i18n="btnAddSection">Add Section</span>
                 </button>
             </div>
             
             <!-- ADDITIONAL INFO – Skills Level Matrix (Collapsible) -->
             <div class="skills-level-accordion">
                 <div class="skills-level-header" id="btnToggleSkillsLevel">
-                    <div class="skills-level-title">📊 Skills Level Matrix (click to expand)</div>
+                    <div class="skills-level-title">📊 <span data-i18n="skillsMatrixTitle">Skills Level Matrix (click to expand)</span></div>
                     <div class="skills-level-toggle">▼</div>
                 </div>
                 <div class="skills-level-content" id="skillsLevelContent">
                     <div class="skills-level-info-box">
-                        <h3>Employability Competencies by Occupational Level</h3>
-                        <p>Select the minimum required skills level for this occupation.</p>
+                        <h3 data-i18n="skillsMatrixHeading">Employability Competencies by Occupational Level</h3>
+                        <p data-i18n="skillsMatrixIntro">Select the minimum required skills level for this occupation.</p>
                         <ul style="margin-top: 10px;">
-                            <li><strong>Craftsman/Supervisor</strong> - Advanced level requiring comprehensive skills</li>
-                            <li><strong>Skilled</strong> - Proficient level requiring specialized skills</li>
-                            <li><strong>Semi-skilled</strong> - Intermediate level requiring basic competencies</li>
-                            <li><strong>Foundation skills</strong> - Entry level requiring minimal competencies</li>
+                            <li><strong data-i18n="lvlCraftsman">Craftsman/Supervisor</strong> <span data-i18n="lvlCraftsmanDesc">Advanced level requiring comprehensive skills</span></li>
+                            <li><strong data-i18n="lvlSkilled">Skilled</strong> <span data-i18n="lvlSkilledDesc">Proficient level requiring specialized skills</span></li>
+                            <li><strong data-i18n="lvlSemiSkilled">Semi-skilled</strong> <span data-i18n="lvlSemiSkilledDesc">Intermediate level requiring basic competencies</span></li>
+                            <li><strong data-i18n="lvlFoundation">Foundation skills</strong> <span data-i18n="lvlFoundationDesc">Entry level requiring minimal competencies</span></li>
                         </ul>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3 style="margin: 0;">Edit Employability Competencies</h3>
-                        <button class="btn-reset-skills" id="btnResetSkillsLevel">🗑️ Reset All Selections</button>
+                        <h3 style="margin: 0;" data-i18n="editCompetencies">Edit Employability Competencies</h3>
+                        <button class="btn-reset-skills" id="btnResetSkillsLevel">🗑️ <span data-i18n="btnResetSelections">Reset All Selections</span></button>
                     </div>
 
                     <div id="skillsLevelContainer"></div>
 
                     <div class="skills-level-buttons">
-                        <button class="btn-add-category" id="btnAddSkillsCategory">➕ Add Category</button>
+                        <button class="btn-add-category" id="btnAddSkillsCategory">➕ <span data-i18n="btnAddCategory">Add Category</span></button>
                     </div>
                 </div>
             </div>
             
             <div class="step-nav-row">
                 <button type="button" class="btn-back-step" data-nav-back="duties-tab"
-                        title="Return to Duties & Tasks to review or edit">
-                    ← Back to Duties & Tasks
+                        title="Return to Duties & Tasks to review or edit"
+                        data-i18n="ttBackDuties" data-i18n-attr="title">
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackDuties">Back to Duties &amp; Tasks</span>
                 </button>
                 <button type="button" class="btn-next-step" data-nav-next="verification-tab">
-                    Proceed to Task Verification →
+                    <span data-i18n="btnProceedVerification">Proceed to Task Verification</span> <span class="rtl-flip">→</span>
                 </button>
             </div>
         </div>

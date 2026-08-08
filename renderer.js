@@ -6,6 +6,11 @@
 
 import { appState } from './state.js';
 
+/* i18n access — resolved lazily, see duties.js for the reasoning. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+
 // ── Status / Utility ──────────────────────────────────────────
 
 export function showStatus(message, type) {
@@ -251,18 +256,28 @@ export function toggleEditHeading(headingId) {
   }
 }
 
-export function clearSection(inputId, headingId, defaultHeading) {
+export function clearSection(inputId, headingId, defaultHeading, headingKey) {
+  /* headingKey is optional: markup added it as data-default-heading-key.
+     When present the reset restores the heading in the CURRENT language;
+     the English attribute remains the fallback for custom sections and
+     for any caller that does not pass a key. */
+  if (headingKey && window.i18n && window.i18n.has(headingKey)) {
+    defaultHeading = _t(headingKey);
+  }
   const current = (document.getElementById(inputId)?.value || '').trim();
   const heading = document.getElementById(headingId)?.textContent?.trim();
-  if (!current && (!heading || heading === defaultHeading)) {
-    showStatus('This section is already empty — nothing to clear', 'success');
+  const isDefaultHeading = !heading || heading === defaultHeading ||
+    (headingKey && window.i18n && window.i18n.has(headingKey) &&
+     heading === window.i18n.t(headingKey));
+  if (!current && isDefaultHeading) {
+    showStatus(_t('msgSectionAlreadyEmpty'), 'success');
     return;
   }
-  if (confirm('Are you sure you want to clear this section?')) {
+  if (confirm(_t('confirmClearSection'))) {
     document.getElementById(inputId).value = '';
     document.getElementById(headingId).textContent = defaultHeading;
     document.getElementById(headingId).setAttribute('contenteditable', 'false');
-    showStatus('Section cleared! ✓', 'success');
+    showStatus(_t('msgSectionCleared') + ' ✓', 'success');
   }
 }
 
@@ -301,22 +316,22 @@ export function addCustomSection() {
   sectionDiv.id = sectionId;
   sectionDiv.innerHTML = `
     <div class="section-header-editable">
-      <h3 id="${headingId}" contenteditable="false">Custom Section ${appState.customSectionCounter}</h3>
+      <h3 id="${headingId}" contenteditable="false">${_tf('lblCustomSection', { n: appState.customSectionCounter })}</h3>
       <div style="display:flex;gap:10px;">
-        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="${headingId}">✏️ Rename</button>
+        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="${headingId}">✏️ ${_t('btnRename')}</button>
         <button class="btn-clear-section" data-action="clear-section"
           data-input-id="${inputId}" data-heading-id="${headingId}"
-          data-default-heading="Custom Section ${appState.customSectionCounter}">🗑️ Clear</button>
+          data-default-heading="${_tf('lblCustomSection', { n: appState.customSectionCounter })}">🗑️ ${_t('btnClear')}</button>
         <button class="btn-remove-section" data-action="remove-custom-section" data-section-id="${sectionId}"
           style="background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);color:white;padding:8px 16px;font-size:0.95em;border:none;border-radius:8px;cursor:pointer;">
-          ❌ Remove
+          ❌ ${_t('btnRemove')}
         </button>
       </div>
     </div>
-    <textarea id="${inputId}" placeholder="Enter information for this custom section on separate lines"></textarea>`;
+    <textarea id="${inputId}" placeholder="${_t('phCustomSection')}"></textarea>`;
 
   container.appendChild(sectionDiv);
-  showStatus('Custom section added! ✓', 'success');
+  showStatus(_t('msgCustomSectionAdded') + ' ✓', 'success');
 }
 
 export function removeCustomSection(sectionId) {

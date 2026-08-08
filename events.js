@@ -59,6 +59,12 @@ import { lwFinalizeAndCreateSession, lwCopyLink, lwShowQRCode,
 import { markAiGenerated, refineResults,
          clearAiGeneratedFlag }                               from './refine.js';
 
+/* i18n access — window.i18n is installed by a plain <script>, so it is
+   read lazily on each call rather than captured at module evaluation. */
+const _t = (k) => (window.i18n ? window.i18n.t(k) : k);
+
+
+
 // ── Delegation helper ─────────────────────────────────────────
 
 function delegate(container, selector, eventType, handler) {
@@ -639,7 +645,8 @@ export function setupEvents() {
         clearSection(
           target.getAttribute('data-input-id'),
           target.getAttribute('data-heading-id'),
-          target.getAttribute('data-default-heading')
+          target.getAttribute('data-default-heading'),
+          target.getAttribute('data-default-heading-key')
         );
       } else if (action === 'remove-custom-section') {
         removeCustomSection(target.getAttribute('data-section-id'));
@@ -744,7 +751,8 @@ function _onStaticInfoButtons() {
       clearSection(
         this.getAttribute('data-input-id'),
         this.getAttribute('data-heading-id'),
-        this.getAttribute('data-default-heading')
+        this.getAttribute('data-default-heading'),
+        this.getAttribute('data-default-heading-key')
       );
     });
   });
@@ -778,6 +786,12 @@ function _showHelpModal({ id, icon, title, intro, items, note, bodyHtml, maxWidt
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-label', title);
+  /* The dialog is appended to <body>, so it inherits dir from <html> —
+     except its inner text alignment, which the inline styles below set
+     explicitly. Setting dir on the overlay keeps the modal correct even
+     if it is ever re-parented. */
+  overlay.setAttribute('dir', (window.i18n && window.i18n.isRTL()) ? 'rtl' : 'ltr');
+
   overlay.style.cssText =
     'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;' +
     'justify-content:center;padding:20px;background:rgba(0,0,0,0.55);' +
@@ -823,7 +837,7 @@ function _showHelpModal({ id, icon, title, intro, items, note, bodyHtml, maxWidt
         '<div style="display:flex;justify-content:flex-end;">' +
           '<button data-help-close style="padding:9px 22px;background:#667eea;' +
           'color:#fff;border:none;border-radius:8px;font-size:0.9em;font-weight:700;' +
-          'cursor:pointer;font-family:inherit;">Got it</button>' +
+          'cursor:pointer;font-family:inherit;">' + _t('btnGotIt') + '</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -920,13 +934,13 @@ function _showAdditionalInfoHelp() {
   _showHelpModal({
     id:    'addInfoHelpModal',
     icon:  '💡',
-    title: 'Why Additional Information Matters',
-    intro: 'This section captures important context that supports the DACUM chart:',
+    title: _t('helpAddInfoTitle'),
+    intro: _t('helpAddInfoIntro'),
     items: [
-      ['📚', 'Skills &amp; Knowledge', 'Core competencies needed across multiple duties'],
-      ['🧭', 'Behaviors',              'Work attitudes and traits that lead to success'],
-      ['🛠️', 'Tools &amp; Equipment',  'Resources used to perform the occupation'],
-      ['📈', 'Future Trends',          'Emerging factors that may impact the occupation'],
+      ['📚', _t('helpAddInfoK1'), _t('helpAddInfoV1')],
+      ['🧭', _t('helpAddInfoK2'), _t('helpAddInfoV2')],
+      ['🛠️', _t('helpAddInfoK3'), _t('helpAddInfoV3')],
+      ['📈', _t('helpAddInfoK4'), _t('helpAddInfoV4')],
     ],
   });
 }
@@ -1052,7 +1066,7 @@ function _showDutiesHelp() {
   const LI = 'font-size:0.87em;line-height:1.7;color:#334155;margin-bottom:4px;';
 
   const formatBox = (accent, bg, label, formula, example) =>
-    '<div style="background:' + bg + ';border-left:3px solid ' + accent + ';' +
+    '<div style="background:' + bg + ';border-inline-start:3px solid ' + accent + ';' +
     'border-radius:8px;padding:11px 13px;margin-bottom:10px;">' +
       '<p style="margin:0 0 5px;font-size:0.83em;font-weight:800;color:' + accent + ';">' +
         label + '</p>' +
@@ -1062,43 +1076,34 @@ function _showDutiesHelp() {
         '💡 ' + example + '</p>' +
     '</div>';
 
+  /* Each list item is ONE key including its <strong> tags. Splitting the
+     emphasis out would force every language into English word order — in
+     Arabic the emphasised phrase frequently sits elsewhere in the
+     sentence, so fragment-joining produces nonsense. */
+  const LIS = ['helpDutiesLi1','helpDutiesLi2','helpDutiesLi3',
+               'helpDutiesLi4','helpDutiesLi5','helpDutiesLi6']
+    .map(k => '<li style="' + LI + '">' + _t(k) + '</li>').join('');
+
   const bodyHtml =
-    '<p style="' + P + '"><strong style="color:#1e293b;">Duty statements</strong> ' +
-      'name the broad areas of work. According to Norton\'s DACUM Handbook, a good ' +
-      'duty statement should:</p>' +
-    '<ul style="margin:0 0 16px;padding-left:20px;">' +
-      '<li style="' + LI + '">Describe a <strong>large area of work</strong> in performance terms</li>' +
-      '<li style="' + LI + '">Act as the <strong>heading for a group of related tasks</strong> ' +
-        '(usually 6–20 tasks per duty)</li>' +
-      '<li style="' + LI + '">Use <strong>one verb, an object,</strong> and usually a qualifier</li>' +
-      '<li style="' + LI + '">Stay <strong>general rather than specific</strong> ' +
-        '(a chart usually has 6–12 duties)</li>' +
-      '<li style="' + LI + '"><strong>Stand alone</strong> — make sense without naming the job</li>' +
-      '<li style="' + LI + '">Leave out <strong>worker behaviours, tools and knowledge</strong> — ' +
-        'those belong in the Additional Information tab</li>' +
-    '</ul>' +
+    '<p style="' + P + '">' + _t('helpDutiesLead') + '</p>' +
+    '<ul style="margin:0 0 16px;padding-inline-start:20px;">' + LIS + '</ul>' +
 
-    formatBox('#4338ca', '#eef2ff', '🗂️ Duty format',
-      'Verb + Object (+ qualifier) — broad, never a single action',
-      '"Maintain testing equipment"') +
+    formatBox('#4338ca', '#eef2ff', '\uD83D\uDDC2\uFE0F ' + _t('helpDutyFormatLabel'),
+      _t('helpDutyFormula'), _t('helpDutyExample')) +
 
-    formatBox('#a16207', '#fffbeb', '📝 Task format',
-      'Action Verb + Task/Activity (What) + Context (Where/How/Why if relevant)',
-      '"Calibrate a digital multimeter to manufacturer specifications"') +
+    formatBox('#a16207', '#fffbeb', '\uD83D\uDCDD ' + _t('helpTaskFormatLabel'),
+      _t('helpTaskFormula'), _t('helpTaskExample')) +
 
     '<p style="margin:12px 0 0;font-size:0.78em;color:#94a3b8;line-height:1.6;">' +
-      'Duty guidance adapted from Norton, R. E., <em>DACUM Handbook</em>.</p>';
+      _t('helpDutiesSource') + '</p>';
 
   _showHelpModal({
     id:       'dutiesHelpModal',
     icon:     '📋',
-    title:    'Writing Duty and Task Statements',
+    title:    _t('helpDutiesTitle'),
     maxWidth: '560px',
     bodyHtml,
-    note: '<strong>The difference that matters:</strong> a duty is a heading, a task is ' +
-          'a single observable unit of work with a clear beginning and end. If a "task" ' +
-          'covers a whole area of work, it is really a duty — and if a "duty" describes ' +
-          'one concrete action, it is really a task.',
+    note: _t('helpDutiesNote'),
   });
 }
 
