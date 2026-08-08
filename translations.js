@@ -592,6 +592,38 @@
       helpMMMode3: 'Manual / Flexible Grouping',
       helpMMMode3Detail: 'Use the dropdowns below to assign outcomes freely.',
       helpMMNote: 'These are ways of thinking about the grouping, not settings to switch between — build any of them with the module controls below.',
+      /* ── AI generation messages ── */
+      msgDailyLimit: 'Daily limit reached ({n} generations). Try again tomorrow!',
+      msgAIFailed: 'AI generation failed. See the error dialog for details.',
+      msgAIClusteringFailed: 'AI clustering failed. See the error dialog for details.',
+      msgCancelClusters: 'Generation cancelled. Your clusters are unchanged.',
+      msgCancelCriteria: 'Generation cancelled. Your criteria are unchanged.',
+      msgCancelOutcomes: 'Generation cancelled. Your outcomes are unchanged.',
+      msgCancelModules: 'Generation cancelled. Your modules are unchanged.',
+      msgCancelAddInfo: 'AI generation cancelled. Your existing content is preserved.',
+      msgNotEnoughTasks: 'Not enough tasks to cluster ({n}). Add tasks in Duties & Tasks first.',
+      msgClustersSuggested: 'Suggested {n} competency clusters.',
+      msgReviewBeforeCriteria: 'Review and adjust before generating criteria.',
+      msgNoClustersYet: 'No clusters yet — create or suggest clusters first.',
+      msgCriteriaGenerated: 'Generated Range and {criteria} performance criteria across {clusters} clusters.',
+      msgThinClusters: '({n} clusters returned fewer than {min} criteria — review.)',
+      msgOccupationRequired: 'Occupation Title is required for AI generation.',
+      msgAddInfoGenerated: 'Draft supporting information generated ({basis}) — {sections} sections, {items} items.',
+      msgNoClustersForLO: 'No Competency Clusters yet — create clusters and criteria first.',
+      msgTickedCriteriaEmpty: 'The ticked criteria are empty — select criteria with text.',
+      msgNoUnusedPC: 'No unused Performance Criteria found. Generate criteria in the Clusters tab first.',
+      msgPatternNeedsMore: '{pattern} integrates criteria — at least {min} are needed. Use Pattern A for a single criterion.',
+      msgLOsCreated: 'Created {n} Learning Outcomes using {pattern}.',
+      msgNoLOsYet: 'No Learning Outcomes yet — create some first.',
+      msgNeedTwoLOs: 'At least 2 Learning Outcomes are needed to group them into modules.',
+      msgModulesOnePerLO: 'Created {n} modules — one per Learning Outcome.',
+      msgModulesSequenced: 'Created {n} modules, sequenced foundational → advanced.',
+      msgNotesSuffix: '({notes}.)',
+      patternA: 'Pattern A (one-to-one)',
+      patternB: 'Pattern B (many-to-one)',
+      patternC: 'Pattern C (hybrid)',
+      confirmReplaceClusters: '⚠️ This will replace the {n} clusters you already have, including their Range and Performance Criteria.\n\nYour duties and tasks are NOT affected.\n\nClick OK to continue, or Cancel to keep your current clusters.',
+      confirmAddLOs: '⚠️ This will ADD new Learning Outcomes using {pattern}.\n\nYou already have {n} outcomes. They will be KEPT — the new ones are appended.\n\nCriteria already linked to an outcome are skipped, so nothing is duplicated.\n\nClick OK to continue, or Cancel to stop.',
     },
 
     fr: {
@@ -1181,6 +1213,38 @@
       helpMMMode3: 'Regroupement manuel / flexible',
       helpMMMode3Detail: 'Utilisez les menus ci-dessous pour affecter librement les résultats.',
       helpMMNote: 'Ce sont des façons de penser le regroupement, non des réglages à basculer — construisez l’une ou l’autre avec les contrôles ci-dessous.',
+      /* ── AI generation messages ── */
+      msgDailyLimit: 'Limite quotidienne atteinte ({n} générations). Réessayez demain !',
+      msgAIFailed: 'Échec de la génération IA. Voir la boîte de dialogue d’erreur.',
+      msgAIClusteringFailed: 'Échec du regroupement IA. Voir la boîte de dialogue d’erreur.',
+      msgCancelClusters: 'Génération annulée. Vos grappes sont inchangées.',
+      msgCancelCriteria: 'Génération annulée. Vos critères sont inchangés.',
+      msgCancelOutcomes: 'Génération annulée. Vos résultats sont inchangés.',
+      msgCancelModules: 'Génération annulée. Vos modules sont inchangés.',
+      msgCancelAddInfo: 'Génération IA annulée. Votre contenu existant est conservé.',
+      msgNotEnoughTasks: 'Pas assez de tâches à regrouper ({n}). Ajoutez des tâches dans Tâches & activités.',
+      msgClustersSuggested: '{n} grappes de compétences proposées.',
+      msgReviewBeforeCriteria: 'Vérifiez et ajustez avant de générer les critères.',
+      msgNoClustersYet: 'Aucune grappe — créez ou proposez des grappes d’abord.',
+      msgCriteriaGenerated: 'Champ et {criteria} critères de performance générés pour {clusters} grappes.',
+      msgThinClusters: '({n} grappes ont moins de {min} critères — à vérifier.)',
+      msgOccupationRequired: 'L’intitulé du métier est requis pour la génération IA.',
+      msgAddInfoGenerated: 'Brouillon d’informations d’appui généré ({basis}) — {sections} sections, {items} éléments.',
+      msgNoClustersForLO: 'Aucune grappe de compétences — créez grappes et critères d’abord.',
+      msgTickedCriteriaEmpty: 'Les critères cochés sont vides — sélectionnez des critères non vides.',
+      msgNoUnusedPC: 'Aucun critère de performance inutilisé. Générez des critères dans l’onglet Grappes.',
+      msgPatternNeedsMore: '{pattern} intègre des critères — au moins {min} sont nécessaires. Utilisez le modèle A pour un critère unique.',
+      msgLOsCreated: '{n} résultats d’apprentissage créés avec {pattern}.',
+      msgNoLOsYet: 'Aucun résultat d’apprentissage — créez-en d’abord.',
+      msgNeedTwoLOs: 'Au moins 2 résultats d’apprentissage sont nécessaires pour les regrouper.',
+      msgModulesOnePerLO: '{n} modules créés — un par résultat d’apprentissage.',
+      msgModulesSequenced: '{n} modules créés, séquencés du fondamental → avancé.',
+      msgNotesSuffix: '({notes}.)',
+      patternA: 'Modèle A (un pour un)',
+      patternB: 'Modèle B (plusieurs pour un)',
+      patternC: 'Modèle C (hybride)',
+      confirmReplaceClusters: '⚠️ Ceci remplacera les {n} grappes existantes, y compris leur champ et leurs critères de performance.\n\nVos activités et tâches ne sont PAS affectées.\n\nOK pour continuer, Annuler pour conserver vos grappes.',
+      confirmAddLOs: '⚠️ Ceci AJOUTERA de nouveaux résultats d’apprentissage avec {pattern}.\n\nVous en avez déjà {n}. Ils seront CONSERVÉS — les nouveaux sont ajoutés à la suite.\n\nLes critères déjà liés sont ignorés, rien n’est dupliqué.\n\nOK pour continuer, Annuler pour arrêter.',
     },
 
     ar: {
@@ -1724,6 +1788,38 @@
       helpMMMode3: 'تجميع يدوي / مرن',
       helpMMMode3Detail: 'استخدم القوائم المنسدلة أدناه لإسناد المحصلات بحرّية.',
       helpMMNote: 'هذه طرائق للتفكير في التجميع، لا إعدادات تُبدَّل بينها — يمكنك بناء أي منها بأدوات الوحدات أدناه.',
+      /* ── AI generation messages ── */
+      msgDailyLimit: 'بلغتَ الحد اليومي ({n} عملية توليد). حاول غداً!',
+      msgAIFailed: 'فشل التوليد بالذكاء الاصطناعي. راجع نافذة الخطأ للتفاصيل.',
+      msgAIClusteringFailed: 'فشل التجميع بالذكاء الاصطناعي. راجع نافذة الخطأ للتفاصيل.',
+      msgCancelClusters: 'أُلغي التوليد. تجمعاتك لم تتغيّر.',
+      msgCancelCriteria: 'أُلغي التوليد. معاييرك لم تتغيّر.',
+      msgCancelOutcomes: 'أُلغي التوليد. محصلاتك لم تتغيّر.',
+      msgCancelModules: 'أُلغي التوليد. وحداتك لم تتغيّر.',
+      msgCancelAddInfo: 'أُلغي التوليد. محتواك الحالي محفوظ.',
+      msgNotEnoughTasks: 'المهام غير كافية للتجميع ({n}). أضف مهاماً في تبويب الواجبات والمهام أولاً.',
+      msgClustersSuggested: 'تم اقتراح {n} تجمع كفاءات.',
+      msgReviewBeforeCriteria: 'راجِع وعدّل قبل توليد المعايير.',
+      msgNoClustersYet: 'لا توجد تجمعات بعد — أنشئ أو اقترح تجمعات أولاً.',
+      msgCriteriaGenerated: 'تم توليد المدى و{criteria} معيار أداء عبر {clusters} تجمع.',
+      msgThinClusters: '({n} تجمع أعاد أقل من {min} معيار — يستحق المراجعة.)',
+      msgOccupationRequired: 'اسم المهنة مطلوب للتوليد بالذكاء الاصطناعي.',
+      msgAddInfoGenerated: 'تم توليد مسودة المعلومات الداعمة ({basis}) — {sections} قسماً، {items} عنصراً.',
+      msgNoClustersForLO: 'لا توجد تجمعات كفاءات بعد — أنشئ التجمعات والمعايير أولاً.',
+      msgTickedCriteriaEmpty: 'المعايير المؤشَّرة فارغة — اختر معايير تحتوي نصاً.',
+      msgNoUnusedPC: 'لا توجد معايير أداء غير مستعملة. ولّد معايير في تبويب التجمعات أولاً.',
+      msgPatternNeedsMore: '{pattern} يدمج المعايير — ويلزمه {min} على الأقل. استخدم النمط أ لمعيار واحد.',
+      msgLOsCreated: 'تم إنشاء {n} محصلة تعلم باستخدام {pattern}.',
+      msgNoLOsYet: 'لا توجد محصلات تعلم بعد — أنشئ بعضها أولاً.',
+      msgNeedTwoLOs: 'يلزم محصلتا تعلم على الأقل لتجميعهما في وحدات.',
+      msgModulesOnePerLO: 'تم إنشاء {n} وحدة — وحدة لكل محصلة تعلم.',
+      msgModulesSequenced: 'تم إنشاء {n} وحدة، مرتّبة من التأسيسي ← المتقدّم.',
+      msgNotesSuffix: '({notes}.)',
+      patternA: 'النمط أ (واحد لواحد)',
+      patternB: 'النمط ب (متعدد لواحد)',
+      patternC: 'النمط ج (مختلط)',
+      confirmReplaceClusters: '⚠️ سيؤدي هذا إلى استبدال التجمعات الـ{n} الموجودة لديك، بما فيها مداها ومعايير أدائها.\n\nأما واجباتك ومهامك فلن تتأثر.\n\nاضغط «موافق» للمتابعة، أو «إلغاء» للإبقاء على تجمعاتك الحالية.',
+      confirmAddLOs: '⚠️ سيؤدي هذا إلى <إضافة> محصلات تعلم جديدة باستخدام {pattern}.\n\nلديك {n} محصلة بالفعل، وستبقى كما هي — والجديدة تُضاف إليها.\n\nأما المعايير المرتبطة بمحصلة سابقاً فتُتخطّى، فلا يحدث تكرار.\n\nاضغط «موافق» للمتابعة، أو «إلغاء» للتوقف.',
     },
   };
 
@@ -1806,6 +1902,68 @@
       console.info('[i18n] audit clean for ' + _current);
     }
     return hits;
+  }
+
+
+  /* ── AI output-language directive ────────────────────────────────
+     Appended to every prompt sent to the generation backend, at the
+     single point where each AI module builds its request. Doing it
+     there rather than inside each prompt string means a prompt added
+     later is covered automatically and cannot be forgotten.
+
+     Two things are specified, and the second matters more than the
+     first: the OUTPUT LANGUAGE, and the DACUM TERMINOLOGY to use in
+     that language. Without the glossary a model will happily produce
+     fluent Arabic that calls a Duty a «مهمة رئيسية» in one cluster and
+     «مجال عمل» in the next — internally inconsistent, and at odds with
+     the interface labels sitting right beside it on screen.
+
+     English returns an empty string: the prompts are written in English
+     and adding "reply in English" is noise that costs tokens and can
+     distract a model from the actual instruction. */
+  var AI_DIRECTIVE = {
+    ar: '\n\n=== OUTPUT LANGUAGE ===\n' +
+        'Write ALL generated content in Modern Standard Arabic (\u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0641\u0635\u062d\u0649).\n' +
+        'JSON keys, field names and any id values stay exactly as specified in English — ' +
+        'translate only the human-readable VALUES.\n' +
+        'Use this DACUM terminology consistently:\n' +
+        '  Duty = \u0648\u0627\u062c\u0628\n' +
+        '  Task = \u0645\u0647\u0645\u0629\n' +
+        '  Competency Cluster = \u062a\u062c\u0645\u0639 \u0643\u0641\u0627\u0621\u0627\u062a\n' +
+        '  Performance Criteria = \u0645\u0639\u0627\u064a\u064a\u0631 \u0627\u0644\u0623\u062f\u0627\u0621\n' +
+        '  Range = \u0627\u0644\u0645\u062f\u0649\n' +
+        '  Learning Outcome = \u0645\u062d\u0635\u0644\u0629 \u062a\u0639\u0644\u0645\n' +
+        '  Module = \u0648\u062d\u062f\u0629 \u062a\u0639\u0644\u0645\u064a\u0629\n' +
+        '  Facilitator = \u0645\u064a\u0633\u0631\n' +
+        'Keep "DACUM" in Latin script, untranslated.\n' +
+        'Task and duty statements start with a verbal noun (\u0645\u0635\u062f\u0631), e.g. ' +
+        '\u00ab\u0645\u0639\u0627\u064a\u0631\u0629 \u0645\u0642\u064a\u0627\u0633 \u0645\u062a\u0639\u062f\u062f \u0631\u0642\u0645\u064a\u00bb — not a conjugated verb.\n' +
+        'Keep technical abbreviations, standards codes, tool model numbers and ' +
+        'measurements in their original Latin form (CNC, PLC, ISO 9001, \u00b10.5 mm).',
+
+    fr: '\n\n=== OUTPUT LANGUAGE ===\n' +
+        'Write ALL generated content in French.\n' +
+        'JSON keys, field names and any id values stay exactly as specified in English — ' +
+        'translate only the human-readable VALUES.\n' +
+        'Use this DACUM terminology consistently:\n' +
+        '  Duty = activit\u00e9\n' +
+        '  Task = t\u00e2che\n' +
+        '  Competency Cluster = grappe de comp\u00e9tences\n' +
+        '  Performance Criteria = crit\u00e8res de performance\n' +
+        '  Range = champ d\u2019application\n' +
+        '  Learning Outcome = r\u00e9sultat d\u2019apprentissage\n' +
+        '  Module = module\n' +
+        '  Facilitator = animateur\n' +
+        'Keep "DACUM" untranslated.\n' +
+        'Task statements start with an infinitive verb.\n' +
+        'Keep technical abbreviations, standards codes and measurements in their ' +
+        'original form (CNC, PLC, ISO 9001, \u00b10,5 mm).',
+
+    en: ''
+  };
+
+  function aiDirective() {
+    return AI_DIRECTIVE[_current] || '';
   }
 
   function setLang(code) {
@@ -1943,7 +2101,8 @@
     t: t, tf: tf, setLang: setLang, getLang: getLang, apply: applyTranslations,
     isRTL: function () { return RTL_LANGS.indexOf(_current) !== -1; },
     has: function (key) { return TRANSLATIONS.en[key] !== undefined; },
-    audit: audit
+    audit: audit,
+    aiDirective: aiDirective
   };
 
   function _init() { _injectSelector(); applyTranslations(); }

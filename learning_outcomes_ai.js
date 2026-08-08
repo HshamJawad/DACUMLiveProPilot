@@ -37,6 +37,16 @@ import { renderPCSourceList, renderLearningOutcomes } from './modules.js';
 import { checkUsageLimit, incrementUsage,
          showLoadingModal, hideLoadingModal } from './storage.js';
 
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+/* Output-language directive for the generation backend. Appended at the
+   ONE place this module builds a request, so any prompt added later is
+   covered without having to remember. Empty string in English. */
+const _aiDir = () => (window.i18n ? window.i18n.aiDirective() : '');
+
+
 const BACKEND_URL = 'https://dacum-ai-backend-production.up.railway.app';
 
 // Integration bounds for Patterns B and C. Beyond ~5 criteria an
@@ -186,18 +196,18 @@ Return ONLY that JSON object.`;
 
 // ── Generation ────────────────────────────────────────────────
 
-const _PATTERN_LABEL = {
-  A: 'Pattern A (one-to-one)',
-  B: 'Pattern B (many-to-one)',
-  C: 'Pattern C (hybrid)',
-};
+/* Resolved through _t() at call time rather than frozen at module load:
+   these labels appear inside user-facing messages, and the language can
+   change between load and use. */
+const _PATTERN_KEY = { A: 'patternA', B: 'patternB', C: 'patternC' };
+const _patternLabel = (p) => _t(_PATTERN_KEY[p] || 'patternC');
 
 export async function generateLearningOutcomesAI(pattern = 'C') {
   if (!_PATTERN_RULES[pattern]) pattern = 'C';
 
   const cd = appState.clusteringData;
   if (!cd?.clusters?.length) {
-    showStatus('No Competency Clusters yet — create clusters and criteria first.', 'error');
+    showStatus(_t('msgNoClustersForLO'), 'error');
     return false;
   }
 
@@ -205,9 +215,7 @@ export async function generateLearningOutcomesAI(pattern = 'C') {
 
   if (!selection.length) {
     showStatus(
-      usedSelection
-        ? 'The ticked criteria are empty — select criteria with text.'
-        : 'No unused Performance Criteria found. Generate criteria in the Clusters tab first.',
+      _t(usedSelection ? 'msgTickedCriteriaEmpty' : 'msgNoUnusedPC'),
       'error'
     );
     return false;
@@ -215,8 +223,7 @@ export async function generateLearningOutcomesAI(pattern = 'C') {
 
   if (pattern !== 'A' && selection.length < MIN_PC_PER_LO) {
     showStatus(
-      `${_PATTERN_LABEL[pattern]} integrates criteria — at least ${MIN_PC_PER_LO} are needed. ` +
-      `Use Pattern A for a single criterion.`,
+      _tf('msgPatternNeedsMore', { pattern: _patternLabel(pattern), min: MIN_PC_PER_LO }),
       'error'
     );
     return false;
@@ -224,19 +231,15 @@ export async function generateLearningOutcomesAI(pattern = 'C') {
 
   const existing = appState.learningOutcomesData?.outcomes || [];
   if (existing.length && !confirm(
-    `⚠️ This will ADD new Learning Outcomes using ${_PATTERN_LABEL[pattern]}.\n\n` +
-    `You already have ${existing.length} outcome${existing.length > 1 ? 's' : ''}. ` +
-    `They will be KEPT — the new ones are appended.\n\n` +
-    `Criteria already linked to an outcome are skipped, so nothing is duplicated.\n\n` +
-    `Click OK to continue, or Cancel to stop.`
+    _tf('confirmAddLOs', { pattern: _patternLabel(pattern), n: existing.length })
   )) {
-    showStatus('Generation cancelled. Your outcomes are unchanged.', 'error');
+    showStatus(_t('msgCancelOutcomes'), 'error');
     return false;
   }
 
   const usage = checkUsageLimit();
   if (!usage.allowed) {
-    showStatus(`❌ Daily limit reached (${usage.count} generations). Try again tomorrow!`, 'error');
+    showStatus('❌ ' + _tf('msgDailyLimit', { n: usage.count }), 'error');
     return false;
   }
 
@@ -247,7 +250,7 @@ export async function generateLearningOutcomesAI(pattern = 'C') {
     const response = await fetch(`${BACKEND_URL}/api/generate-dacum`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ prompt: _buildPrompt(selection, pattern) }),
+      body:    JSON.stringify({ prompt: _buildPrompt(selection, pattern) + _aiDir() }),
     });
     if (!response.ok) {
       throw new Error(`Backend request failed: ${response.status} ${response.statusText}`);
@@ -340,8 +343,8 @@ export async function generateLearningOutcomesAI(pattern = 'C') {
     }
 
     showStatus(
-      `✓ Created ${added} Learning Outcome${added > 1 ? 's' : ''} using ${_PATTERN_LABEL[pattern]}.` +
-      (notes.length ? ` (${notes.join('; ')}.)` : ''),
+      '✓ ' + _tf('msgLOsCreated', { n: added, pattern: _patternLabel(pattern) }) +
+      (notes.length ? ' ' + _tf('msgNotesSuffix', { notes: notes.join('; ') }) : ''),
       'success'
     );
     return true;
@@ -349,7 +352,7 @@ export async function generateLearningOutcomesAI(pattern = 'C') {
   } catch (error) {
     hideLoadingModal();
     console.error('Error generating learning outcomes:', error);
-    showStatus('AI generation failed. See the error dialog for details.', 'error');
+    showStatus(_t('msgAIFailed'), 'error');
     _showAIErrorModal(error.message || String(error));
     return false;
   }

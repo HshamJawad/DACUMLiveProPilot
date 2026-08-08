@@ -31,6 +31,16 @@ import { showStatus } from './renderer.js';
 import { checkUsageLimit, incrementUsage,
          showLoadingModal, hideLoadingModal } from './storage.js';
 
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+/* Output-language directive for the generation backend. Appended at the
+   ONE place this module builds a request, so any prompt added later is
+   covered without having to remember. Empty string in English. */
+const _aiDir = () => (window.i18n ? window.i18n.aiDirective() : '');
+
+
 const BACKEND_URL = 'https://dacum-ai-backend-production.up.railway.app';
 
 // Maps the JSON keys the model returns → the textarea that receives
@@ -229,7 +239,7 @@ export async function generateAdditionalInfoAI() {
   // ── Usage limit (shared budget with the duties generator) ──
   const usageStatus = checkUsageLimit();
   if (!usageStatus.allowed) {
-    showStatus(`❌ Daily limit reached (${usageStatus.count} generations). Try again tomorrow!`, 'error');
+    showStatus('❌ ' + _tf('msgDailyLimit', { n: usageStatus.count }), 'error');
     return false;
   }
 
@@ -237,7 +247,7 @@ export async function generateAdditionalInfoAI() {
 
   if (!inputs.occupationTitle) {
     alert('Please enter an Occupation Title in Chart Info to generate the supporting information.');
-    showStatus('Occupation Title is required for AI generation.', 'error');
+    showStatus(_t('msgOccupationRequired'), 'error');
     return false;
   }
 
@@ -251,7 +261,7 @@ export async function generateAdditionalInfoAI() {
       '\n\nCustom sections you added yourself are NOT affected.\n\n' +
       'Click OK to continue, or Cancel to keep your current work.'
     )) {
-      showStatus('AI generation cancelled. Your existing content is preserved.', 'error');
+      showStatus(_t('msgCancelAddInfo'), 'error');
       return false;
     }
   }
@@ -267,7 +277,7 @@ export async function generateAdditionalInfoAI() {
     const response = await fetch(`${BACKEND_URL}/api/generate-dacum`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ prompt: prompt + _aiDir() })
     });
 
     if (!response.ok) {
@@ -345,7 +355,8 @@ export async function generateAdditionalInfoAI() {
       ? ' Long lists were trimmed to the top items — expand them with your panel.'
       : '';
     showStatus(
-      `✓ Draft supporting information generated (${basis}) — ${filledCount} sections, ${itemCount} items.${trimNote}`,
+      '✓ ' + _tf('msgAddInfoGenerated',
+        { basis: basis, sections: filledCount, items: itemCount }) + trimNote,
       'success'
     );
     return true;
@@ -353,7 +364,7 @@ export async function generateAdditionalInfoAI() {
   } catch (error) {
     hideLoadingModal();
     console.error('Error generating Additional Information:', error);
-    showStatus('AI generation failed. See the error dialog for details.', 'error');
+    showStatus(_t('msgAIFailed'), 'error');
     _showAIErrorModal(error.message || String(error));
     return false;
   }

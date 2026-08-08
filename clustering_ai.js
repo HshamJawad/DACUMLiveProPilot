@@ -39,6 +39,16 @@ import { renderAvailableTasks, renderClusters } from './modules.js';
 import { checkUsageLimit, incrementUsage,
          showLoadingModal, hideLoadingModal } from './storage.js';
 
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+/* Output-language directive for the generation backend. Appended at the
+   ONE place this module builds a request, so any prompt added later is
+   covered without having to remember. Empty string in English. */
+const _aiDir = () => (window.i18n ? window.i18n.aiDirective() : '');
+
+
 const BACKEND_URL = 'https://dacum-ai-backend-production.up.railway.app';
 
 // A cluster below ~4 tasks is rarely a competency in its own right;
@@ -66,7 +76,7 @@ async function _callBackend(prompt) {
   const response = await fetch(`${BACKEND_URL}/api/generate-dacum`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ prompt }),
+    body:    JSON.stringify({ prompt: prompt + _aiDir() }),
   });
   if (!response.ok) {
     throw new Error(`Backend request failed: ${response.status} ${response.statusText}`);
@@ -84,7 +94,7 @@ async function _callBackend(prompt) {
 function _guardQuota() {
   const usage = checkUsageLimit();
   if (!usage.allowed) {
-    showStatus(`❌ Daily limit reached (${usage.count} generations). Try again tomorrow!`, 'error');
+    showStatus('❌ ' + _tf('msgDailyLimit', { n: usage.count }), 'error');
     return false;
   }
   return true;
@@ -190,20 +200,14 @@ export async function suggestClustersAI() {
   const pool = [...available, ...existing.flatMap(c => c.tasks || [])];
 
   if (pool.length < MIN_TASKS_PER_CLUSTER * 2) {
-    showStatus(
-      `Not enough tasks to cluster (${pool.length}). Add tasks in Duties & Tasks first.`,
-      'error'
-    );
+    showStatus(_tf('msgNotEnoughTasks', { n: pool.length }), 'error');
     return false;
   }
 
   if (existing.length && !confirm(
-    `⚠️ This will replace the ${existing.length} cluster${existing.length > 1 ? 's' : ''} ` +
-    `you already have, including their Range and Performance Criteria.\n\n` +
-    `Your duties and tasks are NOT affected.\n\n` +
-    `Click OK to continue, or Cancel to keep your current clusters.`
+    _tf('confirmReplaceClusters', { n: existing.length })
   )) {
-    showStatus('Generation cancelled. Your clusters are unchanged.', 'error');
+    showStatus(_t('msgCancelClusters'), 'error');
     return false;
   }
 
@@ -272,9 +276,9 @@ export async function suggestClustersAI() {
     if (mirror) notes.push(mirror);
 
     showStatus(
-      `✓ Suggested ${clusters.length} competency clusters.` +
-      (notes.length ? ` (${notes.join('; ')}.)` : '') +
-      ' Review and adjust before generating criteria.',
+      '✓ ' + _tf('msgClustersSuggested', { n: clusters.length }) +
+      (notes.length ? ' ' + _tf('msgNotesSuffix', { notes: notes.join('; ') }) : '') +
+      ' ' + _t('msgReviewBeforeCriteria'),
       'success'
     );
     return true;
@@ -282,7 +286,7 @@ export async function suggestClustersAI() {
   } catch (error) {
     hideLoadingModal();
     console.error('Error suggesting clusters:', error);
-    showStatus('AI clustering failed. See the error dialog for details.', 'error');
+    showStatus(_t('msgAIClusteringFailed'), 'error');
     _showAIErrorModal(error.message || String(error), 'clustering');
     return false;
   }
@@ -386,7 +390,7 @@ export async function generateRangeAndCriteriaAI(onlyClusterId = null) {
     : all;
 
   if (!targets.length) {
-    showStatus('No clusters yet — create or suggest clusters first.', 'error');
+    showStatus(_t('msgNoClustersYet'), 'error');
     return false;
   }
 
@@ -399,7 +403,7 @@ export async function generateRangeAndCriteriaAI(onlyClusterId = null) {
     `Cluster names and their task groupings are NOT affected.\n\n` +
     `Click OK to continue, or Cancel to keep your current text.`
   )) {
-    showStatus('Generation cancelled. Your criteria are unchanged.', 'error');
+    showStatus(_t('msgCancelCriteria'), 'error');
     return false;
   }
 
@@ -443,9 +447,8 @@ export async function generateRangeAndCriteriaAI(onlyClusterId = null) {
     ).length;
 
     showStatus(
-      `✓ Generated Range and ${criteriaCount} performance criteria across ` +
-      `${updated} cluster${updated > 1 ? 's' : ''}.` +
-      (thin ? ` (${thin} cluster${thin > 1 ? 's' : ''} returned fewer than ${MIN_CRITERIA} criteria — review.)` : ''),
+      '✓ ' + _tf('msgCriteriaGenerated', { criteria: criteriaCount, clusters: updated }) +
+      (thin ? ' ' + _tf('msgThinClusters', { n: thin, min: MIN_CRITERIA }) : ''),
       'success'
     );
     return true;
@@ -453,7 +456,7 @@ export async function generateRangeAndCriteriaAI(onlyClusterId = null) {
   } catch (error) {
     hideLoadingModal();
     console.error('Error generating range/criteria:', error);
-    showStatus('AI generation failed. See the error dialog for details.', 'error');
+    showStatus(_t('msgAIFailed'), 'error');
     _showAIErrorModal(error.message || String(error), 'criteria');
     return false;
   }

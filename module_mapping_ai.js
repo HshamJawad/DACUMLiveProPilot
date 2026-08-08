@@ -36,6 +36,16 @@ import { renderModules, renderModuleLoList } from './modules.js';
 import { checkUsageLimit, incrementUsage,
          showLoadingModal, hideLoadingModal } from './storage.js';
 
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+/* Output-language directive for the generation backend. Appended at the
+   ONE place this module builds a request, so any prompt added later is
+   covered without having to remember. Empty string in English. */
+const _aiDir = () => (window.i18n ? window.i18n.aiDirective() : '');
+
+
 const BACKEND_URL = 'https://dacum-ai-backend-production.up.railway.app';
 
 // Grouping bounds. Without these the model drifts to one of two
@@ -92,11 +102,11 @@ export function generateOneModulePerOutcome() {
   const outcomes = _outcomes();
 
   if (outcomes.length === 0) {
-    showStatus('No Learning Outcomes yet — create some first.', 'error');
+    showStatus(_t('msgNoLOsYet'), 'error');
     return false;
   }
   if (!_confirmOverwrite()) {
-    showStatus('Generation cancelled. Your modules are unchanged.', 'error');
+    showStatus(_t('msgCancelModules'), 'error');
     return false;
   }
 
@@ -107,7 +117,7 @@ export function generateOneModulePerOutcome() {
   }));
 
   _commitModules(modules);
-  showStatus(`✓ Created ${modules.length} modules — one per Learning Outcome.`, 'success');
+  showStatus('✓ ' + _tf('msgModulesOnePerLO', { n: modules.length }), 'success');
   return true;
 }
 
@@ -212,22 +222,22 @@ export async function generateModulesAI() {
   const outcomes = _outcomes();
 
   if (outcomes.length === 0) {
-    showStatus('No Learning Outcomes yet — create some first.', 'error');
+    showStatus(_t('msgNoLOsYet'), 'error');
     return false;
   }
   if (outcomes.length < 2) {
-    showStatus('At least 2 Learning Outcomes are needed to group them into modules.', 'error');
+    showStatus(_t('msgNeedTwoLOs'), 'error');
     return false;
   }
 
   const usageStatus = checkUsageLimit();
   if (!usageStatus.allowed) {
-    showStatus(`❌ Daily limit reached (${usageStatus.count} generations). Try again tomorrow!`, 'error');
+    showStatus('❌ ' + _tf('msgDailyLimit', { n: usageStatus.count }), 'error');
     return false;
   }
 
   if (!_confirmOverwrite()) {
-    showStatus('Generation cancelled. Your modules are unchanged.', 'error');
+    showStatus(_t('msgCancelModules'), 'error');
     return false;
   }
 
@@ -238,7 +248,7 @@ export async function generateModulesAI() {
     const response = await fetch(`${BACKEND_URL}/api/generate-dacum`, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ prompt: _buildPrompt(outcomes) }),
+      body:    JSON.stringify({ prompt: _buildPrompt(outcomes) + _aiDir() }),
     });
 
     if (!response.ok) {
@@ -315,8 +325,8 @@ export async function generateModulesAI() {
     if (trimmed)        notes.push(`${trimmed} oversized module${trimmed > 1 ? 's' : ''} trimmed`);
 
     showStatus(
-      `✓ Created ${modules.length} modules, sequenced foundational → advanced.` +
-      (notes.length ? ` (${notes.join('; ')}.)` : ''),
+      '✓ ' + _tf('msgModulesSequenced', { n: modules.length }) +
+      (notes.length ? ' ' + _tf('msgNotesSuffix', { notes: notes.join('; ') }) : ''),
       'success'
     );
     return true;
@@ -324,7 +334,7 @@ export async function generateModulesAI() {
   } catch (error) {
     hideLoadingModal();
     console.error('Error generating modules:', error);
-    showStatus('AI generation failed. See the error dialog for details.', 'error');
+    showStatus(_t('msgAIFailed'), 'error');
     _showAIErrorModal(error.message || String(error));
     return false;
   }
