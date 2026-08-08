@@ -185,15 +185,62 @@ html[dir="rtl"] .dps-sidebar {
    margin-left is what the base rule sets, so it must be zeroed and
    re-applied on the other side — logical properties alone would not
    override it. */
-html[dir="rtl"] #dacumAppWrapper > .container {
-  margin-left: 0;
-  margin-right: 260px;
-  transition: margin-right 0.25s cubic-bezier(.4, 0, .2, 1);
+/* DESKTOP ONLY. Below 1100px the sidebar stops being a push-panel and
+   becomes an overlay drawer, and dacum-responsive.css zeroes the
+   container margin. My first version of this rule had no media query,
+   so on a phone it kept a 260px margin-right that nothing overrode
+   (their reset only touches margin-LEFT). That pushed the whole app
+   off the right edge of the viewport — the empty coloured area in the
+   PWA screenshot — and the resulting horizontal overflow is what made
+   the drawer look clipped and stuck. */
+@media (min-width: 1101px) {
+  html[dir="rtl"] #dacumAppWrapper > .container {
+    margin-left: 0;
+    margin-right: 260px;
+    transition: margin-right 0.25s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  html[dir="rtl"] #dacumAppWrapper.dps-is-collapsed > .container {
+    margin-left: 0;
+    margin-right: 68px;
+  }
 }
 
-html[dir="rtl"] #dacumAppWrapper.dps-is-collapsed > .container {
-  margin-left: 0;
-  margin-right: 68px;
+/* ── Mobile / PWA: overlay drawer ──────────────────────────────
+   Every base rule in this breakpoint uses !important, so matching it
+   is the only way to win — specificity alone cannot beat !important.
+   This is the one place in this file where !important is correct
+   rather than lazy. */
+@media (max-width: 1100px) {
+
+  /* Belt and braces: kill BOTH margins so no stale value can survive
+     a language switch mid-session. */
+  html[dir="rtl"] #dacumAppWrapper > .container,
+  html[dir="rtl"] #dacumAppWrapper.dps-is-collapsed > .container {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* The drawer must dock to — and retract past — the right edge.
+     translateX(+100%) instead of -100%: it hides beyond the right
+     side, matching the side it now docks on. */
+  html[dir="rtl"] .dps-sidebar {
+    left: auto !important;
+    right: 0 !important;
+    transform: translateX(100%) !important;
+  }
+
+  html[dir="rtl"] .dps-sidebar.dps-mobile-open {
+    transform: translateX(0) !important;
+    box-shadow: -2px 0 24px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  /* Nothing may create horizontal overflow in RTL: on a phone the
+     scroll origin sits at the right edge, so any overflow opens as a
+     blank gutter the user cannot easily scroll back from. */
+  html[dir="rtl"] body {
+    overflow-x: hidden;
+  }
 }
 
 /* Active-nav accent bar: a 3px spine on the inline-start edge, with
@@ -355,4 +402,16 @@ html[dir="rtl"] .wv-zoom-group {
 html[dir="rtl"] .wall-print-header {
   direction: rtl;
   text-align: right;
+}
+
+
+/* ── Print ─────────────────────────────────────────────────────
+   dacum-responsive.css resets margin-left for print but not the
+   mirrored margin, which would otherwise indent every printed page. */
+@media print {
+  html[dir="rtl"] #dacumAppWrapper > .container,
+  html[dir="rtl"] #dacumAppWrapper.dps-is-collapsed > .container {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+  }
 }

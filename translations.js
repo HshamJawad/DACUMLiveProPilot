@@ -262,6 +262,9 @@
       msgDutyAlreadyEmpty: 'This duty is already empty — nothing to clear',
       confirmClearDuty: 'Are you sure you want to clear this duty and all its tasks?',
       msgDutyCleared: 'Duty cleared!',
+      btnClear: 'Clear',
+      btnRemoveDuty: 'Remove Duty',
+      btnAddTask: 'Add Task',
     },
 
     fr: {
@@ -521,6 +524,9 @@
       msgDutyAlreadyEmpty: 'Cette activité est déjà vide — rien à effacer',
       confirmClearDuty: 'Voulez-vous vraiment effacer cette activité et toutes ses tâches ?',
       msgDutyCleared: 'Activité effacée !',
+      btnClear: 'Effacer',
+      btnRemoveDuty: 'Supprimer l’activité',
+      btnAddTask: 'Ajouter une tâche',
     },
 
     ar: {
@@ -696,6 +702,9 @@
       refineReversible: 'يمكن التراجع بـ Ctrl+Z.',
       btnRefine: 'تنقيح النتائج',
       btnProceedAdditional: 'الانتقال إلى المعلومات الإضافية',
+      btnClear: 'تفريغ',
+      btnRemoveDuty: 'حذف الواجب',
+      btnAddTask: 'إضافة مهمة',
     },
   };
 

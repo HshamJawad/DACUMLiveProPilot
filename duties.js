@@ -144,14 +144,14 @@ function _renderTableView(container) {
       <div class="duty-header">
         <h4>${_tf('lblDuty', { code: _bdi(dutyLetter) })}</h4>
         <div style="display:flex;gap:10px;">
-          <button class="btn-clear-section" data-action="clear-duty"   data-duty-id="${duty.id}">🗑️ Clear</button>
-          <button class="btn-remove"         data-action="remove-duty"  data-duty-id="${duty.id}">🗑️ Remove Duty</button>
+          <button class="btn-clear-section" data-action="clear-duty"   data-duty-id="${duty.id}">🗑️ ${_t('btnClear')}</button>
+          <button class="btn-remove"         data-action="remove-duty"  data-duty-id="${duty.id}">🗑️ ${_t('btnRemoveDuty')}</button>
         </div>
       </div>
       <input type="text" placeholder="${_t('phEnterDutyDesc')}"
              data-duty-id="${duty.id}" value="${_esc(duty.title)}">
       <div class="task-list" id="tasks_${duty.id}"></div>
-      <button class="btn-add" data-action="add-task" data-duty-id="${duty.id}">➕ Add Task</button>
+      <button class="btn-add" data-action="add-task" data-duty-id="${duty.id}">➕ ${_t('btnAddTask')}</button>
     `;
     container.appendChild(dutyDiv);
 
@@ -164,7 +164,8 @@ function _renderTableView(container) {
         <span class="task-label">${_tf('lblTaskColon', { code: _bdi(dutyLetter + (taskIndex + 1)) })}</span>
         <input type="text" style="flex:1;" placeholder="${_t('phEnterTaskDesc')}"
                data-task-id="${task.inputId}" value="${_esc(task.text)}">
-        <button class="btn-remove" data-action="remove-task" data-task-div-id="${task.divId}">🗑️</button>
+        <button class="btn-remove" data-action="remove-task" data-task-div-id="${task.divId}"
+                title="${_t('ttRemoveTask')}" aria-label="${_t('ttRemoveTask')}">🗑️</button>
       `;
       taskList.appendChild(taskDiv);
     });
