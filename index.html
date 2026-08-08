@@ -308,6 +308,10 @@
          which rule applies with no error to warn you. See the header
          comment in that file. -->
     <link rel="stylesheet" href="dacum-components.css">
+    <!-- RTL mirroring + language switcher. MUST be last stylesheet. -->
+    <link rel="stylesheet" href="dacum-rtl.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap">
     
 </head>
 <body>
@@ -348,48 +352,48 @@
         <!-- Tabs kept in DOM (hidden) so tab-switching logic works unchanged.
              Visual navigation has moved into the sidebar (dacum_projects.js). -->
         <div class="tabs" id="dacumMainTabsHidden" style="display:none!important;pointer-events:none!important;position:absolute!important;visibility:hidden!important;">
-            <div class="tab active" data-tab="info-tab">📋 Chart Info</div>
-            <div class="tab" data-tab="duties-tab">✅ Duties & Tasks</div>
-            <div class="tab" data-tab="additional-info-tab">📚 Additional Info</div>
-            <div class="tab" data-tab="verification-tab">🎯 Task Verification</div>
-            <div class="tab" data-tab="clustering-tab">🎯 Competency Clusters</div>
-            <div class="tab" data-tab="learning-outcomes-tab">🎓 Learning Outcomes</div>
-            <div class="tab" data-tab="module-mapping-tab">📦 Module Mapping</div>
-            <div class="tab" data-tab="contact-tab">❓ Help</div>
+            <div class="tab active" data-tab="info-tab" data-i18n="tabChartInfo">📋 Chart Info</div>
+            <div class="tab" data-tab="duties-tab" data-i18n="tabDuties">✅ Duties & Tasks</div>
+            <div class="tab" data-tab="additional-info-tab" data-i18n="tabAdditionalInfo">📚 Additional Info</div>
+            <div class="tab" data-tab="verification-tab" data-i18n="tabVerification">🎯 Task Verification</div>
+            <div class="tab" data-tab="clustering-tab" data-i18n="tabClustering">🎯 Competency Clusters</div>
+            <div class="tab" data-tab="learning-outcomes-tab" data-i18n="tabLearningOutcomes">🎓 Learning Outcomes</div>
+            <div class="tab" data-tab="module-mapping-tab" data-i18n="tabModuleMapping">📦 Module Mapping</div>
+            <div class="tab" data-tab="contact-tab" data-i18n="tabHelp">❓ Help</div>
         </div>
         
         <div class="tab-content active" id="info-tab">
             <div class="tab-header-row">
-                <h2>DACUM Research Chart Information</h2>
+                <h2 data-i18n="h2ChartInfo">DACUM Research Chart Information</h2>
                 <button data-action="clear-tab" data-tab-id="info-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
-                    🗑️ Clear This Tab
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
             
             <div class="mb-20">
                 <div class="mb-10">
-                    <label for="dacumDate">📅 DACUM Date:</label>
+                    <label for="dacumDate">📅 <span data-i18n="labelDate">DACUM Date:</span></label>
                     <input type="date" id="dacumDate" style="cursor: pointer;">
                 </div>
                 
                 <div class="mb-10">
-                    <label for="venue">📍 Venue:</label>
-                    <input type="text" id="venue" placeholder="e.g., Conference Center, City">
+                    <label for="venue">📍 <span data-i18n="labelVenue">Venue:</span></label>
+                    <input type="text" id="venue" placeholder="e.g., Conference Center, City" data-i18n="phVenue" data-i18n-attr="placeholder">
                 </div>
                 
                 <div class="mb-10">
-                    <label for="producedFor">🏢 Produced For:</label>
-                    <input type="text" id="producedFor" placeholder="e.g., Company/Organization Name">
+                    <label for="producedFor">🏢 <span data-i18n="labelProducedFor">Produced For:</span></label>
+                    <input type="text" id="producedFor" placeholder="e.g., Company/Organization Name" data-i18n="phProducedFor" data-i18n-attr="placeholder">
                     <div class="image-upload-container">
                         <div class="image-preview" id="producedForImagePreview">
-                            <span style="color: #999; font-size: 0.9em;">No image</span>
+                            <span style="color: #999; font-size: 0.9em;" data-i18n="phNoImage">No image</span>
                         </div>
                         <div>
                             <button class="btn-add-image" onclick="document.getElementById('producedForImageInput').click()">
-                                🖼️ Add Logo
+                                🖼️ <span data-i18n="labelAddLogo">Add Logo</span>
                             </button>
-                            <button class="btn-remove-image" id="removeProducedForImage" id="removeProducedForImage" style="display: none;">
-                                🗑️ Remove
+                            <button class="btn-remove-image" id="removeProducedForImage" style="display: none;">
+                                🗑️ <span data-i18n="labelRemove">Remove</span>
                             </button>
                             <input type="file" id="producedForImageInput" accept=".jpg,.jpeg,.png,.bmp" style="display: none;">
                         </div>
@@ -397,18 +401,18 @@
                 </div>
                 
                 <div class="mb-10">
-                    <label for="producedBy">🎓 Produced By:</label>
-                    <input type="text" id="producedBy" placeholder="e.g., Training Institution Name">
+                    <label for="producedBy">🎓 <span data-i18n="labelProducedBy">Produced By:</span></label>
+                    <input type="text" id="producedBy" placeholder="e.g., Training Institution Name" data-i18n="phProducedBy" data-i18n-attr="placeholder">
                     <div class="image-upload-container">
                         <div class="image-preview" id="producedByImagePreview">
-                            <span style="color: #999; font-size: 0.9em;">No image</span>
+                            <span style="color: #999; font-size: 0.9em;" data-i18n="phNoImage">No image</span>
                         </div>
                         <div>
                             <button class="btn-add-image" onclick="document.getElementById('producedByImageInput').click()">
-                                🖼️ Add Logo
+                                🖼️ <span data-i18n="labelAddLogo">Add Logo</span>
                             </button>
-                            <button class="btn-remove-image" id="removeProducedByImage" id="removeProducedByImage" style="display: none;">
-                                🗑️ Remove
+                            <button class="btn-remove-image" id="removeProducedByImage" style="display: none;">
+                                🗑️ <span data-i18n="labelRemove">Remove</span>
                             </button>
                             <input type="file" id="producedByImageInput" accept=".jpg,.jpeg,.png,.bmp" style="display: none;">
                         </div>
@@ -416,12 +420,12 @@
                 </div>
                 
                 <div class="mb-10">
-                    <label for="occupationTitle">💼 Occupation Title:</label>
-                    <input type="text" id="occupationTitle" placeholder="e.g., Automotive Technician">
+                    <label for="occupationTitle">💼 <span data-i18n="labelOccupation">Occupation Title:</span></label>
+                    <input type="text" id="occupationTitle" placeholder="e.g., Automotive Technician" data-i18n="phOccupation" data-i18n-attr="placeholder">
                 </div>
 
                 <div class="mb-10">
-                    <label for="scopeOfWork">📋 Scope of Work / Occupational Definition:</label>
+                    <label for="scopeOfWork">📋 <span data-i18n="labelScope">Scope of Work / Occupational Definition:</span></label>
                     <!-- The helper line that used to sit here has been folded
                          into the placeholder. Two explanations of the same
                          field, one above it and one inside it, competed for
@@ -440,38 +444,39 @@
                          out, since drawing the boundary is the whole purpose
                          of an occupational definition. -->
                     <textarea id="scopeOfWork" rows="5"
+                              data-i18n="phScope" data-i18n-attr="placeholder"
                               placeholder="Describe in one concise paragraph what this occupation covers and where its boundaries lie — its main responsibilities, typical tools and work environments, and which related roles or specializations it does NOT include."
                               style="min-height: 110px; font-family: inherit; resize: vertical; width:100%;"></textarea>
                 </div>
 
                 <div class="mb-10">
-                    <label for="jobTitle">👔 Job Title:</label>
-                    <input type="text" id="jobTitle" placeholder="e.g., Service Technician Level 2">
+                    <label for="jobTitle">👔 <span data-i18n="labelJobTitle">Job Title:</span></label>
+                    <input type="text" id="jobTitle" placeholder="e.g., Service Technician Level 2" data-i18n="phJobTitle" data-i18n-attr="placeholder">
                 </div>
                 
                 <div class="mb-10">
-                    <label for="sector">🏭 Sector (Optional):</label>
-                    <input type="text" id="sector" placeholder="e.g., Automotive, Healthcare, IT">
+                    <label for="sector">🏭 <span data-i18n="labelSector">Sector (Optional):</span></label>
+                    <input type="text" id="sector" placeholder="e.g., Automotive, Healthcare, IT" data-i18n="phSector" data-i18n-attr="placeholder">
                 </div>
                 
                 <div class="mb-10">
-                    <label for="context">🌍 Country / Context (Optional):</label>
-                    <input type="text" id="context" placeholder="e.g., Iraq, Middle East">
+                    <label for="context">🌍 <span data-i18n="labelContext">Country / Context (Optional):</span></label>
+                    <input type="text" id="context" placeholder="e.g., Iraq, Middle East" data-i18n="phContext" data-i18n-attr="placeholder">
                 </div>
                 
                 <div class="mb-10">
-                    <label for="facilitators">👥 Facilitators:</label>
-                    <textarea id="facilitators" placeholder="Enter facilitator names (one per line)" style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
+                    <label for="facilitators">👥 <span data-i18n="labelFacilitators">Facilitators:</span></label>
+                    <textarea id="facilitators" placeholder="Enter facilitator names (one per line)" data-i18n="phFacilitators" data-i18n-attr="placeholder" style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
                 </div>
                 
                 <div class="mb-10">
-                    <label for="observers">👁️ Observers:</label>
-                    <textarea id="observers" placeholder="Enter observer names (one per line)" style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
+                    <label for="observers">👁️ <span data-i18n="labelObservers">Observers:</span></label>
+                    <textarea id="observers" placeholder="Enter observer names (one per line)" data-i18n="phObservers" data-i18n-attr="placeholder" style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
                 </div>
                 
                 <div class="mb-10">
-                    <label for="panelMembers">🎯 Panel Members:</label>
-                    <textarea id="panelMembers" placeholder="Enter panel member names (one per line)" style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
+                    <label for="panelMembers">🎯 <span data-i18n="labelPanelMembers">Panel Members:</span></label>
+                    <textarea id="panelMembers" placeholder="Enter panel member names (one per line)" data-i18n="phPanel" data-i18n-attr="placeholder" style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
                 </div>
                 
                 <!-- Chart Info is the first step so it has no Back button,
@@ -483,7 +488,7 @@
                      buttons sit on everywhere else. -->
                 <div class="step-nav-row" style="justify-content: flex-end;">
                     <button type="button" class="btn-next-step" data-nav-next="duties-tab">
-                        Proceed to Duties & Tasks →
+                        <span data-i18n="btnProceedDuties">Proceed to Duties &amp; Tasks →</span>
                     </button>
                 </div>
             </div>
@@ -1593,6 +1598,10 @@
     </div>
 
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="qrcode.min.js"></script>
+    <!-- i18n engine. Loaded BEFORE app.js so window.i18n exists by the
+         time module code first calls i18n.t(). It is a plain script, not a
+         module: it must be reachable from non-module files too. -->
+    <script src="translations.js"></script>
     <script type="module" src="app.js"></script>
     <script src="dacum-ui.js"></script>
     <script src="dacum-mobile.js"></script>
@@ -1602,36 +1611,36 @@
     <div id="dacumTopToolbar">
       <div class="dtb-left">
         <!-- ── Sidebar toggle (always in HTML — never injected) ── -->
-        <button id="btnSidebarToggle" title="Toggle Projects Sidebar" aria-label="Toggle sidebar">
+        <button id="btnSidebarToggle" title="Toggle Projects Sidebar" aria-label="Toggle sidebar" data-i18n="ttSidebarToggle" data-i18n-attr="title">
           <svg viewBox="0 0 18 18" width="16" height="16" fill="none" aria-hidden="true">
             <rect x="2" y="3.5"  width="14" height="1.8" rx="0.9" fill="currentColor"/>
             <rect x="2" y="8.1"  width="14" height="1.8" rx="0.9" fill="currentColor"/>
             <rect x="2" y="12.7" width="14" height="1.8" rx="0.9" fill="currentColor"/>
           </svg>
         </button>
-        <button class="dtb-btn dtb-snapshot" id="btnSaveSnapshot" title="Save Snapshot">
+        <button class="dtb-btn dtb-snapshot" id="btnSaveSnapshot" title="Save Snapshot" data-i18n="ttSaveSnapshot" data-i18n-attr="title">
           <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#f59e0b"/><circle cx="9" cy="9" r="3" fill="#fff"/></svg>
-          <span>Snapshot</span>
+          <span data-i18n="tbSnapshot">Snapshot</span>
         </button>
       </div>
       <div class="dtb-center">
-        <button class="dtb-btn dtb-primary" id="btnSaveJSON" title="Export project as JSON file">
+        <button class="dtb-btn dtb-primary" id="btnSaveJSON" title="Export project as JSON file" data-i18n="ttExportJSON" data-i18n-attr="title">
           <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#6366f1"/><path d="M9 5v8M6 10l3 3 3-3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span>Export</span>
+          <span data-i18n="tbExport">Export</span>
         </button>
-        <button class="dtb-btn dtb-secondary" id="btnLoadImport" title="Import project from JSON file"
+        <button class="dtb-btn dtb-secondary" id="btnLoadImport" title="Import project from JSON file" data-i18n="ttImportJSON" data-i18n-attr="title"
                 onclick="document.getElementById('loadFileInput').click()">
           <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#10b981"/><path d="M9 13V5M6 8l3-3 3 3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span>Import</span>
+          <span data-i18n="tbImport">Import</span>
         </button>
         <div class="dtb-divider"></div>
-        <button class="dtb-btn dtb-ghost" id="btnExportPDF" title="Export as PDF">
+        <button class="dtb-btn dtb-ghost" id="btnExportPDF" title="Export as PDF" data-i18n="ttExportPDF" data-i18n-attr="title">
           <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#ef4444"/><text x="9" y="12.5" text-anchor="middle" font-size="6.5" font-weight="700" fill="#fff" font-family="Arial,sans-serif">PDF</text></svg>
-          <span>PDF</span>
+          <span data-i18n="tbPDF">PDF</span>
         </button>
-        <button class="dtb-btn dtb-ghost" id="btnExportWord" title="Export as Word DOCX">
+        <button class="dtb-btn dtb-ghost" id="btnExportWord" title="Export as Word DOCX" data-i18n="ttExportWord" data-i18n-attr="title">
           <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#2563eb"/><text x="9" y="12.5" text-anchor="middle" font-size="6" font-weight="700" fill="#fff" font-family="Arial,sans-serif">DOC</text></svg>
-          <span>Word</span>
+          <span data-i18n="tbWord">Word</span>
         </button>
         <div class="dtb-divider"></div>
         <!-- ── History & recovery group ────────────────────────
@@ -1642,21 +1651,21 @@
              you would want to undo. It also leaves .dtb-right
              holding nothing but the version badge, which is what
              relieves the crowding on that side of the bar. -->
-        <button class="dtb-undo" id="btnUndo" disabled title="Undo  (Ctrl+Z)">
+        <button class="dtb-undo" id="btnUndo" disabled title="Undo  (Ctrl+Z)" data-i18n="ttUndo" data-i18n-attr="title">
           <svg viewBox="0 0 16 16" width="13" height="13" fill="none"><path d="M3 8a5 5 0 1 0 1.5-3.5L3 6V3H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Undo
+          <span data-i18n="tbUndo">Undo</span>
         </button>
-        <button class="dtb-undo dtb-redo" id="btnRedo" disabled title="Redo  (Ctrl+Y)">
+        <button class="dtb-undo dtb-redo" id="btnRedo" disabled title="Redo  (Ctrl+Y)" data-i18n="ttRedo" data-i18n-attr="title">
           <svg viewBox="0 0 16 16" width="13" height="13" fill="none"><path d="M13 8a5 5 0 1 1-1.5-3.5L13 6V3h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Redo
+          <span data-i18n="tbRedo">Redo</span>
         </button>
-        <button class="dtb-lens" id="btnOpenSnapshots" title="Saved Snapshots">
+        <button class="dtb-lens" id="btnOpenSnapshots" title="Saved Snapshots" data-i18n="ttSnapshots" data-i18n-attr="title">
           <svg viewBox="0 0 18 18" width="15" height="15" fill="none"><circle cx="8" cy="8" r="4.5" stroke="#92570a" stroke-width="1.6"/><line x1="11.5" y1="11.5" x2="15" y2="15" stroke="#92570a" stroke-width="1.6" stroke-linecap="round"/></svg>
         </button>
         <div class="dtb-divider"></div>
-        <button class="dtb-btn dtb-danger" id="btnClearAll" title="Clear all data">
+        <button class="dtb-btn dtb-danger" id="btnClearAll" title="Clear all data" data-i18n="ttClearAll" data-i18n-attr="title">
           <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#ef4444"/><path d="M6 6l6 6M12 6l-6 6" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg>
-          <span>Clear All</span>
+          <span data-i18n="tbClearAll">Clear All</span>
         </button>
       </div>
       <div class="dtb-right">

@@ -1,4 +1,7 @@
-/* translations.js v3 -- DACUM Live Pro i18n Engine */
+/* translations.js v4 -- DACUM Live Pro i18n Engine
+   v4: Arabic (ar) locale + RTL layer + segmented EN|FR|AR switcher.
+   Coverage so far: Chart Info tab and the top toolbar.
+   Any key missing from a locale falls back to English. */
 (function () {
   'use strict';
   var TRANSLATIONS = {
@@ -188,6 +191,28 @@
       expMethodologySummary: 'Methodology Summary',
       expPriorityRankings: 'Priority Rankings',
       expDutyLevelSummary: 'Duty-Level Summary',
+      labelScope: 'Scope of Work / Occupational Definition:',
+      phScope: 'Describe in one concise paragraph what this occupation covers and where its boundaries lie — its main responsibilities, typical tools and work environments, and which related roles or specializations it does NOT include.',
+      phNoImage: 'No image',
+      tbSnapshot: 'Snapshot',
+      tbExport: 'Export',
+      tbImport: 'Import',
+      tbPDF: 'PDF',
+      tbWord: 'Word',
+      tbUndo: 'Undo',
+      tbRedo: 'Redo',
+      tbClearAll: 'Clear All',
+      ttSidebarToggle: 'Toggle Projects Sidebar',
+      ttSaveSnapshot: 'Save Snapshot',
+      ttExportJSON: 'Export project as JSON file',
+      ttImportJSON: 'Import project from JSON file',
+      ttExportPDF: 'Export as PDF',
+      ttExportWord: 'Export as Word DOCX',
+      ttUndo: 'Undo  (Ctrl+Z)',
+      ttRedo: 'Redo  (Ctrl+Y)',
+      ttSnapshots: 'Saved Snapshots',
+      ttClearAll: 'Clear all data',
+      msgPdfArabicUnsupported: 'Arabic PDF export is not available yet. Please use Word (DOCX) export — it fully supports Arabic and right-to-left layout.',
     },
     fr: {
       appSubtitle: 'Analyse • Vérification • Cartographie des compétences • Ingénierie pédagogique',
@@ -375,6 +400,104 @@
       expMethodologySummary: 'Résumé méthodologique',
       expPriorityRankings: 'Classement des priorités',
       expDutyLevelSummary: 'Résumé par activité',
+      labelScope: 'Champ d’activité / Définition du métier :',
+      phScope: 'Décrivez en un paragraphe concis ce que couvre ce métier et où se situent ses limites — responsabilités principales, outils et environnements de travail typiques, et les rôles connexes qu’il n’inclut PAS.',
+      phNoImage: 'Aucune image',
+      tbSnapshot: 'Instantané',
+      tbExport: 'Exporter',
+      tbImport: 'Importer',
+      tbPDF: 'PDF',
+      tbWord: 'Word',
+      tbUndo: 'Annuler',
+      tbRedo: 'Rétablir',
+      tbClearAll: 'Tout effacer',
+      ttSidebarToggle: 'Afficher / masquer le panneau des projets',
+      ttSaveSnapshot: 'Enregistrer un instantané',
+      ttExportJSON: 'Exporter le projet en fichier JSON',
+      ttImportJSON: 'Importer un projet depuis un fichier JSON',
+      ttExportPDF: 'Exporter en PDF',
+      ttExportWord: 'Exporter en Word DOCX',
+      ttUndo: 'Annuler  (Ctrl+Z)',
+      ttRedo: 'Rétablir  (Ctrl+Y)',
+      ttSnapshots: 'Instantanés enregistrés',
+      ttClearAll: 'Effacer toutes les données',
+      msgPdfArabicUnsupported: 'L’export PDF en arabe n’est pas encore disponible. Utilisez l’export Word (DOCX).',
+    },
+    ar: {
+    /* ══════════════════════════════════════════════════════════
+       المسرد المعتمد (لا يُخالف في أي مفتاح لاحق)
+         Duty ............... واجب
+         Task ............... مهمة
+         Learning Outcome ... محصلة تعلم / محصلات التعلم
+         Facilitator ........ ميسر
+         Module ............. وحدة تعلمية
+         Competency Cluster . تجمع كفاءات
+         DACUM .............. تبقى DACUM باللاتينية دون ترجمة
+       مقياس التصويت (0-3) يبقى بالأرقام اللاتينية في كل اللغات:
+       الأرقام مقروءة عربياً، وتحويلها يكسر الفرز والمخططات.
+       ══════════════════════════════════════════════════════════ */
+      /* مرحلة 1 — تبويب معلومات المخطط + شريط الأدوات
+         أي مفتاح غير موجود هنا يرجع تلقائياً إلى الإنجليزية (fallback)  */
+      appSubtitle: 'تحليل • تحقق • تجميع الكفاءات • تصميم التعلم',
+      tabChartInfo: 'بيانات المخطط',
+      tabDuties: 'الواجبات والمهام',
+      tabAdditionalInfo: 'معلومات داعمة',
+      tabVerification: 'التحقق من المهام',
+      tabClustering: 'تجمعات الكفاءات',
+      tabLearningOutcomes: 'محصلات التعلم',
+      tabModuleMapping: 'مواءمة الوحدات التعلمية',
+      tabHelp: 'المساعدة',
+
+      h2ChartInfo: 'معلومات مخطط DACUM البحثي',
+      labelDate: 'تاريخ DACUM:',
+      labelVenue: 'مكان انعقاد الورشة:',
+      labelProducedFor: 'أُعدّ لصالح:',
+      labelProducedBy: 'إعداد وتنفيذ:',
+      labelOccupation: 'اسم المهنة:',
+      labelScope: 'نطاق العمل / التعريف المهني:',
+      labelJobTitle: 'المسمّى الوظيفي:',
+      labelSector: 'القطاع (اختياري):',
+      labelContext: 'الدولة / السياق (اختياري):',
+      labelFacilitators: 'الميسّرون:',
+      labelObservers: 'المراقبون:',
+      labelPanelMembers: 'أعضاء لجنة الخبراء:',
+      labelAddLogo: 'إضافة شعار',
+      labelRemove: 'حذف',
+      btnProceedDuties: 'الانتقال إلى الواجبات والمهام ←',
+      btnClearTab: 'تفريغ هذا التبويب',
+
+      phVenue: 'مثال: مركز المؤتمرات، بغداد',
+      phProducedFor: 'مثال: اسم الجهة أو المؤسسة',
+      phProducedBy: 'مثال: اسم مؤسسة التدريب',
+      phOccupation: 'مثال: فني مركبات',
+      phScope: 'اوصف في فقرة موجزة ما تغطيه هذه المهنة وأين تقع حدودها — المسؤوليات الرئيسة، الأدوات وبيئات العمل المعتادة، والأدوار القريبة التي لا تشملها.',
+      phJobTitle: 'مثال: فني صيانة مستوى 2',
+      phSector: 'مثال: المركبات، الصحة، تكنولوجيا المعلومات',
+      phContext: 'مثال: العراق، الشرق الأوسط',
+      phFacilitators: 'اكتب أسماء الميسّرين (اسم في كل سطر)',
+      phObservers: 'اكتب أسماء المراقبين (اسم في كل سطر)',
+      phPanel: 'اكتب أسماء أعضاء اللجنة (اسم في كل سطر)',
+      phNoImage: 'لا يوجد شعار',
+
+      tbSnapshot: 'لقطة',
+      tbExport: 'تصدير',
+      tbImport: 'استيراد',
+      tbPDF: 'PDF',
+      tbWord: 'Word',
+      tbUndo: 'تراجع',
+      tbRedo: 'إعادة',
+      tbClearAll: 'مسح الكل',
+      ttSidebarToggle: 'إظهار / إخفاء لوحة المشاريع',
+      ttSaveSnapshot: 'حفظ لقطة',
+      ttExportJSON: 'تصدير المشروع كملف JSON',
+      ttImportJSON: 'استيراد مشروع من ملف JSON',
+      ttExportPDF: 'تصدير كملف PDF',
+      ttExportWord: 'تصدير كملف Word',
+      ttUndo: 'تراجع  (Ctrl+Z)',
+      ttRedo: 'إعادة  (Ctrl+Y)',
+      ttSnapshots: 'اللقطات المحفوظة',
+      ttClearAll: 'مسح جميع البيانات',
+      msgPdfArabicUnsupported: 'تصدير PDF بالعربية غير متاح حالياً. استخدم تصدير Word (DOCX) — فهو يدعم العربية واتجاه الكتابة من اليمين بالكامل.',
     },
   };
 
@@ -422,42 +545,76 @@
                       el.getAttribute('data-i18n-attr') || 'text');
     });
     document.documentElement.lang = _current;
-    var sel = document.getElementById('dacumLangSelector');
-    if (sel) sel.value = _current;
+
+    /* ---- RTL layer -------------------------------------------------
+       dir is set on <html> so native form controls, scrollbars and
+       text selection flip too; the body class is what dacum-rtl.css
+       hooks into for the mirrored layout rules. Both are toggled
+       here and nowhere else. ------------------------------------- */
+    var rtl = RTL_LANGS.indexOf(_current) !== -1;
+    document.documentElement.setAttribute('dir', rtl ? 'rtl' : 'ltr');
+    document.body.classList.toggle('dacum-rtl', rtl);
+
+    _syncSelector();
     window.dispatchEvent(new CustomEvent('dacum:langchange', { detail: { lang: _current } }));
   }
 
-  function _injectSelector() {
-    if (document.getElementById('dacumLangSelector')) return;
-    var wrap = document.createElement('div');
-    wrap.id = 'dacumLangWrap';
-    wrap.style.cssText = 'display:inline-flex;align-items:center;gap:5px;flex-shrink:0;';
-    var globe = document.createElement('span');
-    globe.textContent = '🌐';
-    globe.setAttribute('aria-hidden', 'true');
-    globe.style.cssText = 'font-size:0.78em;line-height:1;';
-    var sel = document.createElement('select');
-    sel.id = 'dacumLangSelector';
-    sel.title = 'Select language / Choisir la langue';
-    sel.style.cssText = 'padding:4px 8px;border:1.5px solid #e2e2e4;border-radius:99px;' +
-      'background:#fff;font-size:0.78em;font-weight:600;cursor:pointer;' +
-      'color:#1a1a1a;outline:none;appearance:none;-webkit-appearance:none;' +
-      'min-width:58px;text-align:center;';
-    [{ value: 'en', label: 'EN' }, { value: 'fr', label: 'FR' }].forEach(function (opt) {
-      var o = document.createElement('option');
-      o.value = opt.value;
-      o.textContent = opt.label;
-      sel.appendChild(o);
+  /* Languages that need a mirrored layout. Kept as a list rather than
+     an `=== 'ar'` test so Kurdish (ckb), Farsi and Urdu can be added
+     later without touching applyTranslations. */
+  var RTL_LANGS = ['ar', 'fa', 'ur', 'ckb', 'he'];
+
+  var LANGS = [
+    { code: 'en', label: 'EN', title: 'English' },
+    { code: 'fr', label: 'FR', title: 'Fran\u00e7ais' },
+    { code: 'ar', label: 'AR', title: '\u0627\u0644\u0639\u0631\u0628\u064a\u0629' }
+  ];
+
+  /* Highlight whichever pill matches the active language. Split out of
+     applyTranslations because the pills are also re-synced when the
+     toolbar is rebuilt by other modules. */
+  function _syncSelector() {
+    var wrap = document.getElementById('dacumLangWrap');
+    if (!wrap) return;
+    wrap.querySelectorAll('.dacum-lang-btn').forEach(function (b) {
+      var on = b.getAttribute('data-lang') === _current;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
-    wrap.appendChild(globe);
-    wrap.appendChild(sel);
-    var right = document.querySelector('.dtb-right');
-    if (right) right.appendChild(wrap);
-    else { var tb = document.getElementById('dacumTopToolbar'); if (tb) tb.appendChild(wrap); }
-    sel.addEventListener('change', function () { setLang(this.value); });
   }
 
-  window.i18n = { t: t, tf: tf, setLang: setLang, getLang: getLang, apply: applyTranslations };
+  /* A three-way <select> costs two taps (open, choose) and hides the
+     current language behind a closed control. Three pills cost one tap
+     and keep the active language visible at all times \u2014 which matters
+     on a bar a facilitator is operating in front of a room. */
+  function _injectSelector() {
+    if (document.getElementById('dacumLangWrap')) return;
+
+    var wrap = document.createElement('div');
+    wrap.id = 'dacumLangWrap';
+    wrap.setAttribute('role', 'group');
+    wrap.setAttribute('aria-label', 'Language / \u0627\u0644\u0644\u063a\u0629');
+
+    LANGS.forEach(function (L) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dacum-lang-btn';
+      b.setAttribute('data-lang', L.code);
+      b.textContent = L.label;
+      b.title = L.title;
+      b.addEventListener('click', function () { setLang(L.code); });
+      wrap.appendChild(b);
+    });
+
+    var right = document.querySelector('.dtb-right');
+    if (right) right.insertBefore(wrap, right.firstChild);
+    else { var tb = document.getElementById('dacumTopToolbar'); if (tb) tb.appendChild(wrap); }
+  }
+
+  window.i18n = {
+    t: t, tf: tf, setLang: setLang, getLang: getLang, apply: applyTranslations,
+    isRTL: function () { return RTL_LANGS.indexOf(_current) !== -1; }
+  };
 
   function _init() { _injectSelector(); applyTranslations(); }
   if (document.readyState === 'loading') {

@@ -4,7 +4,7 @@
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v40';
+const CACHE_VERSION = 'v41';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -27,6 +27,13 @@ const PRECACHE_URLS = [
   BASE + 'dacum-responsive.css',
   BASE + 'dacum-typography.css',
   BASE + 'dacum-components.css',
+  // RTL mirroring + language switcher (loads last, see index.html).
+  BASE + 'dacum-rtl.css',
+
+  // ── Non-module scripts ───────────────────────────────────
+  // translations.js is a plain IIFE that must be available before
+  // app.js runs, so it is warmed with the critical set, not lazily.
+  BASE + 'translations.js',
 
   // ── ES modules (app.js import graph) ─────────────────────
   BASE + 'app.js',
@@ -132,6 +139,10 @@ self.addEventListener('activate', function (event) {
           // own, so every stylesheet it links has to be warmed alongside
           // the HTML or an updated page paints unstyled for one cycle.
           BASE + 'dacum-typography.css',
+          BASE + 'dacum-rtl.css',
+          // Without this the page repaints in English for one cycle
+          // after an update, which is jarring for an Arabic user.
+          BASE + 'translations.js',
           BASE + 'app.js',
         ];
         return caches.open(CACHE_NAME).then(function (cache) {

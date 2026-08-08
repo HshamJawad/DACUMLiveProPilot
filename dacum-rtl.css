@@ -1,0 +1,236 @@
+/* ══════════════════════════════════════════════════════════════
+   dacum-rtl.css  —  DACUM Live Pro
+   ------------------------------------------------------------
+   TWO things live here and nothing else:
+
+     1. The EN | FR | AR switcher styling (needed in every
+        language, so it sits OUTSIDE the .dacum-rtl scope).
+     2. Layout mirroring for right-to-left languages, scoped
+        entirely under `body.dacum-rtl`.
+
+   Everything in section 2 is inert until translations.js adds
+   the class, so this file can be loaded unconditionally and
+   costs an LTR user nothing.
+
+   LOAD ORDER — this must come LAST, after dacum-styles.css,
+   dacum-components.css, dacum-typography.css and
+   dacum-responsive.css, or the mirroring will lose to the
+   base rules on equal specificity.
+   ══════════════════════════════════════════════════════════════ */
+
+
+/* ─────────────────────────────────────────────────────────────
+   1. LANGUAGE SWITCHER  (all languages)
+   ───────────────────────────────────────────────────────────── */
+
+#dacumLangWrap {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 2px;
+  gap: 2px;
+  border: 1.5px solid #e2e2e4;
+  border-radius: 99px;
+  background: #f4f4f5;
+  margin-inline-end: 8px;
+}
+
+.dacum-lang-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font: 600 0.72em/1 inherit;
+  letter-spacing: 0.03em;
+  padding: 5px 9px;
+  min-width: 32px;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dacum-lang-btn:hover  { color: #1a1a1a; }
+
+.dacum-lang-btn.is-active {
+  background: #fff;
+  color: #4f46e5;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.dacum-lang-btn:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 1px;
+}
+
+/* The AR pill renders Latin letters, so it keeps the UI font.
+   Only the panel it switches TO changes typeface. */
+
+
+/* ─────────────────────────────────────────────────────────────
+   2. RTL LAYER  —  everything below requires body.dacum-rtl
+   ───────────────────────────────────────────────────────────── */
+
+/* Arabic needs a face with proper Kashida and diacritic metrics;
+   Latin-first UI stacks render it with fallback glyphs that sit
+   too small on the line. Cairo is used at a slightly larger size
+   because Arabic x-height reads smaller than Latin at parity. */
+body.dacum-rtl,
+body.dacum-rtl input,
+body.dacum-rtl textarea,
+body.dacum-rtl select,
+body.dacum-rtl button {
+  font-family: 'Cairo', 'Tajawal', 'Noto Sans Arabic',
+               'Segoe UI', Tahoma, sans-serif;
+}
+
+body.dacum-rtl {
+  font-size: 1.03em;
+  line-height: 1.75;   /* Arabic ascenders/descenders need the room */
+}
+
+
+/* ── Text alignment ────────────────────────────────────────────
+   `text-align: right` is deliberate rather than `start`: several
+   base rules hard-code `left`, and `start` would lose to them on
+   specificity in exactly the places that matter most. */
+body.dacum-rtl h1,
+body.dacum-rtl h2,
+body.dacum-rtl h3,
+body.dacum-rtl h4,
+body.dacum-rtl p,
+body.dacum-rtl label,
+body.dacum-rtl li,
+body.dacum-rtl td,
+body.dacum-rtl th,
+body.dacum-rtl input,
+body.dacum-rtl textarea {
+  text-align: right;
+}
+
+/* Fields whose content is NEVER Arabic. Forcing these back to LTR
+   prevents the bidi algorithm from reordering digits, codes and
+   file names into nonsense. */
+body.dacum-rtl input[type="date"],
+body.dacum-rtl input[type="number"],
+body.dacum-rtl input[type="email"],
+body.dacum-rtl input[type="url"],
+body.dacum-rtl input[type="tel"],
+body.dacum-rtl .task-code,
+body.dacum-rtl .duty-code,
+body.dacum-rtl .score-cell,
+body.dacum-rtl code,
+body.dacum-rtl pre {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: isolate;
+}
+
+
+/* ── Flex rows that carry meaning in their order ───────────────
+   A toolbar's left/right grouping is semantic, not decorative:
+   "back" belongs on the side the reader came from. `dir=rtl` on
+   <html> already reverses flex main-axis direction, so most rows
+   need no rule at all — these are the ones with explicit
+   justify-content or row-reverse in the base sheets. */
+body.dacum-rtl .tab-header-row,
+body.dacum-rtl .section-header-editable,
+body.dacum-rtl .image-upload-container {
+  flex-direction: row-reverse;
+}
+
+/* Proceed / Back navigation: the arrow glyphs in the labels are
+   translated (→ becomes ←) inside translations.js, so the button
+   ORDER is all that needs mirroring here. */
+body.dacum-rtl .step-nav-row {
+  flex-direction: row-reverse;
+}
+
+
+/* ── Top toolbar ───────────────────────────────────────────────
+   #dacumTopToolbar is a three-zone bar. Under dir=rtl the zones
+   swap automatically; what does NOT swap is anything positioned
+   with physical left/right, so those are restated. */
+body.dacum-rtl #dacumTopToolbar .dtb-icon {
+  margin-inline-end: 5px;
+  margin-inline-start: 0;
+}
+
+
+/* ── Sidebar ───────────────────────────────────────────────────
+   The projects sidebar slides in from the inline-start edge. Its
+   base transform is a physical translateX, which points the wrong
+   way once the page is mirrored. */
+body.dacum-rtl #dacumProjectsSidebar {
+  left: auto;
+  right: 0;
+}
+
+body.dacum-rtl #dacumProjectsSidebar.is-collapsed {
+  transform: translateX(100%);
+}
+
+
+/* ── Lists, bullets and indentation ────────────────────────────
+   padding-left on a list is the single most common thing that
+   strands bullets on the wrong side. */
+body.dacum-rtl ul,
+body.dacum-rtl ol {
+  padding-left: 0;
+  padding-right: 24px;
+}
+
+
+/* ── Directional glyphs ────────────────────────────────────────
+   Emoji and icon glyphs that encode direction (arrows, pointing
+   hands) must be flipped; everything else must NOT be, or logos
+   and photographs come out mirrored. Applied narrowly, by class. */
+body.dacum-rtl .rtl-flip {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
+
+/* ── Tables ────────────────────────────────────────────────────
+   Verification and clustering tables are read as matrices. The
+   header column must move to the right with the text. */
+body.dacum-rtl table {
+  direction: rtl;
+}
+
+body.dacum-rtl table th:first-child,
+body.dacum-rtl table td:first-child {
+  text-align: right;
+}
+
+
+/* ── Inputs with leading icons / padding ───────────────────────
+   Any base rule using padding-left to clear an icon needs the
+   logical equivalent once mirrored. */
+body.dacum-rtl .input-with-icon {
+  padding-left: 12px;
+  padding-right: 38px;
+}
+
+
+/* ── Scroll shadows and borders ────────────────────────────────
+   border-left as a visual "spine" on cards reads as a left margin
+   cue; in RTL it belongs on the other edge. */
+body.dacum-rtl .section-container,
+body.dacum-rtl .duty-card,
+body.dacum-rtl .cluster-card {
+  border-left: none;
+  border-right: 4px solid var(--accent, #6366f1);
+}
+
+
+/* ── Print / export preview ────────────────────────────────────
+   The on-screen preview should match what Word will produce. PDF
+   export is intentionally NOT wired for Arabic yet (jsPDF does no
+   Arabic shaping) — translations.js shows msgPdfArabicUnsupported
+   instead. */
+@media print {
+  body.dacum-rtl {
+    direction: rtl;
+  }
+}
