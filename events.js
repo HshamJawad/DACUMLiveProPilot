@@ -882,51 +882,20 @@ function _showTaskVerificationHelp() {
 
   _showHelpModal({
     id:    'taskVerificationHelpModal',
-    icon:  '🎯',
-    title: 'Why Task Verification Matters',
+    icon:  '\u{1F3AF}',
+    title: _t('helpTVTitle'),
     maxWidth: '560px',
-    intro: 'Verification turns the workshop panel\u2019s judgement into evidence you can ' +
-           'defend. Rate each task on three independent 0\u20133 scales. Nothing is added ' +
-           'to or removed from the DACUM chart at this stage \u2014 verification ' +
-           '<strong>prioritises, it does not filter</strong>.',
+    intro: _t('helpTVIntro'),
     items: [
-      ['⭐', 'Importance',
-       '0 = Not Important, 1 = Somewhat, 2 = Important, 3 = Critical. Governs whether a ' +
-       'task is included and how strictly it is assessed later.'],
-      ['🔁', 'Frequency',
-       '0 = Rarely, 1 = Sometimes, 2 = Often, 3 = Daily. Count how often <em>the worker</em> ' +
-       'performs the task on the job &mdash; not how often a single unit, client or product ' +
-       'needs it. A car needs a new battery every few years, but a mechanic fits batteries ' +
-       'daily. Ask the panel &ldquo;how often do <em>you</em> do this?&rdquo; Frequency guides ' +
-       'sequencing and practice opportunities &mdash; not how long a task is taught.'],
-      ['🧠', 'Learning Difficulty',
-       '0 = Easy, 1 = Moderate, 2 = Challenging, 3 = Very Difficult. The main driver of ' +
-       'instructional time and practice volume.'],
-      ['👥', 'Data collection mode',
-       'Choose this first. <em>Workshop</em> records how many panel members chose each ' +
-       'level and reports weighted means. <em>Individual / Survey</em> records one ' +
-       'respondent\u2019s rating.'],
-      ['✅', 'Complete a task fully',
-       'All three dimensions must be set before a task counts as Complete and before it ' +
-       'enters the Task Score, the Priority Index and the results chart.'],
-      ['📊', 'Results chart',
-       'The 📊 button opens a grouped bar chart per duty, tasks in DACUM order. The ' +
-       'dashed line is that duty\u2019s own average.'],
+      ['\u2B50',        _t('helpTVK1'), _t('helpTVV1')],
+      ['\u{1F501}',     _t('helpTVK2'), _t('helpTVV2')],
+      ['\u{1F9E0}',     _t('helpTVK3'), _t('helpTVV3')],
+      ['\u{1F465}',     _t('helpTVK4'), _t('helpTVV4')],
+      ['\u2705',        _t('helpTVK5'), _t('helpTVV5')],
+      ['\u{1F4CA}',     _t('helpTVK6'), _t('helpTVV6')],
     ],
-    bodyHtml:
-      '<p style="' + P + '"><strong style="color:#1e293b;">What this feeds into.</strong> ' +
-      'Verification is an input, not a decision. Its output flows in order into ' +
-      'Clustering &rarr; Learning Outcomes &rarr; Performance Criteria &rarr; Modules. ' +
-      'Tasks rating high here will generally need more detailed learning outcomes and ' +
-      'more precise assessment criteria &mdash; but that judgement belongs to those ' +
-      'later stages, not this one.</p>',
-    note:
-      'The three dimensions do not drive the same decision, so a high total is not by ' +
-      'itself a call for intensive training: a daily, critical but <em>easy</em> task ' +
-      'raises the score without needing much instructional time. And the duty average is ' +
-      '<strong>relative</strong> &mdash; in a duty where every task is critical, half ' +
-      'will still fall below it. A task below the line stays on the DACUM chart; only ' +
-      'the depth of its treatment changes.',
+    bodyHtml: '<p style="' + P + '">' + _t('helpTVBody') + '</p>',
+    note: _t('helpTVNote'),
   });
 }
 

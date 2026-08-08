@@ -7,6 +7,24 @@ import { appState } from './state.js';
 import { showStatus, escapeHtml } from './renderer.js';
 import { getDutyLetter, getDutyCode, getTaskCodeShort, getDutyLabel } from './codes.js';
 
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+/* Duty letters stay Latin inside Arabic sentences. */
+const _bdi = (code) => `<bdi>${code}</bdi>`;
+
+/* The 0-3 rating scale is deliberately NOT translated: Latin digits read
+   correctly in Arabic, and converting them would break sorting, the
+   charts and every CSV a facilitator has already exported. */
+const SCALE = '<span style="font-weight:400;font-size:.85em;">(0-3)</span>';
+
+/* An explicit map rather than 'prio' + capitalise(level). A built key is
+   invisible to the key validator and a renamed level would fail silently
+   at runtime; this way a missing entry is caught before shipping. */
+const PRIORITY_KEY = { high: 'prioHigh', medium: 'prioMedium', low: 'prioLow' };
+
+
 // ── Mode Controls ─────────────────────────────────────────────
 
 export function updateCollectionMode() {
@@ -25,7 +43,7 @@ export function updateCollectionMode() {
     dashboardSection.style.display = 'none';
   }
   loadDutiesForVerification();
-  showStatus(`Data collection mode: ${appState.collectionMode === 'workshop' ? 'Workshop (Facilitated)' : 'Individual / Survey'}`, 'success');
+  showStatus(_tf('msgCollectionMode', { mode: _t(appState.collectionMode === 'workshop' ? 'modeWorkshop' : 'modeSurvey') }), 'success');
 }
 
 export function updateWorkflowMode() {
@@ -47,14 +65,14 @@ export function updateWorkflowMode() {
     priorityFormulaSection.style.display =
       (appState.workflowMode === 'standard' && appState.collectionMode === 'workshop') ? 'block' : 'none';
   }
-  showStatus(`Workflow mode: ${appState.workflowMode === 'standard' ? 'Standard (DACUM)' : 'Extended (DACUM)'}`, 'success');
+  showStatus(_tf('msgWorkflowMode', { mode: _t(appState.workflowMode === 'standard' ? 'modeStandard' : 'modeExtended') }), 'success');
 }
 
 export function updateParticipantCount() {
   const input = document.getElementById('workshopParticipants');
   appState.workshopParticipants = parseInt(input.value) || 10;
   validateAndComputeWorkshopResults();
-  showStatus(`Participants set to ${appState.workshopParticipants}. Re-validating all tasks...`, 'success');
+  showStatus(_tf('msgParticipantsSet', { n: appState.workshopParticipants }), 'success');
 }
 
 export function updatePriorityFormula() {
@@ -64,7 +82,7 @@ export function updatePriorityFormula() {
   else if (ifdRadio.checked) appState.priorityFormula = 'ifd';
   validateAndComputeWorkshopResults();
   refreshDashboard();
-  showStatus(`Priority formula: ${appState.priorityFormula === 'if' ? 'I × F' : 'I × F × D'}`, 'success');
+  showStatus(_tf('msgPriorityFormula', { formula: appState.priorityFormula === 'if' ? 'I × F' : 'I × F × D' }), 'success');
 }
 
 export function updateTrainingLoadMethod() {
@@ -72,7 +90,7 @@ export function updateTrainingLoadMethod() {
   appState.trainingLoadMethod = advanced && advanced.checked ? 'advanced' : 'simple';
   const label = document.getElementById('trainingLoadMethodLabel');
   if (label) {
-    label.innerHTML = `Current Method: <strong style="color:#667eea;">${appState.trainingLoadMethod === 'advanced' ? 'Advanced' : 'Simple'}</strong>`;
+    label.innerHTML = `${_t('lblCurrentMethod')} <strong style="color:#667eea;">${_t(appState.trainingLoadMethod === 'advanced' ? 'methodAdvanced' : 'methodSimple')}</strong>`;
   }
   updateDutyLevelSummary();
 }
@@ -185,7 +203,7 @@ function _confirmIfOrphansWouldBeLost() {
 // Manual "Refresh Duties & Tasks" button, and the entry-point sync.
 export function refreshVerificationTab() {
   if (!_confirmIfOrphansWouldBeLost()) {
-    showStatus('Refresh cancelled — no ratings were lost', 'success');
+    showStatus(_t('msgRefreshCancelled'), 'success');
     return false;
   }
   loadDutiesForVerification();
@@ -275,7 +293,7 @@ export function loadDutiesForVerification() {
   // path that rebuilds — the button, tab entry, and the collection /
   // workflow mode switches — leaves the tracker consistent.
   _lastVerificationSignature = _dutiesSignature();
-  showStatus(`✓ Loaded ${totalDuties} duties with ${totalTasks} tasks for verification`, 'success');
+  showStatus('✓ ' + _tf('msgLoadedForVerification', { duties: totalDuties, tasks: totalTasks }), 'success');
 }
 
 // ── Accordion HTML Builder ────────────────────────────────────
@@ -347,7 +365,7 @@ function createDutyAccordion(dutyId, dutyText, tasks, dutyIndex = 0) {
           <td class="extended-only" style="width:10%;text-align:center;">
             <div class="performs-task-toggle">
               <input type="checkbox" id="performs_${taskKey}" data-action="performs-task" data-task-key="${taskKey}" ${ratings.performsTask ? 'checked' : ''}>
-              <label for="performs_${taskKey}">Yes</label>
+              <label for="performs_${taskKey}">${_t('lblYes')}</label>
             </div>
           </td>
           <td class="extended-only" style="width:12%;">
@@ -356,42 +374,42 @@ function createDutyAccordion(dutyId, dutyText, tasks, dutyIndex = 0) {
           <td class="extended-only" style="width:8%;text-align:center;"><span class="score-display" id="weighted_${taskKey}">${weightedScore}</span></td>
           <td class="extended-only" style="width:10%;text-align:center;"><span id="priority_${taskKey}">${priorityHtml}</span></td>
           <td class="extended-only" style="width:15%;">
-            <textarea class="task-comments" id="comments_${taskKey}" data-action="update-comments" data-task-key="${taskKey}" placeholder="Optional comments...">${escapeHtml(ratings.comments || '')}</textarea>
+            <textarea class="task-comments" id="comments_${taskKey}" data-action="update-comments" data-task-key="${taskKey}" placeholder="${_t('phComments')}">${escapeHtml(ratings.comments || '')}</textarea>
           </td>
         ` : ''}
       </tr>`;
   }).join('');
 
   const tableHeader = !isExtended && !isWorkshop ? `<tr>
-    <th>Task</th><th>Importance<br><span style="font-weight:400;font-size:.85em;">(0-3)</span></th>
-    <th>Frequency<br><span style="font-weight:400;font-size:.85em;">(0-3)</span></th>
-    <th>Learning Difficulty<br><span style="font-weight:400;font-size:.85em;">(0-3)</span></th>
-    <th>Task Score</th><th>Completion</th></tr>`
+    <th>${_t('thTask')}</th><th>${_t('thImportance')}<br>${SCALE}</th>
+    <th>${_t('thFrequency')}<br>${SCALE}</th>
+    <th>${_t('thLearningDifficulty')}<br>${SCALE}</th>
+    <th>${_t('thTaskScore')}</th><th>${_t('thCompletion')}</th></tr>`
   : !isExtended && isWorkshop ? `<tr>
-    <th>Task</th><th>Importance Counts<br><span style="font-weight:400;font-size:.85em;">(0-3)</span></th>
-    <th>Frequency Counts<br><span style="font-weight:400;font-size:.85em;">(0-3)</span></th>
-    <th>Difficulty Counts<br><span style="font-weight:400;font-size:.85em;">(0-3)</span></th>
-    <th>Mean<br>Importance</th><th>Mean<br>Frequency</th><th>Mean<br>Difficulty</th><th>Priority<br>Index</th></tr>`
+    <th>${_t('thTask')}</th><th>${_t('thImportanceCounts')}<br>${SCALE}</th>
+    <th>${_t('thFrequencyCounts')}<br>${SCALE}</th>
+    <th>${_t('thDifficultyCounts')}<br>${SCALE}</th>
+    <th>${_t('thMeanImportance')}</th><th>${_t('thMeanFrequency')}</th><th>${_t('thMeanDifficulty')}</th><th>${_t('thPriorityIndex')}</th></tr>`
   : `<tr>
-    <th>Task</th>
-    <th>${isWorkshop ? 'Importance Counts' : 'Importance'}<br><span style="font-weight:400;font-size:.85em;">(0-3)</span></th>
-    <th>${isWorkshop ? 'Frequency Counts' : 'Frequency'}<br><span style="font-weight:400;font-size:.85em;">(0-3)</span></th>
-    <th>${isWorkshop ? 'Difficulty Counts' : 'Difficulty'}<br><span style="font-weight:400;font-size:.85em;">(0-3)</span></th>
-    <th class="extended-only">Performs?</th>
-    <th class="extended-only">${isWorkshop ? 'Criticality Counts' : 'Criticality'}<br><span style="font-weight:400;font-size:.85em;">(0-3)</span></th>
-    <th class="extended-only">Weighted Score</th>
-    <th class="extended-only">Priority</th>
-    <th class="extended-only">Comments</th></tr>`;
+    <th>${_t('thTask')}</th>
+    <th>${_t(isWorkshop ? 'thImportanceCounts' : 'thImportance')}<br>${SCALE}</th>
+    <th>${_t(isWorkshop ? 'thFrequencyCounts' : 'thFrequency')}<br>${SCALE}</th>
+    <th>${_t(isWorkshop ? 'thDifficultyCounts' : 'thDifficulty')}<br>${SCALE}</th>
+    <th class="extended-only">${_t('thPerforms')}</th>
+    <th class="extended-only">${_t(isWorkshop ? 'thCriticalityCounts' : 'thCriticality')}<br>${SCALE}</th>
+    <th class="extended-only">${_t('thWeightedScore')}</th>
+    <th class="extended-only">${_t('thPriority')}</th>
+    <th class="extended-only">${_t('thComments')}</th></tr>`;
 
   return `
     <div class="duty-accordion">
       <div class="duty-accordion-header" data-duty="${dutyId}">
-        <div class="duty-title">Duty ${dutyLetter}: ${escapeHtml(dutyText)}</div>
+        <div class="duty-title">${_tf('lblDuty', { code: _bdi(dutyLetter) })}: ${escapeHtml(dutyText)}</div>
         <div class="duty-header-actions">
           <button type="button" class="tvc-open-btn"
                   data-action="show-duty-chart" data-duty-index="${dutyIndex}"
-                  title="View verification results chart for this duty"
-                  aria-label="View verification results chart for this duty">📊</button>
+                  title="${_t('ttDutyChart')}"
+                  aria-label="${_t('ttDutyChart')}">📊</button>
           <div class="duty-toggle">▼</div>
         </div>
       </div>
@@ -491,7 +509,7 @@ function updateComputedValues(taskKey) {
     if (scoreEl && completionEl) {
       const isComplete = ratings.importance !== null && ratings.frequency !== null && ratings.difficulty !== null;
       scoreEl.textContent = isComplete ? (ratings.importance + ratings.frequency + ratings.difficulty) : '-';
-      completionEl.innerHTML = `<span class="completion-indicator ${isComplete ? 'complete' : 'incomplete'}">${isComplete ? '✓ Complete' : '○ Incomplete'}</span>`;
+      completionEl.innerHTML = `<span class="completion-indicator ${isComplete ? 'complete' : 'incomplete'}">${isComplete ? '✓ ' + _t('lblComplete') : '○ ' + _t('lblIncomplete')}</span>`;
     }
   } else {
     const weightedEl = document.getElementById(`weighted_${taskKey}`);
@@ -502,10 +520,10 @@ function updateComputedValues(taskKey) {
         const ws = (ratings.importance * ratings.frequency) + ratings.difficulty + ratings.criticality;
         weightedEl.textContent = ws;
         let pl = ws >= 10 ? 'high' : ws >= 6 ? 'medium' : 'low';
-        priorityEl.innerHTML = `<span class="priority-badge ${pl}">${pl.toUpperCase()}</span>`;
+        priorityEl.innerHTML = `<span class="priority-badge ${pl}">${_t(PRIORITY_KEY[pl] || 'prioLow')}</span>`;
       } else {
         weightedEl.textContent = '-';
-        priorityEl.innerHTML = `<span class="priority-badge low">LOW</span>`;
+        priorityEl.innerHTML = `<span class="priority-badge low">${_t('prioLow')}</span>`;
       }
     }
   }
@@ -608,10 +626,10 @@ function showValidationMessage(taskKey, dimension, isError, isWarning, sum) {
   const el = document.getElementById(`warning_${taskKey}_${dimension}`);
   if (!el) return;
   if (isError) {
-    el.innerHTML = `<p>❌ ERROR: Total responses (${sum}) exceeds ${appState.workshopParticipants} participants. Cannot calculate.</p>`;
+    el.innerHTML = `<p>❌ ${_tf('msgResponsesExceed', { sum: sum, max: appState.workshopParticipants })}</p>`;
     el.className = 'validation-warning show error';
   } else if (isWarning) {
-    el.innerHTML = `<p>⚠️ WARNING: Only ${sum} of ${appState.workshopParticipants} participants responded. Calculation will use available responses.</p>`;
+    el.innerHTML = `<p>⚠️ ${_tf('msgResponsesPartial', { sum: sum, max: appState.workshopParticipants })}</p>`;
     el.className = 'validation-warning show warning';
   } else {
     el.className = 'validation-warning';
@@ -752,10 +770,10 @@ export function refreshDashboard() {
         ? `<div style="grid-column:1/-1;text-align:center;margin-bottom:8px;font-size:0.82em;color:#667eea;font-weight:600;">Showing results for: ${escapeHtml(projectLabel)}</div>`
         : '';
       summaryEl.innerHTML = `${labelHtml}
-        <div class="summary-card"><h4>Tasks Verified</h4><p>${validResults.length}</p></div>
+        <div class="summary-card"><h4>${_t('cardTasksVerified')}</h4><p>${validResults.length}</p></div>
         <div class="summary-card"><h4>Avg Priority Index</h4><p>${avgPriority.toFixed(2)}</p></div>
         <div class="summary-card"><h4>High Priority Tasks</h4><p>${highPriorityCount} tasks</p></div>
-        <div class="summary-card"><h4>Formula Used</h4><p>${formulaSource === 'if' ? 'I × F' : 'I × F × D'}</p></div>`;
+        <div class="summary-card"><h4>${_t('cardFormulaUsed')}</h4><p>${formulaSource === 'if' ? 'I × F' : 'I × F × D'}</p></div>`;
     } else {
       summaryEl.innerHTML = '';
     }
@@ -768,7 +786,7 @@ function updateDashboardTable(results) {
   const tableBody = document.getElementById('dashboardTableBody');
   if (!tableBody) return;
   if (results.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:#999;">No valid task data available.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:#999;">${_t('msgNoTaskData')}</td></tr>`;
     return;
   }
   const topThreshold = results[Math.floor(results.length * 0.3)]?.priorityIndex || 0;
@@ -865,7 +883,7 @@ function updateDutyLevelSummaryFromSource(resultsSource) {
   dutyResults.sort((a,b) => sortBy === 'trainingLoad' ? b.trainingLoad - a.trainingLoad : b.avgPriority - a.avgPriority);
 
   if (dutyResults.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#999;">No valid duty data available.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#999;">${_t('msgNoDutyData')}</td></tr>`;
     return;
   }
   tableBody.innerHTML = dutyResults.map(duty => `<tr>
@@ -882,7 +900,7 @@ function updateDutyLevelSummaryFromSource(resultsSource) {
 }
 
 export function exportDashboard() {
-  if (appState.collectionMode !== 'workshop') { showStatus('Dashboard export only available in Workshop mode', 'error'); return; }
+  if (appState.collectionMode !== 'workshop') { showStatus(_t('msgDashboardWorkshopOnly'), 'error'); return; }
   const codeIndex = _buildCodeIndex(appState.dutiesData || []);
   const validResults = [];
   Object.keys(appState.workshopResults).forEach(taskKey => {
@@ -916,7 +934,7 @@ export function exportDashboard() {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-  showStatus('Dashboard exported as CSV successfully! ✓', 'success');
+  showStatus(_t('msgDashboardExported') + ' ✓', 'success');
 }
 
 // ── Accordion Listeners ───────────────────────────────────────

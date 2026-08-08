@@ -459,3 +459,77 @@ html[dir="rtl"] .skills-level-info-box ul {
   padding-left: 0;
   padding-right: 22px;
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   5. TASK VERIFICATION
+   ───────────────────────────────────────────────────────────── */
+
+/* THE RULE FOR THIS TAB: mirror the layout, never the numbers.
+   Every score, mean, count and index stays in Latin digits and LTR —
+   they are compared column-against-column, exported to CSV, and fed
+   into charts. Flipping them would break sorting and silently corrupt
+   any file a facilitator already shared. */
+
+html[dir="rtl"] .verification-table,
+html[dir="rtl"] .dashboard-table {
+  direction: rtl;
+}
+
+/* Task text is prose and follows the content language; the numeric
+   cells are isolated so a leading minus, decimal point or 0-3 label
+   cannot be dragged to the wrong end of the cell. */
+html[dir="rtl"] .verification-table td:not(:first-child),
+html[dir="rtl"] .dashboard-table td:not(:nth-child(2)):not(:nth-child(3)) {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: center;
+}
+
+html[dir="rtl"] .verification-table th:first-child,
+html[dir="rtl"] .dashboard-table th:nth-child(2),
+html[dir="rtl"] .dashboard-table th:nth-child(3) {
+  text-align: right;
+}
+
+/* The 0-3 rating scale: radio buttons read left-to-right as an ordinal
+   axis (0 → 3). Reversing them would put 3 where a facilitator's eye
+   expects 0 — a data-entry error waiting to happen in a live session,
+   where the panel is calling out numbers at speed. Scales stay LTR in
+   every language, exactly like the digits inside them. */
+html[dir="rtl"] .rating-scale,
+html[dir="rtl"] .count-inputs {
+  direction: ltr;
+}
+
+/* Accordion header: duty title on the reading edge, chart button and
+   chevron on the other. */
+html[dir="rtl"] .duty-accordion-header,
+html[dir="rtl"] .duty-header-actions,
+html[dir="rtl"] .results-dashboard-header,
+html[dir="rtl"] .duty-level-header,
+html[dir="rtl"] .tvc-global-bar {
+  flex-direction: row-reverse;
+}
+
+/* Session ID, participant link and QR payload are opaque identifiers:
+   never reordered, never wrapped mid-token. */
+html[dir="rtl"] #lwSessionId,
+html[dir="rtl"] #lwParticipantLink {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+/* The live-workshop bullet list. */
+html[dir="rtl"] #lwStep1-finalize ul {
+  padding-left: 0;
+  padding-right: 25px;
+}
+
+/* Priority badges size themselves to their label; Arabic labels are
+   wider than "LOW"/"HIGH", so give them room rather than let them wrap. */
+html[dir="rtl"] .priority-badge,
+html[dir="rtl"] .completion-indicator {
+  white-space: nowrap;
+}

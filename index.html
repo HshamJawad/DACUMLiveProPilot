@@ -794,70 +794,71 @@
         <div class="tab-content" id="verification-tab">
             <div class="tab-header-row">
                 <div class="tab-title-with-help">
-                    <h2>🎯 Task Verification &amp; Training Priority</h2>
+                    <h2>🎯 <span data-i18n="h2Verification">Task Verification &amp; Training Priority</span></h2>
                     <button type="button" id="taskVerifyHelpBtn" class="tab-help-btn"
                             title="Why does task verification matter?"
+                            data-i18n="ttVerifyHelp" data-i18n-attr="title"
                             aria-label="Why does task verification matter?"
                             aria-haspopup="dialog">?</button>
                 </div>
                 <button data-action="clear-tab" data-tab-id="verification-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
-                    🗑️ Clear This Tab
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
             
             <!-- Data Collection Mode Selector -->
             <div class="verification-mode-selector">
-                <h3>📊 Data Collection Mode</h3>
+                <h3>📊 <span data-i18n="lblCollectionMode">Data Collection Mode</span></h3>
                 <div class="mode-options">
                     <div class="mode-option">
                         <input type="radio" id="mode-workshop" name="collectionMode" value="workshop" checked>
-                        <label for="mode-workshop">👥 Workshop (Facilitated)</label>
+                        <label for="mode-workshop">👥 <span data-i18n="modeWorkshop">Workshop (Facilitated)</span></label>
                     </div>
                     <div class="mode-option">
                         <input type="radio" id="mode-survey" name="collectionMode" value="survey">
-                        <label for="mode-survey">📝 Individual / Survey</label>
+                        <label for="mode-survey">📝 <span data-i18n="modeSurvey">Individual / Survey</span></label>
                     </div>
                 </div>
             </div>
             
             <!-- Workflow Mode Selector -->
             <div class="verification-mode-selector" style="margin-top: 20px;">
-                <h3>⚙️ Workflow Mode</h3>
+                <h3>⚙️ <span data-i18n="lblWorkflowMode">Workflow Mode</span></h3>
                 <div class="mode-options">
                     <div class="mode-option">
                         <input type="radio" id="workflow-standard" name="workflowMode" value="standard" checked>
-                        <label for="workflow-standard">📊 Standard (DACUM)</label>
+                        <label for="workflow-standard">📊 <span data-i18n="modeStandard">Standard (DACUM)</span></label>
                     </div>
                     <div class="mode-option">
                         <input type="radio" id="workflow-extended" name="workflowMode" value="extended">
-                        <label for="workflow-extended">📈 Extended (DACUM)</label>
+                        <label for="workflow-extended">📈 <span data-i18n="modeExtended">Extended (DACUM)</span></label>
                     </div>
                 </div>
             </div>
             
             <!-- Workshop Participants Count (Workshop mode only) -->
             <div class="workshop-participants" id="workshopParticipantsSection" style="display: none;">
-                <h3 style="display: inline-block; margin: 0 15px 0 0;">👥 Number of Workshop Participants:</h3>
+                <h3 style="display: inline-block; margin: 0 15px 0 0;">👥 <span data-i18n="lblParticipantCount">Number of Workshop Participants:</span></h3>
                 <input type="number" id="workshopParticipants" min="1" max="50" value="10" style="display: inline-block; width: 80px;">
-                <p style="color: white; margin: 10px 0 0 0; font-size: 0.9em;">
+                <p style="color: white; margin: 10px 0 0 0; font-size: 0.9em;" data-i18n="hintParticipants">
                     Enter the total number of workshop participants (recommended: 8–20). This is the maximum number of responses per task.
                 </p>
             </div>
             
             <!-- Priority Formula Selector (Standard mode only) -->
             <div class="priority-formula-selector" id="priorityFormulaSection" style="display: none;">
-                <h4>📐 Priority Calculation Formula</h4>
+                <h4>📐 <span data-i18n="lblPriorityFormula">Priority Calculation Formula</span></h4>
                 <div class="formula-options">
                     <div class="formula-option">
                         <input type="radio" id="formula-if" name="priorityFormula" value="if" checked>
-                        <label for="formula-if">Importance × Frequency</label>
+                        <label for="formula-if" data-i18n="formulaIF">Importance × Frequency</label>
                     </div>
                     <div class="formula-option">
                         <input type="radio" id="formula-ifd" name="priorityFormula" value="ifd">
-                        <label for="formula-ifd">Importance × Frequency × Difficulty</label>
+                        <label for="formula-ifd" data-i18n="formulaIFD">Importance × Frequency × Difficulty</label>
                     </div>
                 </div>
-                <p style="margin: 10px 0 0 0; color: #666; font-size: 0.9em;">
+                <p style="margin: 10px 0 0 0; color: #666; font-size: 0.9em;" data-i18n="hintPriorityFormula">
                     Select the formula to calculate Priority Index for training priority ranking.
                 </p>
             </div>
@@ -865,10 +866,11 @@
             <!-- Duties and Tasks Accordion Container -->
             <div class="tvc-global-bar">
                 <button type="button" id="btnTVChart" class="tvc-global-btn"
-                        title="Open the verification results chart">
-                    📊 View Results Chart
+                        title="Open the verification results chart"
+                        data-i18n="ttViewChart" data-i18n-attr="title">
+                    📊 <span data-i18n="btnViewChart">View Results Chart</span>
                 </button>
-                <span class="tvc-global-hint">Grouped bar chart per duty — tasks in DACUM order.</span>
+                <span class="tvc-global-hint" data-i18n="hintChartBar">Grouped bar chart per duty — tasks in DACUM order.</span>
             </div>
             <div id="verificationAccordionContainer">
                 <!-- Will be populated dynamically -->
@@ -880,15 +882,15 @@
                 <!-- ── Project selector ── -->
                 <div id="dashboardProjectSelectorWrap" style="display:none; align-items:center; gap:12px; padding:10px 16px 0; flex-wrap:wrap;">
                   <label for="dashboardProjectSelector" style="font-size:0.88em; font-weight:700; color:#374151; white-space:nowrap;">
-                    📂 View results for:
+                    📂 <span data-i18n="lblViewResultsFor">View results for:</span>
                   </label>
                   <select id="dashboardProjectSelector" class="dpd-selector">
-                    <option value="__current__">📊 Current project</option>
+                    <option value="__current__" data-i18n="optCurrentProject">📊 Current project</option>
                   </select>
                 </div>
 
                 <div class="results-dashboard-header" id="btnToggleDashboard">
-                    <h3>📊 Workshop Results Dashboard</h3>
+                    <h3>📊 <span data-i18n="lblDashboard">Workshop Results Dashboard</span></h3>
                     <div class="results-dashboard-toggle">▼</div>
                 </div>
                 <div class="results-dashboard-content" id="dashboardContent">
@@ -903,13 +905,13 @@
                             <table class="dashboard-table" id="dashboardTable">
                                 <thead>
                                     <tr>
-                                        <th>Rank</th>
-                                        <th>Duty</th>
-                                        <th>Task</th>
-                                        <th>Mean<br>Importance</th>
-                                        <th>Mean<br>Frequency</th>
-                                        <th>Mean<br>Difficulty</th>
-                                        <th>Priority<br>Index</th>
+                                        <th data-i18n="thRank">Rank</th>
+                                        <th data-i18n="thDuty">Duty</th>
+                                        <th data-i18n="thTask">Task</th>
+                                        <th data-i18n="thMeanImportance" data-i18n-html>Mean<br>Importance</th>
+                                        <th data-i18n="thMeanFrequency" data-i18n-html>Mean<br>Frequency</th>
+                                        <th data-i18n="thMeanDifficulty" data-i18n-html>Mean<br>Difficulty</th>
+                                        <th data-i18n="thPriorityIndex" data-i18n-html>Priority<br>Index</th>
                                     </tr>
                                 </thead>
                                 <tbody id="dashboardTableBody">
@@ -921,21 +923,21 @@
                         <!-- Duty-Level Summary Section -->
                         <div style="margin-top: 30px; border-top: 2px solid #e5e7eb; padding-top: 20px;">
                             <div class="duty-level-header" id="btnToggleDutyLevelSummary" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f9fafb; border-radius: 8px; margin-bottom: 15px;">
-                                <h4 style="margin: 0; color: #667eea; font-size: 1.1em;">📋 Duty-Level Summary</h4>
+                                <h4 style="margin: 0; color: #667eea; font-size: 1.1em;">📋 <span data-i18n="lblDutySummary">Duty-Level Summary</span></h4>
                                 <div id="dutyLevelToggle" style="font-size: 1.2em; color: #667eea;">▼</div>
                             </div>
                             <div id="dutyLevelContent" style="display: block;">
                                 <!-- Training Load Method Selector -->
                                 <div style="margin-bottom: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; border: 2px solid #667eea;">
-                                    <h5 style="margin: 0 0 10px 0; color: #333; font-size: 1em;">Training Load Calculation Method:</h5>
+                                    <h5 style="margin: 0 0 10px 0; color: #333; font-size: 1em;" data-i18n="lblTrainingLoadMethod">Training Load Calculation Method:</h5>
                                     <div style="display: flex; flex-direction: column; gap: 10px;">
                                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                             <input type="radio" name="trainingLoadMethod" value="advanced" checked style="width: 16px; height: 16px;">
-                                            <span style="font-weight: 600;">Advanced</span> — Σ (Priority Index × Mean Difficulty) <span style="color: #667eea; font-style: italic;">(Recommended)</span>
+                                            <span style="font-weight: 600;" data-i18n="methodAdvanced">Advanced</span> — <span data-i18n="methodAdvancedDesc">Σ (Priority Index × Mean Difficulty)</span> <span style="color: #667eea; font-style: italic;" data-i18n="lblRecommended">(Recommended)</span>
                                         </label>
                                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                             <input type="radio" name="trainingLoadMethod" value="simple" style="width: 16px; height: 16px;">
-                                            <span style="font-weight: 600;">Simple</span> — Average Priority × Tasks Count
+                                            <span style="font-weight: 600;" data-i18n="methodSimple">Simple</span> — <span data-i18n="methodSimpleDesc">Average Priority × Tasks Count</span>
                                         </label>
                                     </div>
                                     <div id="trainingLoadMethodLabel" style="margin-top: 10px; padding: 8px; background: white; border-radius: 4px; font-size: 0.9em; color: #666;">
@@ -945,10 +947,10 @@
                                 
                                 <!-- Sort Selector -->
                                 <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                                    <label style="font-weight: 600; color: #333;">Sort By:</label>
+                                    <label style="font-weight: 600; color: #333;" data-i18n="lblSortBy">Sort By:</label>
                                     <select id="dutySortSelector" onchange="window.updateDutyLevelSummary()" style="padding: 8px; border: 2px solid #e5e7eb; border-radius: 4px; font-size: 0.9em;">
-                                        <option value="priority">Average Priority Index</option>
-                                        <option value="trainingLoad">Training Load Score</option>
+                                        <option value="priority" data-i18n="sortAvgPriority">Average Priority Index</option>
+                                        <option value="trainingLoad" data-i18n="sortTrainingLoad">Training Load Score</option>
                                     </select>
                                 </div>
                                 
@@ -957,15 +959,15 @@
                                     <table class="dashboard-table" id="dutyLevelTable">
                                         <thead>
                                             <tr>
-                                                <th>Duty Title</th>
-                                                <th>Total<br>Tasks</th>
-                                                <th>Valid<br>Tasks</th>
-                                                <th>Avg Mean<br>Importance</th>
-                                                <th>Avg Mean<br>Frequency</th>
-                                                <th>Avg Mean<br>Difficulty</th>
-                                                <th>Avg Priority<br>Index</th>
-                                                <th>High Priority<br>Tasks</th>
-                                                <th>Training Load<br>Score</th>
+                                                <th data-i18n="thDutyTitle">Duty Title</th>
+                                                <th data-i18n="thTotalTasks" data-i18n-html>Total<br>Tasks</th>
+                                                <th data-i18n="thValidTasks" data-i18n-html>Valid<br>Tasks</th>
+                                                <th data-i18n="thAvgImportance" data-i18n-html>Avg Mean<br>Importance</th>
+                                                <th data-i18n="thAvgFrequency" data-i18n-html>Avg Mean<br>Frequency</th>
+                                                <th data-i18n="thAvgDifficulty" data-i18n-html>Avg Mean<br>Difficulty</th>
+                                                <th data-i18n="thAvgPriority" data-i18n-html>Avg Priority<br>Index</th>
+                                                <th data-i18n="thHighPriorityTasks" data-i18n-html>High Priority<br>Tasks</th>
+                                                <th data-i18n="thTrainingLoad" data-i18n-html>Training Load<br>Score</th>
                                             </tr>
                                         </thead>
                                         <tbody id="dutyLevelTableBody">
@@ -979,7 +981,7 @@
                         <!-- Export Button -->
                         <div style="text-align: center;">
                             <button class="btn-export-dashboard" id="btnExportDashboard">
-                                📊 Export Dashboard as CSV
+                                📊 <span data-i18n="btnExportDashboardCSV">Export Dashboard as CSV</span>
                             </button>
                         </div>
                     </div>
@@ -996,42 +998,42 @@
                      because presenting it as the primary action was what
                      made new users think it was a required step. -->
                 <button class="btn-add" id="btnLoadDutiesForVerification" style="background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1; padding: 9px 20px; font-size: 0.9em; font-weight: 600;">
-                    🔄 Refresh Duties &amp; Tasks
+                    🔄 <span data-i18n="btnRefreshDutiesTasks">Refresh Duties &amp; Tasks</span>
                 </button>
-                <p style="color: #94a3b8; margin-top: 10px; font-size: 0.82em;">This tab updates automatically when duties or tasks change. Use this only to force a rebuild.</p>
+                <p style="color: #94a3b8; margin-top: 10px; font-size: 0.82em;" data-i18n="hintRefreshDuties">This tab updates automatically when duties or tasks change. Use this only to force a rebuild.</p>
             </div>
             
             <!-- ===== LIVE WORKSHOP MODULE (MVP INTEGRATION) ===== -->
             <div id="liveWorkshopSection" style="display: none; margin-top: 40px; padding-top: 40px; border-top: 3px solid #667eea;">
-                <h2 style="color: #667eea; text-align: center; margin-bottom: 20px;">🎯 Live Workshop Voting System</h2>
+                <h2 style="color: #667eea; text-align: center; margin-bottom: 20px;">🎯 <span data-i18n="h2LiveWorkshop">Live Workshop Voting System</span></h2>
                 
                 <!-- Step 1: Finalize for Live Workshop -->
                 <div id="lwStep1-finalize" style="margin: 30px 0;">
                     <div style="background: linear-gradient(135deg, #f0f7ff 0%, #e0f2fe 100%); padding: 25px; border-radius: 12px; border: 2px solid #667eea; margin-bottom: 20px;">
-                        <h3 style="color: #667eea; margin: 0 0 15px 0;">📋 Ready to Start Live Voting?</h3>
-                        <p style="color: #334155; margin: 0 0 15px 0; line-height: 1.6;">
+                        <h3 style="color: #667eea; margin: 0 0 15px 0;">📋 <span data-i18n="lwReadyTitle">Ready to Start Live Voting?</span></h3>
+                        <p style="color: #334155; margin: 0 0 15px 0; line-height: 1.6;" data-i18n="lwReadyIntro">
                             Finalize your duties and tasks to create a live voting session. After finalization:
                         </p>
                         <ul style="color: #334155; margin: 0 0 15px 0; padding-left: 25px; line-height: 1.8;">
-                            <li>✅ Duties and tasks will be <strong>locked</strong> (read-only)</li>
-                            <li>✅ A unique <strong>participant link</strong> will be generated</li>
-                            <li>✅ Participants can vote on all tasks (0-3 scales)</li>
-                            <li>✅ Results will be <strong>aggregated</strong> and ranked by priority</li>
+                            <li>✅ <span data-i18n="lwBullet1" data-i18n-html>Duties and tasks will be <strong>locked</strong> (read-only)</span></li>
+                            <li>✅ <span data-i18n="lwBullet2" data-i18n-html>A unique <strong>participant link</strong> will be generated</span></li>
+                            <li>✅ <span data-i18n="lwBullet3" data-i18n-html>Participants can vote on all tasks (0-3 scales)</span></li>
+                            <li>✅ <span data-i18n="lwBullet4" data-i18n-html>Results will be <strong>aggregated</strong> and ranked by priority</span></li>
                         </ul>
                         <p style="color: #64748b; margin: 0; font-size: 0.9em; font-style: italic;">
-                            <strong>Note:</strong> Make sure all duties and tasks are complete before finalizing.
+                            <span data-i18n="lwNote" data-i18n-html><strong>Note:</strong> Make sure all duties and tasks are complete before finalizing.</span>
                         </p>
                     </div>
                     
                     <div style="text-align: center; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;">
                         <button class="btn-primary"  id="btnLWFinalize" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            🔒 Finalize & Create Live Voting Session
+                            🔒 <span data-i18n="btnLWFinalize">Finalize & Create Live Voting Session</span>
                         </button>
                         <button type="button" class="btn-bypass-verification btn-next-step btn-next-strong" id="btnBypassToClustering">
-                            ⚡ Proceed to Competency Clustering Without Verification
+                            ⚡ <span data-i18n="btnBypassClustering">Proceed to Competency Clustering Without Verification</span>
                         </button>
                         <button  id="btnResetDecision" style="display: none; background: #ef4444; color: white; padding: 15px 30px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            🔄 Reset Decision
+                            🔄 <span data-i18n="btnResetDecision">Reset Decision</span>
                         </button>
                     </div>
                 </div>
@@ -1040,13 +1042,13 @@
                 <div id="lwStep2-session" style="display: none; margin: 30px 0;">
                     <div style="text-align: center; margin-bottom: 20px;">
                         <span style="background: #10b981; color: white; padding: 10px 20px; border-radius: 25px; font-weight: 600; font-size: 1.1em; display: inline-block;">
-                            ✅ FINALIZED & LOCKED
+                            ✅ <span data-i18n="lblFinalizedLocked">FINALIZED & LOCKED</span>
                         </span>
                     </div>
                     
                     <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                        <h3 style="color: white; margin: 0 0 15px 0; font-size: 1.3em;">📢 Live Voting Session Active</h3>
-                        <p style="margin: 0 0 20px 0; opacity: 0.95;">Share this link with participants to start voting:</p>
+                        <h3 style="color: white; margin: 0 0 15px 0; font-size: 1.3em;">📢 <span data-i18n="lwSessionActive">Live Voting Session Active</span></h3>
+                        <p style="margin: 0 0 20px 0; opacity: 0.95;" data-i18n="lwShareLink">Share this link with participants to start voting:</p>
                         <div style="background: white; padding: 20px; border-radius: 8px; margin: 0 0 15px 0;">
                             <div id="lwParticipantLink" 
                                  data-full-url=""
@@ -1074,7 +1076,7 @@
                                            transition: background 0.2s;"
                                     onmouseover="this.style.background='#059669'"
                                     onmouseout="this.style.background='#10b981'">
-                                📋 Copy Link
+                                📋 <span data-i18n="btnCopyLink">Copy Link</span>
                             </button>
                             <button id="btnLWShowQR" 
                                     style="background: #6366f1; 
@@ -1089,17 +1091,17 @@
                                            transition: background 0.2s;"
                                     onmouseover="this.style.background='#4f46e5'"
                                     onmouseout="this.style.background='#6366f1'">
-                                📱 Show QR Code
+                                📱 <span data-i18n="btnShowQR">Show QR Code</span>
                             </button>
                             <span id="lwCopyFeedback" 
                                   style="color: #10b981; 
                                          margin-left: 12px; 
                                          font-weight: 600; 
                                          font-size: 0.9em;
-                                         display: none;">✓ Copied!</span>
+                                         display: none;">✓ <span data-i18n="lblCopied">Copied!</span></span>
                         </div>
                         <p style="margin: 20px 0 0 0; font-size: 0.9em; opacity: 0.9;">
-                            Session ID: <span id="lwSessionId" style="font-family: monospace; font-weight: 600;"></span>
+                            <span data-i18n="lblSessionId">Session ID:</span> <span id="lwSessionId" style="font-family: monospace; font-weight: 600;"></span>
                         </p>
                         <p id="lwProjectInfo" style="margin: 8px 0 0 0; font-size: 0.88em; opacity: 0.85; display:none;">
                             📁 <span id="lwProjectName" style="font-weight:700;"></span>
@@ -1109,10 +1111,10 @@
 
                     <div style="text-align: center; margin: 30px 0; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                         <button id="btnLWFetchResults" class="btn-primary"  style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 15px 40px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            🔄 Refresh Voting Results
+                            🔄 <span data-i18n="btnRefreshVoting">Refresh Voting Results</span>
                         </button>
                         <button id="btnLWCloseVoting" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 15px 40px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
-                            🔒 Close Voting (Lock Submissions)
+                            🔒 <span data-i18n="btnCloseVoting">Close Voting (Lock Submissions)</span>
                         </button>
                     </div>
 
@@ -1123,16 +1125,16 @@
 
                     <!-- Export Buttons (shown after results) -->
                     <div id="lwExportButtons" style="display: none; margin-top: 30px; padding: 25px; background: #f9fafb; border-radius: 12px; border: 2px solid #e5e7eb;">
-                        <h3 style="color: #667eea; margin: 0 0 20px 0; text-align: center;">📥 Export Voting Results</h3>
+                        <h3 style="color: #667eea; margin: 0 0 20px 0; text-align: center;">📥 <span data-i18n="lblExportVotingResults">Export Voting Results</span></h3>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                             <button id="btnLWExportJSON" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em;">
-                                📄 Export JSON<br><span style="font-size: 0.85em; opacity: 0.9;">(With Voting Data)</span>
+                                📄 <span data-i18n="btnExportJSONVoting">Export JSON</span><br><span style="font-size: 0.85em; opacity: 0.9;" data-i18n="subWithVotingData">(With Voting Data)</span>
                             </button>
                             <button id="btnLWExportCSV" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em;">
-                                📊 Export CSV<br><span style="font-size: 0.85em; opacity: 0.9;">(Tasks & Scores)</span>
+                                📊 <span data-i18n="btnExportCSVVoting">Export CSV</span><br><span style="font-size: 0.85em; opacity: 0.9;" data-i18n="subTasksScores">(Tasks & Scores)</span>
                             </button>
                             <button id="btnLWExportSnapshot" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em;">
-                                💾 Download Snapshot<br><span style="font-size: 0.85em; opacity: 0.9;">(Pre-Voting Backup)</span>
+                                💾 <span data-i18n="btnDownloadSnapshot">Download Snapshot</span><br><span style="font-size: 0.85em; opacity: 0.9;" data-i18n="subPreVotingBackup">(Pre-Voting Backup)</span>
                             </button>
                         </div>
                     </div>
@@ -1154,30 +1156,33 @@
                  a button that produces a file when you press it. -->
             <div style="max-width: 800px; margin: 24px auto 16px auto; padding: 12px 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
                 <div style="min-width: 220px; flex: 1 1 auto;">
-                    <p style="margin: 0; font-size: 0.9em; font-weight: 700; color: #334155;">📊 Verification Report</p>
-                    <p style="margin: 2px 0 0; font-size: 0.8em; color: #64748b;">Automatically included as an appendix in the main PDF and Word exports.</p>
+                    <p style="margin: 0; font-size: 0.9em; font-weight: 700; color: #334155;">📊 <span data-i18n="lblVerificationReport">Verification Report</span></p>
+                    <p style="margin: 2px 0 0; font-size: 0.8em; color: #64748b;" data-i18n="hintVerificationReport">Automatically included as an appendix in the main PDF and Word exports.</p>
                 </div>
                 <div style="display: flex; gap: 8px; flex: 0 0 auto;">
                     <button type="button" id="btnTVExportPDF"
                             title="Export the verification results on their own as a PDF"
+                            data-i18n="ttStandalonePDF" data-i18n-attr="title"
                             style="background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; font-size: 0.84em; font-weight: 600; cursor: pointer;">
-                        📄 Standalone PDF
+                        📄 <span data-i18n="btnStandalonePDF">Standalone PDF</span>
                     </button>
                     <button type="button" id="btnTVExportDOCX"
                             title="Export the verification results on their own as a Word document"
+                            data-i18n="ttStandaloneDOCX" data-i18n-attr="title"
                             style="background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; font-size: 0.84em; font-weight: 600; cursor: pointer;">
-                        📝 Standalone DOCX
+                        📝 <span data-i18n="btnStandaloneDOCX">Standalone DOCX</span>
                     </button>
                 </div>
             </div>
             
             <div class="step-nav-row">
                 <button type="button" class="btn-back-step" data-nav-back="additional-info-tab"
-                        title="Return to Additional Info to review or edit">
-                    ← Back to Additional Info
+                        title="Return to Additional Info to review or edit"
+                        data-i18n="ttBackAdditional" data-i18n-attr="title">
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackAdditional">Back to Additional Info</span>
                 </button>
                 <button type="button" id="btnProceedToClustering" class="btn-next-step">
-                    Proceed to Competency Clustering →
+                    <span data-i18n="btnProceedClustering">Proceed to Competency Clustering</span> <span class="rtl-flip">→</span>
                 </button>
             </div>
 
