@@ -21,6 +21,7 @@ import { initImageStore }     from './image_store.js';
 import { clearAiGeneratedFlag } from './refine.js';
 import { initDragDrop }        from './drag_drop.js';
 import { initVerificationCharts } from './verification_charts.js';
+import { initOccupationSuggestions } from './occupations_list.js';
 
 // Expose switchTab globally (called from HTML onclick and live workshop guards)
 window.switchTab = switchTab;
@@ -94,6 +95,11 @@ document.addEventListener('DOMContentLoaded', async function () {
   // delegated onto the permanent container, so it survives every
   // later re-render when the collection or workflow mode changes.
   initVerificationCharts();
+
+  // Occupation Title suggestions. Purely additive — it fills a
+  // <datalist> and touches nothing else, so a failure here cannot
+  // affect any other field.
+  initOccupationSuggestions();
 
   // Check Live Workshop section visibility
   const urlParams = new URLSearchParams(window.location.search);
