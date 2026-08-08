@@ -23,6 +23,14 @@ import { renderAvailableTasks, renderClusters,
 import { renderAll }          from './workshop_snapshots.js';
 import { resetHistoryToCurrentState } from './history.js';
 
+/* i18n access — resolved lazily; see duties.js for why.
+   _tp() picks the correct plural form: Arabic has six categories and
+   "2 duties" must render as the dual «واجبان», not «2 واجب». */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)      : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v)  : k);
+const _tp = (k, n) => (window.i18n ? window.i18n.tp(k, n)  : k);
+
+
 const LS_PROJECTS = 'dacum_projects';
 const LS_ACTIVE   = 'dacum_active_project';
 const MAX_PROJECTS = 50;
@@ -74,7 +82,7 @@ export function createProject(name) {
   try { resetHistoryToCurrentState(); } catch (_) {}
 
   renderProjectsSidebar();
-  showStatus(`✅ Project "${label}" created`, 'success');
+  showStatus('✅ ' + _tf('msgProjectCreated', { name: label }), 'success');
   return id;
 }
 
@@ -195,13 +203,10 @@ export function importProjectFromData(data, fileName) {
     const existing = projects[existingIdx];
     const when = existing.lastSaved
       ? new Date(existing.lastSaved).toLocaleString()
-      : 'unknown date';
+      : _t('lblUnknownDate');
 
     const replace = confirm(
-      `A project named "${label}" already exists.\n` +
-      `Last saved: ${when}\n\n` +
-      `OK  — Replace it with the imported file\n` +
-      `Cancel — Keep both (import as a separate copy)`
+      _tf('confirmReplaceProject', { name: label, when: when })
     );
 
     if (replace) {
@@ -247,7 +252,7 @@ function _dutiesArrayToState(dutiesArr) {
 export function loadProject(id) {
   const projects = _loadProjects();
   const project  = projects.find(p => p.id === id);
-  if (!project) { showStatus('❌ Project not found', 'error'); return; }
+  if (!project) { showStatus('❌ ' + _t('msgProjectNotFound'), 'error'); return; }
 
   // Auto-save current project before switching
   saveCurrentProject();
@@ -275,7 +280,7 @@ export function loadProject(id) {
     document.dispatchEvent(new CustomEvent('dacum:project-loaded', { detail: { projectId: id } }));
   } catch(e) {}
 
-  showStatus(`📂 Loaded: "${project.name}"`, 'success');
+  showStatus('📂 ' + _tf('msgProjectLoaded', { name: project.name }), 'success');
 }
 
 export function saveCurrentProject() {
@@ -298,7 +303,7 @@ export function renameProject(id, newName) {
   project.name = label;
   _saveProjects(projects);
   renderProjectsSidebar();
-  showStatus(`✏️ Renamed to "${label}"`, 'success');
+  showStatus('✏️ ' + _tf('msgProjectRenamed', { name: label }), 'success');
 }
 
 export function deleteProject(id) {
@@ -326,7 +331,7 @@ export function deleteProject(id) {
     }
   }
   renderProjectsSidebar();
-  showStatus(`🗑️ Project deleted`, 'success');
+  showStatus('🗑️ ' + _t('msgProjectDeleted'), 'success');
 }
 
 export function getProjects() {
@@ -363,7 +368,7 @@ export function deleteActiveProject() {
   if (remaining.length === 0) {
     showWelcomeOverlay();
   } else {
-    showStatus('Workspace cleared. Select a project from the sidebar to continue.', 'success');
+    showStatus(_t('msgWorkspaceCleared'), 'success');
   }
 }
 
@@ -399,14 +404,13 @@ export function showWelcomeOverlay() {
       <h2 style="
         color:#cba6f7;font-size:1.45em;margin:0 0 12px;
         font-weight:800;letter-spacing:-0.01em;
-      ">Welcome to DACUM Live Pro</h2>
+      ">${_t('wcTitle')}</h2>
       <p style="
         color:#a6adc8;font-size:0.91em;line-height:1.75;margin:0 0 8px;
-      ">Every analysis begins with a <strong style="color:#cdd6f4;">project</strong>.</p>
+      ">${_t('wcLine1')}</p>
       <p style="
         color:#a6adc8;font-size:0.91em;line-height:1.75;margin:0 0 28px;
-      ">Start a new one, or open a project you saved earlier —<br>
-      this is <strong style="color:#cdd6f4;">Step 1</strong> before entering any data.</p>
+      ">${_t('wcLine2')}</p>
 
       <button id="dacumWelcomeNewBtn" style="
         display:block;width:100%;
@@ -421,12 +425,12 @@ export function showWelcomeOverlay() {
       onmouseout="this.style.opacity='1'"
       onmousedown="this.style.transform='scale(0.97)'"
       onmouseup="this.style.transform='scale(1)'">
-        + &nbsp;Create New Project
+        + &nbsp;${_t('wcBtnNew')}
       </button>
 
       <div style="display:flex;align-items:center;gap:12px;margin:18px 0;">
         <span style="flex:1;height:1px;background:#313244;"></span>
-        <span style="color:#585b70;font-size:0.72em;font-weight:700;letter-spacing:0.06em;">OR</span>
+        <span style="color:#585b70;font-size:0.72em;font-weight:700;letter-spacing:0.06em;">${_t('wcOr')}</span>
         <span style="flex:1;height:1px;background:#313244;"></span>
       </div>
 
@@ -442,12 +446,11 @@ export function showWelcomeOverlay() {
       onmouseout="this.style.background='transparent';this.style.borderColor='#45475a'"
       onmousedown="this.style.transform='scale(0.97)'"
       onmouseup="this.style.transform='scale(1)'">
-        📂 &nbsp;Open Existing Project
+        📂 &nbsp;${_t('wcBtnOpen')}
       </button>
 
       <p style="color:#45475a;font-size:0.76em;margin:20px 0 0;line-height:1.6;">
-        Open a <strong style="color:#6c7086;">.json</strong> project you exported earlier,
-        or one shared with you by another facilitator.
+        ${_t('wcFootnote')}
       </p>
     </div>`;
 
@@ -463,7 +466,8 @@ export function showWelcomeOverlay() {
   document.body.appendChild(overlay);
 
   document.getElementById('dacumWelcomeNewBtn').addEventListener('click', () => {
-    const name = prompt('Project name:', `DACUM Project ${_loadProjects().length + 1}`);
+    const name = prompt(_t('promptProjectName'),
+      _tf('defaultProjectName', { n: _loadProjects().length + 1 }));
     if (name !== null) createProject(name);
   });
 
@@ -478,7 +482,7 @@ export function showWelcomeOverlay() {
     openBtn.addEventListener('click', () => {
       const input = document.getElementById('loadFileInput');
       if (!input) {
-        alert('Import is unavailable — the file picker could not be found.');
+        alert(_t('msgImportUnavailable'));
         return;
       }
 
@@ -523,7 +527,7 @@ export function initProjectsSidebar() {
       <div class="dps-brand">
         <span class="dps-brand-text">DACUM Live Pro</span>
       </div>
-      <button class="dps-collapse-btn" id="dpsCollapseBtn" title="Toggle sidebar" aria-label="Toggle sidebar">
+      <button class="dps-collapse-btn" id="dpsCollapseBtn" title="${_t('ttToggleSidebar')}" aria-label="${_t('ttToggleSidebar')}">
         <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true" style="display:block;stroke:currentColor;">
           <path d="M12 5l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -532,46 +536,46 @@ export function initProjectsSidebar() {
 
     <!-- ── MIDDLE: Navigation tabs ── -->
     <nav class="dps-nav" id="dpsSidebarNav" aria-label="Main navigation">
-      <div class="dps-nav-label">Navigation</div>
-      <button class="dps-nav-item dps-nav-active" data-target-tab="info-tab" data-tooltip="Chart Info">
+      <div class="dps-nav-label">${_t('sbNavLabel')}</div>
+      <button class="dps-nav-item dps-nav-active" data-target-tab="info-tab" data-tooltip="${_t('tabChartInfo')}">
         <span class="dps-nav-icon">📋</span>
-        <span class="dps-nav-text">Chart Info</span>
+        <span class="dps-nav-text">${_t('tabChartInfo')}</span>
       </button>
-      <button class="dps-nav-item" data-target-tab="duties-tab" data-tooltip="Duties &amp; Tasks">
+      <button class="dps-nav-item" data-target-tab="duties-tab" data-tooltip="${_t('tabDuties')}">
         <span class="dps-nav-icon">✅</span>
-        <span class="dps-nav-text">Duties &amp; Tasks</span>
+        <span class="dps-nav-text">${_t('tabDuties')}</span>
       </button>
-      <button class="dps-nav-item" data-target-tab="additional-info-tab" data-tooltip="Additional Info">
+      <button class="dps-nav-item" data-target-tab="additional-info-tab" data-tooltip="${_t('tabAdditionalInfo')}">
         <span class="dps-nav-icon">📚</span>
-        <span class="dps-nav-text">Additional Info</span>
+        <span class="dps-nav-text">${_t('tabAdditionalInfo')}</span>
       </button>
-      <button class="dps-nav-item" data-target-tab="verification-tab" data-tooltip="Task Verification">
+      <button class="dps-nav-item" data-target-tab="verification-tab" data-tooltip="${_t('tabVerification')}">
         <span class="dps-nav-icon">🎯</span>
-        <span class="dps-nav-text">Task Verification</span>
+        <span class="dps-nav-text">${_t('tabVerification')}</span>
       </button>
-      <button class="dps-nav-item" data-target-tab="clustering-tab" data-tooltip="Competency Clusters">
+      <button class="dps-nav-item" data-target-tab="clustering-tab" data-tooltip="${_t('tabClustering')}">
         <span class="dps-nav-icon">🧩</span>
-        <span class="dps-nav-text">Competency Clusters</span>
+        <span class="dps-nav-text">${_t('tabClustering')}</span>
       </button>
-      <button class="dps-nav-item" data-target-tab="learning-outcomes-tab" data-tooltip="Learning Outcomes">
+      <button class="dps-nav-item" data-target-tab="learning-outcomes-tab" data-tooltip="${_t('tabLearningOutcomes')}">
         <span class="dps-nav-icon">🎓</span>
-        <span class="dps-nav-text">Learning Outcomes</span>
+        <span class="dps-nav-text">${_t('tabLearningOutcomes')}</span>
       </button>
-      <button class="dps-nav-item" data-target-tab="module-mapping-tab" data-tooltip="Module Mapping">
+      <button class="dps-nav-item" data-target-tab="module-mapping-tab" data-tooltip="${_t('tabModuleMapping')}">
         <span class="dps-nav-icon">📦</span>
-        <span class="dps-nav-text">Module Mapping</span>
+        <span class="dps-nav-text">${_t('tabModuleMapping')}</span>
       </button>
-      <button class="dps-nav-item" data-target-tab="contact-tab" data-tooltip="Help">
+      <button class="dps-nav-item" data-target-tab="contact-tab" data-tooltip="${_t('tabHelp')}">
         <span class="dps-nav-icon">❓</span>
-        <span class="dps-nav-text">Help</span>
+        <span class="dps-nav-text">${_t('tabHelp')}</span>
       </button>
     </nav>
 
     <!-- ── BOTTOM: Project cards (UNCHANGED structure) ── -->
     <div class="dps-projects-section">
       <div class="dps-header">
-        <span class="dps-title">📁 Projects</span>
-        <button class="dps-new-btn" id="dpsNewProject" title="New project">＋ New</button>
+        <span class="dps-title">📁 ${_t('sbProjects')}</span>
+        <button class="dps-new-btn" id="dpsNewProject" title="${_t('ttNewProject')}">＋ ${_t('sbNew')}</button>
       </div>
       <div class="dps-search-wrap">
         <div class="dps-search-box">
@@ -586,7 +590,7 @@ export function initProjectsSidebar() {
             <line x1="12.5" y1="12.5" x2="16" y2="16" stroke="url(#dpsSearchGrad)" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
           <input class="dps-search" id="dpsSearch" type="text"
-                 placeholder="Search projects…" autocomplete="off">
+                 placeholder="${_t('phSearchProjects')}" autocomplete="off">
         </div>
       </div>
       <div class="dps-list" id="dpsProjectList"></div>
@@ -609,7 +613,8 @@ export function initProjectsSidebar() {
 
   // ── Wire: New project button ──
   document.getElementById('dpsNewProject').addEventListener('click', () => {
-    const name = prompt('Project name:', `DACUM Project ${_loadProjects().length + 1}`);
+    const name = prompt(_t('promptProjectName'),
+      _tf('defaultProjectName', { n: _loadProjects().length + 1 }));
     if (name !== null) createProject(name);
   });
 
@@ -709,7 +714,7 @@ export function renderProjectsSidebar() {
   }
 
   if (projects.length === 0) {
-    list.innerHTML = `<p class="dps-empty">${_searchQuery ? 'No matching projects.' : 'No projects yet.<br>Click <strong>＋ New</strong> to start.'}</p>`;
+    list.innerHTML = `<p class="dps-empty">${_t(_searchQuery ? 'sbNoMatch' : 'sbNoProjects')}</p>`;
     return;
   }
 
@@ -717,7 +722,8 @@ export function renderProjectsSidebar() {
     const isActive  = p.id === activeId;
     const dutyCount = (p.state?.dutiesData || []).length;
     const taskCount = (p.state?.dutiesData || []).reduce((s, d) => s + (d.tasks?.length || 0), 0);
-    const date      = new Date(p.created).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    const locale    = window.i18n ? window.i18n.getLang() : undefined;
+    const date      = new Date(p.created).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
 
     return `
       <div class="dps-card${isActive ? ' dps-active' : ''}" data-project-id="${p.id}">
@@ -730,13 +736,13 @@ export function renderProjectsSidebar() {
           </div>
           <div class="dps-card-meta">🕐 ${date}</div>
           <div class="dps-card-stats">
-            <span>📋 ${dutyCount} ${dutyCount === 1 ? 'duty' : 'duties'}</span>
-            <span>✅ ${taskCount} ${taskCount === 1 ? 'task' : 'tasks'}</span>
+            <span>📋 ${_tp('countDuty', dutyCount)}</span>
+            <span>✅ ${_tp('countTask', taskCount)}</span>
           </div>
         </div>
         <div class="dps-card-actions">
-          <button class="dps-icon-btn dps-rename" data-action="rename-project" data-project-id="${p.id}" title="Rename">✏️</button>
-          <button class="dps-icon-btn dps-delete" data-action="delete-project" data-project-id="${p.id}" title="Delete">✕</button>
+          <button class="dps-icon-btn dps-rename" data-action="rename-project" data-project-id="${p.id}" title="${_t('ttRenameProject')}">✏️</button>
+          <button class="dps-icon-btn dps-delete" data-action="delete-project" data-project-id="${p.id}" title="${_t('ttDeleteProject')}">✕</button>
         </div>
       </div>`;
   }).join('');
@@ -760,7 +766,7 @@ export function renderProjectsSidebar() {
     } else if (action === 'delete-project') {
       const proj = _loadProjects().find(p => p.id === id);
       const confirmed = confirm(
-        `Are you sure you want to delete "${proj?.name || 'this project'}"?\n\nThis action cannot be undone.`
+        _tf('confirmDeleteProject', { name: proj?.name || _t('lblThisProject') })
       );
       if (confirmed) deleteProject(id);
     }
@@ -982,7 +988,7 @@ function _applyLiveWorkshopDOM(s) {
       const dCount = (proj.state?.dutiesData || []).length;
       const tCount = (proj.state?.dutiesData || []).reduce((a, d) => a + (d.tasks?.length || 0), 0);
       lwProjectName.textContent  = proj.name;
-      lwProjectStats.textContent = `${dCount} ${dCount === 1 ? 'duty' : 'duties'} · ${tCount} ${tCount === 1 ? 'task' : 'tasks'}`;
+      lwProjectStats.textContent = `${_tp('countDuty', dCount)} · ${_tp('countTask', tCount)}`;
       lwProjectInfo.style.display = 'block';
     } else if (lwProjectInfo) {
       lwProjectInfo.style.display = 'none';
@@ -1001,9 +1007,9 @@ function _applyLiveWorkshopDOM(s) {
 
     // Results area
     if (s.lwAggregatedResults && lwResults) {
-      lwResults.innerHTML = '<p style="color:#16a34a;font-style:italic;text-align:center;padding:20px;">✅ Voting results available — click Refresh to view.</p>';
+      lwResults.innerHTML = `<p style="color:#16a34a;font-style:italic;text-align:center;padding:20px;">✅ ${_t('msgVotingAvailable')}</p>`;
     } else if (lwResults) {
-      lwResults.innerHTML = '<p style="color:#999;font-style:italic;text-align:center;padding:30px;">No votes received yet.</p>';
+      lwResults.innerHTML = `<p style="color:#999;font-style:italic;text-align:center;padding:30px;">${_t('msgNoVotesYet')}</p>`;
     }
     if (lwExport) lwExport.style.display = s.lwAggregatedResults ? 'block' : 'none';
 
@@ -1108,8 +1114,8 @@ function _saveProjects(list) {
     if (!_quotaWarned && payload.length > QUOTA_WARN_BYTES) {
       _quotaWarned = true;
       showStatus(
-        `⚠️ Storage is ${Math.round(payload.length / (1024 * 1024) * 10) / 10} MB and filling up. ` +
-        `Export and remove old projects before it runs out.`,
+        '⚠️ ' + _tf('msgStorageFilling',
+          { mb: Math.round(payload.length / (1024 * 1024) * 10) / 10 }),
         'error'
       );
     }
@@ -1117,7 +1123,7 @@ function _saveProjects(list) {
   } catch (err) {
     if (!_isQuotaError(err)) {
       console.warn('[projects] save failed:', err);
-      showStatus('⚠️ Could not save. See the browser console for details.', 'error');
+      showStatus('⚠️ ' + _t('msgCouldNotSave'), 'error');
       return false;
     }
 
@@ -1174,25 +1180,23 @@ function _showStorageFullDialog(list) {
                   background:linear-gradient(135deg,#fef2f2,#fee2e2);border-bottom:1px solid #fecaca;">
         <span style="font-size:1.8em;line-height:1;">💾</span>
         <div>
-          <p style="margin:0;font-size:1em;font-weight:800;color:#991b1b;">Storage Full — Not Saved</p>
-          <p style="margin:2px 0 0;font-size:0.78em;color:#b91c1c;">Your recent changes are still on screen</p>
+          <p style="margin:0;font-size:1em;font-weight:800;color:#991b1b;">${_t('quotaTitle')}</p>
+          <p style="margin:2px 0 0;font-size:0.78em;color:#b91c1c;">${_t('quotaSub')}</p>
         </div>
       </div>
       <div style="padding:18px 22px 20px;">
         <p style="margin:0 0 14px;font-size:0.88em;color:#374151;line-height:1.6;">
-          This browser's storage for the app is full, so the last change could not be
-          written to disk. <strong>Nothing has been deleted.</strong> Free some space and
-          your work will save again — but export anything important first.
+          ${_t('quotaBody')}
         </p>
-        <p style="margin:0 0 6px;font-size:0.82em;font-weight:700;color:#1e293b;">Largest projects:</p>
+        <p style="margin:0 0 6px;font-size:0.82em;font-weight:700;color:#1e293b;">${_t('quotaLargest')}</p>
         <ul style="list-style:none;margin:0 0 16px;padding:0;">${rows}</ul>
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;
                     padding:11px 13px;margin-bottom:16px;">
-          <p style="margin:0;font-size:0.82em;color:#15803d;font-weight:700;">What to do:</p>
-          <ol style="margin:6px 0 0;padding-left:18px;font-size:0.82em;color:#166534;line-height:1.8;">
-            <li>Export the projects you need (Export Project in the toolbar)</li>
-            <li>Delete projects you no longer need from the sidebar</li>
-            <li>Remove large logos in Chart Info if you added any</li>
+          <p style="margin:0;font-size:0.82em;color:#15803d;font-weight:700;">${_t('quotaWhatToDo')}</p>
+          <ol style="margin:6px 0 0;padding-inline-start:18px;font-size:0.82em;color:#166534;line-height:1.8;">
+            <li>${_t('quotaStep1')}</li>
+            <li>${_t('quotaStep2')}</li>
+            <li>${_t('quotaStep3')}</li>
           </ol>
         </div>
         <div style="display:flex;justify-content:flex-end;">
@@ -1834,3 +1838,66 @@ function _injectCSS() {
 `;
   document.head.appendChild(style);
 }
+
+
+/* ── Re-render on language change ────────────────────────────────────
+   The sidebar is built once at startup as one innerHTML string and then
+   only updated in place, so applyTranslations() never sees any of it:
+   the nav labels, the collapsed-rail tooltips, the search placeholder
+   and every project card are all outside its reach.
+
+   Only the pieces that are cheap and stateless are rebuilt. The whole
+   <aside> is deliberately NOT re-created: doing so would drop the
+   collapse state, the scroll position, an in-progress inline rename and
+   every event binding attached at construction time. */
+window.addEventListener('dacum:langchange', () => {
+  const setText = (sel, key) => {
+    const el = document.querySelector(sel);
+    if (el) el.textContent = _t(key);
+  };
+
+  setText('.dps-nav-label', 'sbNavLabel');
+
+  const NAV_KEYS = {
+    'info-tab':              'tabChartInfo',
+    'duties-tab':            'tabDuties',
+    'additional-info-tab':   'tabAdditionalInfo',
+    'verification-tab':      'tabVerification',
+    'clustering-tab':        'tabClustering',
+    'learning-outcomes-tab': 'tabLearningOutcomes',
+    'module-mapping-tab':    'tabModuleMapping',
+    'contact-tab':           'tabHelp',
+  };
+  document.querySelectorAll('.dps-nav-item').forEach(btn => {
+    const key = NAV_KEYS[btn.getAttribute('data-target-tab')];
+    if (!key) return;
+    const label = _t(key);
+    const txt = btn.querySelector('.dps-nav-text');
+    if (txt) txt.textContent = label;
+    // The tooltip is the ONLY label visible on the collapsed rail.
+    btn.setAttribute('data-tooltip', label);
+  });
+
+  const title = document.querySelector('.dps-title');
+  if (title) title.textContent = '\u{1F4C1} ' + _t('sbProjects');
+
+  const newBtn = document.getElementById('dpsNewProject');
+  if (newBtn) {
+    newBtn.textContent = '\uFF0B ' + _t('sbNew');
+    newBtn.title = _t('ttNewProject');
+  }
+
+  const search = document.getElementById('dpsSearch');
+  if (search) search.placeholder = _t('phSearchProjects');
+
+  const collapse = document.getElementById('dpsCollapseBtn');
+  if (collapse) {
+    collapse.title = _t('ttToggleSidebar');
+    collapse.setAttribute('aria-label', _t('ttToggleSidebar'));
+  }
+
+  /* Cards carry the plural counts and the locale-formatted date, so they
+     must be regenerated rather than patched. renderProjectsSidebar()
+     reads from storage and is already called on every project change. */
+  if (document.getElementById('dpsProjectList')) renderProjectsSidebar();
+});

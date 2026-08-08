@@ -675,3 +675,62 @@ html[dir="rtl"] .module-title {
 html[dir="rtl"] .btn-remove-lo {
   white-space: nowrap;
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   9. SIDEBAR INTERNALS
+   ───────────────────────────────────────────────────────────── */
+
+/* Section 2 already docks the panel to the right edge. These rules
+   handle what is INSIDE it, all of which is generated as one innerHTML
+   string by dacum_projects.js at startup. */
+
+html[dir="rtl"] .dps-top,
+html[dir="rtl"] .dps-header,
+html[dir="rtl"] .dps-nav-item,
+html[dir="rtl"] .dps-card,
+html[dir="rtl"] .dps-card-actions,
+html[dir="rtl"] .dps-card-stats {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .dps-nav-label,
+html[dir="rtl"] .dps-nav-text,
+html[dir="rtl"] .dps-card-name,
+html[dir="rtl"] .dps-card-meta,
+html[dir="rtl"] .dps-empty {
+  text-align: right;
+}
+
+/* The inline rename field must open in the direction of the name it is
+   replacing, or the caret starts at the wrong end. */
+html[dir="rtl"] .dps-card-name-input {
+  direction: rtl;
+  text-align: right;
+}
+
+/* "DACUM Live Pro" is a product name: always Latin, always LTR, even
+   when the panel around it is mirrored. */
+html[dir="rtl"] .dps-brand-text {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* Card counts read «3 واجبات · 12 مهمة». The middle dot is a neutral
+   character: without isolation the bidi algorithm can drag it to the
+   end of the run and the two figures collapse into one another. */
+html[dir="rtl"] .dps-card-stats span {
+  unicode-bidi: isolate;
+}
+
+/* The welcome and storage-full overlays are appended to <body> and
+   styled entirely inline, so only direction can be corrected here. */
+html[dir="rtl"] #dacumWelcomeOverlay,
+html[dir="rtl"] #dacumQuotaOverlay {
+  direction: rtl;
+}
+
+/* Size figures (2.4 MB) stay LTR inside the quota list. */
+html[dir="rtl"] #dacumQuotaOverlay strong {
+  unicode-bidi: isolate;
+}

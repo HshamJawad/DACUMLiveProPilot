@@ -624,6 +624,56 @@
       patternC: 'Pattern C (hybrid)',
       confirmReplaceClusters: '⚠️ This will replace the {n} clusters you already have, including their Range and Performance Criteria.\n\nYour duties and tasks are NOT affected.\n\nClick OK to continue, or Cancel to keep your current clusters.',
       confirmAddLOs: '⚠️ This will ADD new Learning Outcomes using {pattern}.\n\nYou already have {n} outcomes. They will be KEPT — the new ones are appended.\n\nCriteria already linked to an outcome are skipped, so nothing is duplicated.\n\nClick OK to continue, or Cancel to stop.',
+      /* ── Projects sidebar ── */
+      sbNavLabel: 'Navigation',
+      sbProjects: 'Projects',
+      sbNew: 'New',
+      ttNewProject: 'New project',
+      phSearchProjects: 'Search projects…',
+      ttToggleSidebar: 'Toggle sidebar',
+      sbNoMatch: 'No matching projects.',
+      sbNoProjects: 'No projects yet.<br>Click <strong>＋ New</strong> to start.',
+      ttRenameProject: 'Rename',
+      ttDeleteProject: 'Delete',
+      promptProjectName: 'Project name:',
+      defaultProjectName: 'DACUM Project {n}',
+      countDuty_one: '{n} duty',
+      countDuty_two: '{n} duties',
+      countDuty_few: '{n} duties',
+      countDuty_many: '{n} duties',
+      countDuty_zero: '{n} duties',
+      countDuty_other: '{n} duties',
+      countTask_one: '{n} task',
+      countTask_two: '{n} tasks',
+      countTask_few: '{n} tasks',
+      countTask_many: '{n} tasks',
+      countTask_zero: '{n} tasks',
+      countTask_other: '{n} tasks',
+      msgWorkspaceCleared: 'Workspace cleared. Select a project from the sidebar to continue.',
+      msgImportUnavailable: 'Import is unavailable — the file picker could not be found.',
+      msgCouldNotSave: 'Could not save. See the browser console for details.',
+      msgStorageFilling: 'Storage is {mb} MB and filling up. Export and remove old projects before it runs out.',
+      confirmDeleteProject: 'Are you sure you want to delete “{name}”?\n\nThis action cannot be undone.',
+      lblThisProject: 'this project',
+      confirmReplaceProject: 'A project named “{name}” already exists.\nLast saved: {when}\n\nOK — Replace it with the imported file\nCancel — Keep both (import as a separate copy)',
+      lblUnknownDate: 'unknown date',
+      wcTitle: 'Welcome to DACUM Live Pro',
+      wcLine1: 'Every analysis begins with a <strong style="color:#cdd6f4;">project</strong>.',
+      wcLine2: 'Start a new one, or open a project you saved earlier —<br>this is <strong style="color:#cdd6f4;">Step 1</strong> before entering any data.',
+      wcBtnNew: 'Create New Project',
+      wcOr: 'OR',
+      wcBtnOpen: 'Open Existing Project',
+      wcFootnote: 'Open a <strong style="color:#6c7086;">.json</strong> project you exported earlier, or one shared with you by another facilitator.',
+      msgVotingAvailable: 'Voting results available — click Refresh to view.',
+      msgNoVotesYet: 'No votes received yet.',
+      quotaTitle: 'Storage Full — Not Saved',
+      quotaSub: 'Your recent changes are still on screen',
+      quotaBody: 'This browser’s storage for the app is full, so the last change could not be written to disk. <strong>Nothing has been deleted.</strong> Free some space and your work will save again — but export anything important first.',
+      quotaLargest: 'Largest projects:',
+      quotaWhatToDo: 'What to do:',
+      quotaStep1: 'Export the projects you need (Export Project in the toolbar)',
+      quotaStep2: 'Delete projects you no longer need from the sidebar',
+      quotaStep3: 'Remove large logos in Chart Info if you added any',
     },
 
     fr: {
@@ -1245,6 +1295,56 @@
       patternC: 'Modèle C (hybride)',
       confirmReplaceClusters: '⚠️ Ceci remplacera les {n} grappes existantes, y compris leur champ et leurs critères de performance.\n\nVos activités et tâches ne sont PAS affectées.\n\nOK pour continuer, Annuler pour conserver vos grappes.',
       confirmAddLOs: '⚠️ Ceci AJOUTERA de nouveaux résultats d’apprentissage avec {pattern}.\n\nVous en avez déjà {n}. Ils seront CONSERVÉS — les nouveaux sont ajoutés à la suite.\n\nLes critères déjà liés sont ignorés, rien n’est dupliqué.\n\nOK pour continuer, Annuler pour arrêter.',
+      /* ── Projects sidebar ── */
+      sbNavLabel: 'Navigation',
+      sbProjects: 'Projets',
+      sbNew: 'Nouveau',
+      ttNewProject: 'Nouveau projet',
+      phSearchProjects: 'Rechercher un projet…',
+      ttToggleSidebar: 'Afficher / masquer le panneau',
+      sbNoMatch: 'Aucun projet correspondant.',
+      sbNoProjects: 'Aucun projet.<br>Cliquez sur <strong>＋ Nouveau</strong> pour commencer.',
+      ttRenameProject: 'Renommer',
+      ttDeleteProject: 'Supprimer',
+      promptProjectName: 'Nom du projet :',
+      defaultProjectName: 'Projet DACUM {n}',
+      countDuty_one: '{n} activité',
+      countDuty_two: '{n} activités',
+      countDuty_few: '{n} activités',
+      countDuty_many: '{n} activités',
+      countDuty_zero: '{n} activités',
+      countDuty_other: '{n} activités',
+      countTask_one: '{n} tâche',
+      countTask_two: '{n} tâches',
+      countTask_few: '{n} tâches',
+      countTask_many: '{n} tâches',
+      countTask_zero: '{n} tâches',
+      countTask_other: '{n} tâches',
+      msgWorkspaceCleared: 'Espace de travail vidé. Sélectionnez un projet dans le panneau pour continuer.',
+      msgImportUnavailable: 'L’import est indisponible — le sélecteur de fichier est introuvable.',
+      msgCouldNotSave: 'Enregistrement impossible. Consultez la console du navigateur.',
+      msgStorageFilling: 'Le stockage atteint {mb} Mo et se remplit. Exportez et supprimez d’anciens projets.',
+      confirmDeleteProject: 'Êtes-vous sûr de vouloir supprimer « {name} » ?\n\nCette action est irréversible.',
+      lblThisProject: 'ce projet',
+      confirmReplaceProject: 'Un projet nommé « {name} » existe déjà.\nDernier enregistrement : {when}\n\nOK — Le remplacer par le fichier importé\nAnnuler — Conserver les deux (copie séparée)',
+      lblUnknownDate: 'date inconnue',
+      wcTitle: 'Bienvenue dans DACUM Live Pro',
+      wcLine1: 'Toute analyse commence par un <strong style="color:#cdd6f4;">projet</strong>.',
+      wcLine2: 'Créez-en un, ou ouvrez un projet enregistré —<br>c’est l’<strong style="color:#cdd6f4;">étape 1</strong> avant toute saisie.',
+      wcBtnNew: 'Créer un nouveau projet',
+      wcOr: 'OU',
+      wcBtnOpen: 'Ouvrir un projet existant',
+      wcFootnote: 'Ouvrez un projet <strong style="color:#6c7086;">.json</strong> exporté précédemment, ou partagé par un autre animateur.',
+      msgVotingAvailable: 'Résultats du vote disponibles — cliquez sur Actualiser.',
+      msgNoVotesYet: 'Aucun vote reçu pour l’instant.',
+      quotaTitle: 'Stockage plein — non enregistré',
+      quotaSub: 'Vos modifications récentes sont toujours à l’écran',
+      quotaBody: 'Le stockage de ce navigateur pour l’application est plein : la dernière modification n’a pas pu être écrite. <strong>Rien n’a été supprimé.</strong> Libérez de l’espace — mais exportez d’abord ce qui compte.',
+      quotaLargest: 'Projets les plus volumineux :',
+      quotaWhatToDo: 'À faire :',
+      quotaStep1: 'Exportez les projets dont vous avez besoin (Exporter dans la barre d’outils)',
+      quotaStep2: 'Supprimez les projets inutiles depuis le panneau',
+      quotaStep3: 'Retirez les logos volumineux dans la fiche DACUM si vous en avez ajouté',
     },
 
     ar: {
@@ -1820,6 +1920,60 @@
       patternC: 'النمط ج (مختلط)',
       confirmReplaceClusters: '⚠️ سيؤدي هذا إلى استبدال التجمعات الـ{n} الموجودة لديك، بما فيها مداها ومعايير أدائها.\n\nأما واجباتك ومهامك فلن تتأثر.\n\nاضغط «موافق» للمتابعة، أو «إلغاء» للإبقاء على تجمعاتك الحالية.',
       confirmAddLOs: '⚠️ سيؤدي هذا إلى <إضافة> محصلات تعلم جديدة باستخدام {pattern}.\n\nلديك {n} محصلة بالفعل، وستبقى كما هي — والجديدة تُضاف إليها.\n\nأما المعايير المرتبطة بمحصلة سابقاً فتُتخطّى، فلا يحدث تكرار.\n\nاضغط «موافق» للمتابعة، أو «إلغاء» للتوقف.',
+      /* ── Projects sidebar ── */
+      sbNavLabel: 'التنقّل',
+      sbProjects: 'المشاريع',
+      sbNew: 'جديد',
+      ttNewProject: 'مشروع جديد',
+      phSearchProjects: 'ابحث في المشاريع…',
+      ttToggleSidebar: 'إظهار / إخفاء الشريط',
+      sbNoMatch: 'لا توجد مشاريع مطابقة.',
+      sbNoProjects: 'لا توجد مشاريع بعد.<br>انقر <strong>＋ جديد</strong> للبدء.',
+      ttRenameProject: 'إعادة تسمية',
+      ttDeleteProject: 'حذف',
+      promptProjectName: 'اسم المشروع:',
+      defaultProjectName: 'مشروع DACUM {n}',
+      countDuty_one: 'واجب واحد',
+      countDuty_two: 'واجبان',
+      countDuty_few: '{n} واجبات',
+      countDuty_many: '{n} واجباً',
+      countDuty_zero: 'لا توجد واجبات',
+      countDuty_other: '{n} واجب',
+      countTask_one: 'مهمة واحدة',
+      countTask_two: 'مهمتان',
+      countTask_few: '{n} مهمات',
+      countTask_many: '{n} مهمةً',
+      countTask_zero: 'لا توجد مهام',
+      countTask_other: '{n} مهمة',
+      msgProjectCreated: 'أُنشئ المشروع «{name}»',
+      msgProjectNotFound: 'المشروع غير موجود',
+      msgProjectLoaded: 'تم التحميل: «{name}»',
+      msgProjectDeleted: 'تم حذف المشروع',
+      msgWorkspaceCleared: 'أُفرغت مساحة العمل. اختر مشروعاً من الشريط الجانبي للمتابعة.',
+      msgImportUnavailable: 'الاستيراد غير متاح — تعذّر العثور على أداة اختيار الملف.',
+      msgCouldNotSave: 'تعذّر الحفظ. راجع وحدة تحكم المتصفح للتفاصيل.',
+      msgStorageFilling: 'المساحة التخزينية بلغت {mb} ميغابايت وتوشك على الامتلاء. صدّر المشاريع القديمة واحذفها قبل نفادها.',
+      confirmDeleteProject: 'هل أنت متأكد من حذف «{name}»؟\n\nلا يمكن التراجع عن هذا الإجراء.',
+      lblThisProject: 'هذا المشروع',
+      confirmReplaceProject: 'يوجد مشروع باسم «{name}» بالفعل.\nآخر حفظ: {when}\n\n«موافق» — استبداله بالملف المستورد\n«إلغاء» — الإبقاء عليهما معاً (استيراد كنسخة منفصلة)',
+      lblUnknownDate: 'تاريخ غير معروف',
+      wcTitle: 'أهلاً بك في DACUM Live Pro',
+      wcLine1: 'كل تحليل يبدأ بـ<strong style="color:#cdd6f4;">مشروع</strong>.',
+      wcLine2: 'ابدأ مشروعاً جديداً، أو افتح مشروعاً حفظته سابقاً —<br>هذه هي <strong style="color:#cdd6f4;">الخطوة الأولى</strong> قبل إدخال أي بيانات.',
+      wcBtnNew: 'إنشاء مشروع جديد',
+      wcOr: 'أو',
+      wcBtnOpen: 'فتح مشروع موجود',
+      wcFootnote: 'افتح مشروع <strong style="color:#6c7086;">.json</strong> صدّرته سابقاً، أو شاركه معك مُيسِّر آخر.',
+      msgVotingAvailable: 'نتائج التصويت متاحة — انقر «تحديث» لعرضها.',
+      msgNoVotesYet: 'لم تُستلم أي أصوات بعد.',
+      quotaTitle: 'المساحة ممتلئة — لم يُحفظ',
+      quotaSub: 'تغييراتك الأخيرة ما زالت على الشاشة',
+      quotaBody: 'مساحة تخزين هذا المتصفح للتطبيق ممتلئة، فتعذّرت كتابة آخر تغيير على القرص. <strong>ولم يُحذف شيء.</strong> حرّر بعض المساحة ليعود الحفظ للعمل — لكن صدّر ما يهمّك أولاً.',
+      quotaLargest: 'أكبر المشاريع حجماً:',
+      quotaWhatToDo: 'ما العمل:',
+      quotaStep1: 'صدّر المشاريع التي تحتاجها (زر «تصدير» في شريط الأدوات)',
+      quotaStep2: 'احذف المشاريع التي لم تعد تحتاجها من الشريط الجانبي',
+      quotaStep3: 'احذف الشعارات الكبيرة في تبويب بيانات المخطط إن كنت أضفتها',
     },
   };
 
@@ -1966,6 +2120,45 @@
     return AI_DIRECTIVE[_current] || '';
   }
 
+
+  /* ── Plural forms ────────────────────────────────────────────────
+     English and French need two forms; Arabic needs six, and the rules
+     are not a nicety — "1 duty / 2 duties" rendered as
+     «1 واجب / 2 واجب» is simply wrong Arabic, and the sidebar shows
+     these counts on every project card.
+
+     CLDR categories for Arabic:
+       0        → zero   لا يوجد واجب
+       1        → one    واجب واحد
+       2        → two    واجبان        (the dual — no European equivalent)
+       3–10    → few    3 واجبات       (plural of paucity)
+       11–99   → many   11 واجباً       (singular accusative!)
+       100+     → other  100 واجب
+
+     Keys are named "<base>_one", "<base>_two" and so on. A form that is
+     missing falls back to "_other", so a language only has to define
+     the categories it actually uses. */
+  function _pluralCategory(n) {
+    if (_current !== 'ar') return n === 1 ? 'one' : 'other';
+    if (n === 0) return 'zero';
+    if (n === 1) return 'one';
+    if (n === 2) return 'two';
+    var mod100 = n % 100;
+    if (mod100 >= 3  && mod100 <= 10) return 'few';
+    if (mod100 >= 11 && mod100 <= 99) return 'many';
+    return 'other';
+  }
+
+  function tp(base, n, vars) {
+    var cat  = _pluralCategory(n);
+    var lang = TRANSLATIONS[_current] || TRANSLATIONS.en;
+    var key  = base + '_' + cat;
+    if (lang[key] === undefined) key = base + '_other';
+    var merged = { n: n };
+    if (vars) for (var k in vars) merged[k] = vars[k];
+    return tf(key, merged);
+  }
+
   function setLang(code) {
     if (!TRANSLATIONS[code]) return;
     _current = code;
@@ -2102,7 +2295,8 @@
     isRTL: function () { return RTL_LANGS.indexOf(_current) !== -1; },
     has: function (key) { return TRANSLATIONS.en[key] !== undefined; },
     audit: audit,
-    aiDirective: aiDirective
+    aiDirective: aiDirective,
+    tp: tp
   };
 
   function _init() { _injectSelector(); applyTranslations(); }
