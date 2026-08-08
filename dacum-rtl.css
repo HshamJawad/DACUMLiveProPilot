@@ -151,25 +151,80 @@ body.dacum-rtl .step-nav-row {
    #dacumTopToolbar is a three-zone bar. Under dir=rtl the zones
    swap automatically; what does NOT swap is anything positioned
    with physical left/right, so those are restated. */
-body.dacum-rtl #dacumTopToolbar .dtb-icon {
+html[dir="rtl"] #dacumTopToolbar .dtb-icon {
   margin-inline-end: 5px;
   margin-inline-start: 0;
 }
 
 
 /* ── Sidebar ───────────────────────────────────────────────────
-   The projects sidebar slides in from the inline-start edge. Its
-   base transform is a physical translateX, which points the wrong
-   way once the page is mirrored. */
-body.dacum-rtl #dacumProjectsSidebar {
+   TWO things made this fail on the first attempt, both worth naming:
+
+   1. The selector. The sidebar is `.dps-sidebar`, not the
+      `#dacumProjectsSidebar` id I first guessed — that id does not
+      exist anywhere in the app, so the rule was inert.
+
+   2. Specificity. dacum_projects.js injects its own <style> block at
+      RUNTIME, which lands after every <link> in the document. Source
+      order was therefore always against us, and matching specificity
+      loses. Every rule below is prefixed with html[dir="rtl"] to win
+      on specificity instead of position — no !important needed.
+
+   The visible symptom was the sidebar covering the content on the
+   right while an empty 260px gutter sat on the left: the sidebar had
+   moved but `margin-left: 260px` on the container had not. Both edges
+   must flip together or they fight. */
+
+html[dir="rtl"] .dps-sidebar {
   left: auto;
   right: 0;
+  box-shadow: -2px 0 16px rgba(0, 0, 0, 0.3);
 }
 
-body.dacum-rtl #dacumProjectsSidebar.is-collapsed {
-  transform: translateX(100%);
+/* The content offset that pairs with the sidebar width. Physical
+   margin-left is what the base rule sets, so it must be zeroed and
+   re-applied on the other side — logical properties alone would not
+   override it. */
+html[dir="rtl"] #dacumAppWrapper > .container {
+  margin-left: 0;
+  margin-right: 260px;
+  transition: margin-right 0.25s cubic-bezier(.4, 0, .2, 1);
 }
 
+html[dir="rtl"] #dacumAppWrapper.dps-is-collapsed > .container {
+  margin-left: 0;
+  margin-right: 68px;
+}
+
+/* Active-nav accent bar: a 3px spine on the inline-start edge, with
+   its rounded corners facing inward. Both the side and the corner
+   radii mirror. */
+html[dir="rtl"] .dps-nav-item.dps-nav-active::before {
+  left: auto;
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+/* Collapsed-rail tooltips fly out away from the sidebar. */
+html[dir="rtl"] .dps-sidebar.dps-collapsed .dps-nav-item::after {
+  left: auto;
+  right: 74px;
+}
+
+/* The collapse chevron points toward the edge the panel retracts to,
+   so it flips with the layout. */
+html[dir="rtl"] .dps-collapse-btn {
+  transform: scaleX(-1);
+}
+
+/* Search field icon padding. */
+html[dir="rtl"] .dps-search {
+  padding-left: 10px;
+  padding-right: 34px;
+}
+html[dir="rtl"] .dps-search-box.is-focused .dps-search {
+  padding-right: 10px;
+}
 
 /* ── Lists, bullets and indentation ────────────────────────────
    padding-left on a list is the single most common thing that
@@ -243,31 +298,31 @@ body.dacum-rtl .cluster-card {
 /* Duty letters and task codes (A, A1, B12) are wrapped in <bdi> by
    duties.js. <bdi> already isolates them from the surrounding bidi
    run; this only stops a long code from wrapping mid-token. */
-body.dacum-rtl bdi {
+html[dir="rtl"] bdi {
   white-space: nowrap;
 }
 
 /* Card and wall cards carry their accent as a left border. */
-body.dacum-rtl .dcv-duty-card,
-body.dacum-rtl .dcv-task-card,
-body.dacum-rtl .wv-duty-column {
+html[dir="rtl"] .dcv-duty-card,
+html[dir="rtl"] .dcv-task-card,
+html[dir="rtl"] .wv-duty-column {
   border-left: none;
   border-right: 4px solid var(--accent, #6366f1);
 }
 
 /* Drag handles sit at the inline-start edge of a row. dir=rtl moves
    them automatically; what does not move is any absolute positioning. */
-body.dacum-rtl .dcv-duty-drag-handle,
-body.dacum-rtl .dcv-task-drag-handle {
+html[dir="rtl"] .dcv-duty-drag-handle,
+html[dir="rtl"] .dcv-task-drag-handle {
   left: auto;
   right: 6px;
 }
 
 /* Remove / add buttons pinned to the opposite edge. */
-body.dacum-rtl .dcv-duty-remove,
-body.dacum-rtl .dcv-task-remove,
-body.dacum-rtl .dcv-duty-add,
-body.dacum-rtl .dcv-task-add {
+html[dir="rtl"] .dcv-duty-remove,
+html[dir="rtl"] .dcv-task-remove,
+html[dir="rtl"] .dcv-duty-add,
+html[dir="rtl"] .dcv-task-add {
   right: auto;
   left: 6px;
 }
@@ -277,14 +332,14 @@ body.dacum-rtl .dcv-task-add {
    edge, tasks flowing away from them. Arabic facilitators read that
    matrix right-to-left, so the columns must mirror or the chart
    contradicts the reading order of its own text. */
-body.dacum-rtl .wall-view-grid,
-body.dacum-rtl .wv-duty-row {
+html[dir="rtl"] .wall-view-grid,
+html[dir="rtl"] .wv-duty-row {
   direction: rtl;
 }
 
 /* The zoom percentage readout is a number with a % sign — leave it
    LTR so the sign stays on the correct side of the digits. */
-body.dacum-rtl .wv-zoom-pct {
+html[dir="rtl"] .wv-zoom-pct {
   direction: ltr;
   unicode-bidi: isolate;
 }
@@ -292,12 +347,12 @@ body.dacum-rtl .wv-zoom-pct {
 /* The wall toolbar is a fixed overlay; its zoom cluster reads
    [− 100% +] in every language because the operators are spatial,
    not linguistic. Locking it to LTR keeps − on the left of +. */
-body.dacum-rtl .wv-zoom-group {
+html[dir="rtl"] .wv-zoom-group {
   direction: ltr;
 }
 
 /* Print header for wall printouts follows the content language. */
-body.dacum-rtl .wall-print-header {
+html[dir="rtl"] .wall-print-header {
   direction: rtl;
   text-align: right;
 }

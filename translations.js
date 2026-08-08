@@ -213,7 +213,6 @@
       ttSnapshots: 'Saved Snapshots',
       ttClearAll: 'Clear all data',
       msgPdfArabicUnsupported: 'Arabic PDF export is not available yet. Please use Word (DOCX) export — it fully supports Arabic and right-to-left layout.',
-    },
       /* ── Duties & Tasks tab ── */
       aiCardHintV2: 'Fill Occupation Title in Chart Info. Adding Scope of Work & Job Title improves results.',
       scopeWarnTitle: 'No Scope of Work provided',
@@ -263,6 +262,7 @@
       msgDutyAlreadyEmpty: 'This duty is already empty — nothing to clear',
       confirmClearDuty: 'Are you sure you want to clear this duty and all its tasks?',
       msgDutyCleared: 'Duty cleared!',
+    },
 
     fr: {
       appSubtitle: 'Analyse • Vérification • Cartographie des compétences • Ingénierie pédagogique',
@@ -472,7 +472,6 @@
       ttSnapshots: 'Instantanés enregistrés',
       ttClearAll: 'Effacer toutes les données',
       msgPdfArabicUnsupported: 'L’export PDF en arabe n’est pas encore disponible. Utilisez l’export Word (DOCX).',
-    },
       /* ── Duties & Tasks tab ── */
       aiCardHintV2: 'Renseignez l’intitulé du métier dans la fiche DACUM. Ajouter le champ d’activité et le titre du poste améliore les résultats.',
       scopeWarnTitle: 'Aucun champ d’activité renseigné',
@@ -522,6 +521,7 @@
       msgDutyAlreadyEmpty: 'Cette activité est déjà vide — rien à effacer',
       confirmClearDuty: 'Voulez-vous vraiment effacer cette activité et toutes ses tâches ?',
       msgDutyCleared: 'Activité effacée !',
+    },
 
     ar: {
     /* ══════════════════════════════════════════════════════════
@@ -598,7 +598,7 @@
       ttSnapshots: 'اللقطات المحفوظة',
       ttClearAll: 'مسح جميع البيانات',
       msgPdfArabicUnsupported: 'تصدير PDF بالعربية غير متاح حالياً. استخدم تصدير Word (DOCX) — فهو يدعم العربية واتجاه الكتابة من اليمين بالكامل.',
-    },
+
       /* ── مستورد من DACUM Lite (مطابقة آلية عبر النص الإنجليزي) ──
          الأيقونات أُزيلت عمداً: في هذه الأداة تبقى الأيقونة في HTML
          خارج نطاق الترجمة، فلا تتكرر في كل لغة. */
@@ -696,7 +696,7 @@
       refineReversible: 'يمكن التراجع بـ Ctrl+Z.',
       btnRefine: 'تنقيح النتائج',
       btnProceedAdditional: 'الانتقال إلى المعلومات الإضافية',
-
+    },
   };
 
   var _current = localStorage.getItem('dacum_lang') || 'en';
