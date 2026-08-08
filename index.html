@@ -488,7 +488,7 @@
                      buttons sit on everywhere else. -->
                 <div class="step-nav-row" style="justify-content: flex-end;">
                     <button type="button" class="btn-next-step" data-nav-next="duties-tab">
-                        <span data-i18n="btnProceedDuties">Proceed to Duties &amp; Tasks →</span>
+                        <span data-i18n="btnProceedDuties">Proceed to Duties &amp; Tasks</span> <span class="rtl-flip">→</span>
                     </button>
                 </div>
             </div>
@@ -497,25 +497,26 @@
         <div class="tab-content" id="duties-tab">
             <div class="tab-header-row">
                 <div class="tab-title-with-help">
-                    <h2 id="dutiesViewHeadingLegacy">Duties and Tasks</h2>
+                    <h2 id="dutiesViewHeadingLegacy" data-i18n="h2Duties">Duties and Tasks</h2>
                     <button type="button" id="dutiesHelpBtn" class="tab-help-btn"
                             title="How do I write duty and task statements?"
+                            data-i18n="ttDutiesHelp" data-i18n-attr="title"
                             aria-label="How do I write duty and task statements?"
                             aria-haspopup="dialog">?</button>
                 </div>
                 <button data-action="clear-tab" data-tab-id="duties-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
-                    🗑️ Clear This Tab
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
             
             <!-- AI Generation Section -->
             <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
-                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ AI-Powered DACUM Generation</h3>
-                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;">Generate complete duties and tasks automatically based on occupation details</p>
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ <span data-i18n="aiCardTitle">AI-Powered DACUM Generation</span></h3>
+                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;" data-i18n="aiCardDesc">Generate complete duties and tasks automatically based on occupation details</p>
                 <button class="btn-ai-generate" id="aiGenerateBtn"  style="background: white; color: #667eea; padding: 12px 30px; font-size: 1.05em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                    🤖 Generate AI Draft
+                    🤖 <span data-i18n="btnGenerateAI">Generate AI Draft</span>
                 </button>
-                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 Fill Occupation Title in Chart Info. Adding Scope of Work &amp; Job Title improves results.</p>
+                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 <span data-i18n="aiCardHintV2">Fill Occupation Title in Chart Info. Adding Scope of Work &amp; Job Title improves results.</span></p>
             </div>
 
             <!-- Missing-Scope soft warning (hidden until user clicks Generate without Scope) -->
@@ -524,10 +525,10 @@
                             background:#fffbeb; border:1.5px solid #fbbf24; border-radius:10px;">
                     <span style="font-size:1.2em; flex-shrink:0; line-height:1.3;">💡</span>
                     <div style="flex:1; min-width:0;">
-                        <p style="margin:0 0 3px; font-size:0.88em; font-weight:700; color:#92400e;">
+                        <p style="margin:0 0 3px; font-size:0.88em; font-weight:700; color:#92400e;" data-i18n="scopeWarnTitle">
                             No Scope of Work provided
                         </p>
-                        <p style="margin:0 0 10px; font-size:0.8em; color:#78350f; line-height:1.5;">
+                        <p style="margin:0 0 10px; font-size:0.8em; color:#78350f; line-height:1.5;" data-i18n="scopeWarnBody">
                             Generation works without it, but results are more accurate and stay within the right boundaries when you provide a short Scope paragraph in Chart Info.
                         </p>
                         <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -538,7 +539,7 @@
                                            white-space:nowrap; transition:background 0.15s, border-color 0.15s;"
                                     onmouseover="this.style.background='#fef3c7';this.style.borderColor='#f59e0b';"
                                     onmouseout="this.style.background='#ffffff';this.style.borderColor='#fbbf24';">
-                                ⚡ Generate Anyway
+                                ⚡ <span data-i18n="btnGenerateAnyway">Generate Anyway</span>
                             </button>
                             <button id="btnAddScopeFirst" type="button"
                                     style="padding:7px 14px; background:transparent; color:#78350f;
@@ -547,12 +548,12 @@
                                            white-space:nowrap; transition:background 0.15s;"
                                     onmouseover="this.style.background='rgba(251,191,36,0.15)';"
                                     onmouseout="this.style.background='transparent';">
-                                I'll add Scope first
+                                <span data-i18n="btnAddScopeFirst">I'll add Scope first</span>
                             </button>
                         </div>
                     </div>
                     <button id="btnDismissScopeWarning"
-                            title="Dismiss"
+                            title="Dismiss" data-i18n="ttDismiss" data-i18n-attr="title"
                             aria-label="Dismiss scope warning"
                             style="flex-shrink:0; background:transparent; border:none; font-size:1.2em;
                                    color:#92400e; cursor:pointer; padding:2px 8px; border-radius:4px;
@@ -570,10 +571,10 @@
                             background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:10px;">
                     <span style="font-size:1.1em; flex-shrink:0;">&#x2728;</span>
                     <div style="flex:1; min-width:0;">
-                        <p style="margin:0 0 2px; font-size:0.86em; font-weight:700; color:#374151;">Refine AI Results</p>
+                        <p style="margin:0 0 2px; font-size:0.86em; font-weight:700; color:#374151;" data-i18n="refineTitle">Refine AI Results</p>
                         <p style="margin:0; font-size:0.78em; color:#6b7280; line-height:1.4;">
-                            Clean duplicates, normalize wording, remove result clauses &amp; fragments.
-                            <strong style="color:#4b5563;">Reversible with Ctrl+Z.</strong>
+                            <span data-i18n="refineDescV2">Clean duplicates, normalize wording, remove result clauses &amp; fragments.</span>
+                            <strong style="color:#4b5563;" data-i18n="refineReversible">Reversible with Ctrl+Z.</strong>
                         </p>
                     </div>
                     <button id="btnRefineResults"
@@ -582,7 +583,7 @@
                                    font-weight:600; cursor:pointer; white-space:nowrap;"
                             onmouseover="this.style.background='#f0f4ff';this.style.borderColor='#a5b4fc';"
                             onmouseout="this.style.background='#fff';this.style.borderColor='#d1d5db';">
-                        &#x1F9F9; Refine Results
+                        &#x1F9F9; <span data-i18n="btnRefine">Refine Results</span>
                     </button>
                 </div>
             </div>
@@ -590,10 +591,10 @@
             <!-- View toggle — sits between AI section and the duties area -->
             <div style="display:flex; align-items:center; justify-content:space-between; margin: 18px 0 10px 0; flex-wrap:wrap; gap:10px;">
               <span id="dutiesViewHeading" style="font-size:1.05em; font-weight:700; color:#374151;">Card View — Duties &amp; Tasks</span>
-              <div class="view-segmented" role="tablist" aria-label="Switch duties view">
-                <button data-view-switch="card"  class="view-seg-btn is-active" role="tab" aria-selected="true">🃏 Card</button>
-                <button data-view-switch="table" class="view-seg-btn"           role="tab" aria-selected="false">📋 Table</button>
-                <button data-view-switch="wall"  class="view-seg-btn"           role="tab" aria-selected="false" title="DACUM Workshop display — read-only wall view">🧱 Wall</button>
+              <div class="view-segmented" role="tablist" aria-label="Switch duties view" data-i18n="ttViewSwitch" data-i18n-attr="aria-label">
+                <button data-view-switch="card"  class="view-seg-btn is-active" role="tab" aria-selected="true">🃏 <span data-i18n="viewCard">Card</span></button>
+                <button data-view-switch="table" class="view-seg-btn"           role="tab" aria-selected="false">📋 <span data-i18n="viewTable">Table</span></button>
+                <button data-view-switch="wall"  class="view-seg-btn"           role="tab" aria-selected="false" title="DACUM Workshop display — read-only wall view" data-i18n="ttViewWall" data-i18n-attr="title">🧱 <span data-i18n="viewWall">Wall</span></button>
               </div>
               <!-- Legacy hidden button kept for backward compat (still wired in events.js) -->
               <button id="btnToggleDutiesView" class="dcv-toggle-btn is-card" style="display:none;" aria-hidden="true">📋 Table View</button>
@@ -607,15 +608,16 @@
             </div>
 
             <div id="dutiesContainer"></div>
-            <button class="btn-add" id="btnAddDuty">➕ Add Duty</button>
+            <button class="btn-add" id="btnAddDuty">➕ <span data-i18n="btnAddDuty">Add Duty</span></button>
             
             <div class="step-nav-row">
                 <button type="button" class="btn-back-step" data-nav-back="info-tab"
-                        title="Return to Chart Info to review or edit">
-                    ← Back to Chart Info
+                        title="Return to Chart Info to review or edit"
+                        data-i18n="ttBackChartInfo" data-i18n-attr="title">
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackChartInfo">Back to Chart Info</span>
                 </button>
                 <button type="button" class="btn-next-step" data-nav-next="additional-info-tab">
-                    Proceed to Additional Info →
+                    <span data-i18n="btnProceedAdditional">Proceed to Additional Info</span> <span class="rtl-flip">→</span>
                 </button>
             </div>
         </div>

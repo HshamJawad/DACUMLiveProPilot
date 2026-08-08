@@ -16,6 +16,20 @@ import { appState }   from './state.js';
 import { showStatus } from './renderer.js';
 import { getDutyLetter, getTaskCode as _codesTaskCode } from './codes.js';
 
+/* ── i18n access ──────────────────────────────────────────────────
+   Resolved lazily on every call: window.i18n is installed by a plain
+   <script>, and an ES module must not assume it already exists at
+   evaluation time. Falls back to the key so a missing engine degrades
+   to visible-but-harmless text instead of a TypeError. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)      : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v)  : k);
+
+/* Duty letters and task codes (A, A1, B12) are Latin and must never be
+   reordered by the bidi algorithm when embedded in an Arabic sentence.
+   <bdi> is the native isolate for exactly this case — no CSS required. */
+const _bdi = (code) => `<bdi>${code}</bdi>`;
+
+
 // ── View mode (persisted) ─────────────────────────────────────
 //
 // Three modes:
@@ -77,7 +91,7 @@ function _updateToggleButton() {
   const mode    = _activeMode();
   if (btn) {
     const isCard = mode === 'card';
-    btn.textContent = isCard ? '📋 Table View' : '🃏 Card View';
+    btn.textContent = isCard ? '📋 ' + _t('viewTable') : '🃏 ' + _t('viewCard');
     btn.className   = 'dcv-toggle-btn' + (isCard ? ' is-card' : '');
   }
   // Update segmented toggle's active button (if present)
@@ -86,9 +100,9 @@ function _updateToggleButton() {
     el.classList.toggle('is-active', target === mode);
   });
   if (heading) {
-    heading.textContent = mode === 'card'  ? 'Card View — Duties & Tasks'
-                        : mode === 'table' ? 'Duties and Tasks'
-                        : 'Wall View — DACUM Research Chart';
+    heading.textContent = mode === 'card'  ? _t('headingCardView')
+                        : mode === 'table' ? _t('headingTableView')
+                        : _t('headingWallView');
   }
 }
 
@@ -128,13 +142,13 @@ function _renderTableView(container) {
     dutyDiv.id = duty.id;
     dutyDiv.innerHTML = `
       <div class="duty-header">
-        <h4>Duty ${dutyLetter}</h4>
+        <h4>${_tf('lblDuty', { code: _bdi(dutyLetter) })}</h4>
         <div style="display:flex;gap:10px;">
           <button class="btn-clear-section" data-action="clear-duty"   data-duty-id="${duty.id}">🗑️ Clear</button>
           <button class="btn-remove"         data-action="remove-duty"  data-duty-id="${duty.id}">🗑️ Remove Duty</button>
         </div>
       </div>
-      <input type="text" placeholder="Enter duty description"
+      <input type="text" placeholder="${_t('phEnterDutyDesc')}"
              data-duty-id="${duty.id}" value="${_esc(duty.title)}">
       <div class="task-list" id="tasks_${duty.id}"></div>
       <button class="btn-add" data-action="add-task" data-duty-id="${duty.id}">➕ Add Task</button>
@@ -147,8 +161,8 @@ function _renderTableView(container) {
       taskDiv.className = 'task-item';
       taskDiv.id = task.divId;
       taskDiv.innerHTML = `
-        <span class="task-label">Task ${dutyLetter}${taskIndex + 1}:</span>
-        <input type="text" style="flex:1;" placeholder="Enter task description"
+        <span class="task-label">${_tf('lblTaskColon', { code: _bdi(dutyLetter + (taskIndex + 1)) })}</span>
+        <input type="text" style="flex:1;" placeholder="${_t('phEnterTaskDesc')}"
                data-task-id="${task.inputId}" value="${_esc(task.text)}">
         <button class="btn-remove" data-action="remove-task" data-task-div-id="${task.divId}">🗑️</button>
       `;
@@ -188,15 +202,15 @@ function _renderCardView(container) {
     dutyCard.innerHTML = `
       <div class="dcv-card-top">
         <div class="dcv-card-top-left">
-          <span class="dcv-duty-drag-handle" title="Drag to reorder duty" aria-label="Drag to reorder duty">${_DRAG_DOTS_SVG}</span>
-          <span class="dcv-duty-label">Duty ${dutyLetter}</span>
+          <span class="dcv-duty-drag-handle" title="${_t('ttDragDuty')}" aria-label="${_t('ttDragDuty')}">${_DRAG_DOTS_SVG}</span>
+          <span class="dcv-duty-label">${_tf('lblDuty', { code: _bdi(dutyLetter) })}</span>
         </div>
         <button class="dcv-close-btn" data-action="remove-duty" data-duty-id="${duty.id}"
-                title="Remove duty" aria-label="Remove duty">✕</button>
+                title="${_t('ttRemoveDuty')}" aria-label="${_t('ttRemoveDuty')}">✕</button>
       </div>
       <textarea class="dcv-duty-input"
                 data-duty-id="${duty.id}"
-                placeholder="Enter duty"
+                placeholder="${_t('phEnterDuty')}"
                 rows="2">${_esc(duty.title)}</textarea>
     `;
     row.appendChild(dutyCard);
@@ -218,7 +232,7 @@ function _renderCardView(container) {
     addTaskBtn.className = 'dcv-add-task-btn';
     addTaskBtn.setAttribute('data-action', 'add-task');
     addTaskBtn.setAttribute('data-duty-id', duty.id);
-    addTaskBtn.innerHTML = '＋ Task';
+    addTaskBtn.innerHTML = '＋ ' + _t('btnAddTaskShort');
     tasksScroll.appendChild(addTaskBtn);   // ← inside scroll, moves with cards
 
     tasksArea.appendChild(tasksScroll);
@@ -236,15 +250,15 @@ function _makeTaskCard(task, displayCode) {
   card.innerHTML = `
     <div class="dcv-card-top">
       <div class="dcv-card-top-left">
-        <span class="dcv-task-drag-handle" title="Drag to reorder task" aria-label="Drag to reorder task">${_DRAG_DOTS_SVG}</span>
-        <span class="dcv-task-label">Task ${displayCode}</span>
+        <span class="dcv-task-drag-handle" title="${_t('ttDragTask')}" aria-label="${_t('ttDragTask')}">${_DRAG_DOTS_SVG}</span>
+        <span class="dcv-task-label">${_tf('lblTask', { code: _bdi(displayCode) })}</span>
       </div>
       <button class="dcv-close-btn" data-action="remove-task" data-task-div-id="${task.divId}"
-              title="Remove task" aria-label="Remove task">✕</button>
+              title="${_t('ttRemoveTask')}" aria-label="${_t('ttRemoveTask')}">✕</button>
     </div>
     <textarea class="dcv-task-input"
               data-task-id="${task.inputId}"
-              placeholder="Enter task"
+              placeholder="${_t('phEnterTask')}"
               rows="2">${_esc(task.text)}</textarea>
   `;
   return card;
@@ -267,7 +281,7 @@ function _setAddDutyVisibility(mode) {
       cardBtn           = document.createElement('button');
       cardBtn.id        = 'btnAddDutyCard';
       cardBtn.className = 'dcv-add-duty-btn';
-      cardBtn.innerHTML = '＋ Add Duty';
+      cardBtn.innerHTML = '＋ ' + _t('btnAddDuty');
       // Insert after dutiesContainer
       const container = document.getElementById('dutiesContainer');
       if (container && container.parentNode) {
@@ -387,15 +401,15 @@ export function clearDuty(dutyId) {
   const isBlank  = !existing || (!(existing.title || '').trim() && !(existing.tasks || []).length);
 
   if (isBlank) {
-    showStatus('This duty is already empty — nothing to clear', 'success');
+    showStatus(_t('msgDutyAlreadyEmpty'), 'success');
     return;
   }
-  if (!confirm('Are you sure you want to clear this duty and all its tasks?')) return;
+  if (!confirm(_t('confirmClearDuty'))) return;
   existing.title = '';
   existing.tasks = [];
   appState.taskCounts[dutyId] = 0;
   renderDutiesFromState();
-  showStatus('Duty cleared! ✓', 'success');
+  showStatus(_t('msgDutyCleared') + ' ✓', 'success');
 }
 
 // ── Utility (unchanged public API) ───────────────────────────
@@ -524,8 +538,8 @@ function _renderWallView(container) {
     empty.className = 'wall-empty-state';
     empty.innerHTML = `
       <div class="wall-empty-icon">🧱</div>
-      <h3>No duties yet</h3>
-      <p>Add your first duty to start building the chart right here on the wall.</p>
+      <h3>${_t('emptyWallTitle')}</h3>
+      <p>${_t('emptyWallBody')}</p>
       <button class="wall-btn-primary" data-wall-empty-action="add-duty">＋ Add First Duty</button>
     `;
     // Matches the floating "＋ Add Duty" button's own onclick (see
@@ -648,19 +662,19 @@ function _makeWallDutyCard(duty, dutyLetter) {
   card.innerHTML = `
     <div class="dcv-card-top">
       <div class="dcv-card-top-left">
-        <span class="dcv-duty-drag-handle" title="Drag to reorder duty" aria-label="Drag to reorder duty">${_DRAG_DOTS_SVG}</span>
-        <span class="dcv-duty-label">Duty ${_esc(dutyLetter)}</span>
+        <span class="dcv-duty-drag-handle" title="${_t('ttDragDuty')}" aria-label="${_t('ttDragDuty')}">${_DRAG_DOTS_SVG}</span>
+        <span class="dcv-duty-label">${_tf('lblDuty', { code: _bdi(_esc(dutyLetter)) })}</span>
       </div>
       <div class="dcv-card-top-right">
         <button class="dcv-add-btn" data-action="add-duty"
-                title="Add a new duty" aria-label="Add a new duty">＋</button>
+                title="${_t('ttAddDuty')}" aria-label="${_t('ttAddDuty')}">＋</button>
         <button class="dcv-close-btn" data-action="remove-duty" data-duty-id="${duty.id}"
-                title="Remove duty" aria-label="Remove duty">✕</button>
+                title="${_t('ttRemoveDuty')}" aria-label="${_t('ttRemoveDuty')}">✕</button>
       </div>
     </div>
     <textarea class="dcv-duty-input"
               data-duty-id="${duty.id}"
-              placeholder="Enter duty..."
+              placeholder="${_t('phEnterDuty')}…"
               rows="2">${_esc(duty.title)}</textarea>
   `;
   return card;
@@ -673,19 +687,19 @@ function _makeWallTaskCard(task, displayCode, dutyId) {
   card.innerHTML = `
     <div class="dcv-card-top">
       <div class="dcv-card-top-left">
-        <span class="dcv-task-drag-handle" title="Drag to reorder task" aria-label="Drag to reorder task">${_DRAG_DOTS_SVG}</span>
-        <span class="dcv-task-label">Task ${displayCode}</span>
+        <span class="dcv-task-drag-handle" title="${_t('ttDragTask')}" aria-label="${_t('ttDragTask')}">${_DRAG_DOTS_SVG}</span>
+        <span class="dcv-task-label">${_tf('lblTask', { code: _bdi(displayCode) })}</span>
       </div>
       <div class="dcv-card-top-right">
         <button class="dcv-add-btn" data-action="add-task" data-duty-id="${dutyId}"
-                title="Add another task" aria-label="Add another task">＋</button>
+                title="${_t('ttAddTask')}" aria-label="${_t('ttAddTask')}">＋</button>
         <button class="dcv-close-btn" data-action="remove-task" data-task-div-id="${task.divId}"
-                title="Remove task" aria-label="Remove task">✕</button>
+                title="${_t('ttRemoveTask')}" aria-label="${_t('ttRemoveTask')}">✕</button>
       </div>
     </div>
     <textarea class="dcv-task-input"
               data-task-id="${task.inputId}"
-              placeholder="Enter task..."
+              placeholder="${_t('phEnterTask')}…"
               rows="2">${_esc(task.text)}</textarea>
   `;
   return card;
@@ -724,17 +738,17 @@ function _makeWallToolbar() {
   bar.className = 'wall-toolbar';
   bar.innerHTML = `
     <div class="wv-left">
-      <button class="wv-btn wv-btn-exit" data-wv-action="exit"  title="Return to Card View (Esc)">✕ Exit</button>
+      <button class="wv-btn wv-btn-exit" data-wv-action="exit"  title="${_t('ttWvExit')}">✕ ${_t('wvExit')}</button>
     </div>
     <div class="wv-center">
-      <button class="wv-btn"  data-wv-action="zoom-out"  title="Zoom out (Ctrl+−)">🔍−</button>
+      <button class="wv-btn"  data-wv-action="zoom-out"  title="${_t('ttWvZoomOut')}">🔍−</button>
       <span class="wv-zoom-pct">100%</span>
-      <button class="wv-btn"  data-wv-action="zoom-in"   title="Zoom in (Ctrl++)">🔍+</button>
-      <button class="wv-btn"  data-wv-action="zoom-reset" title="Reset auto-zoom">⟲ Reset</button>
+      <button class="wv-btn"  data-wv-action="zoom-in"   title="${_t('ttWvZoomIn')}">🔍+</button>
+      <button class="wv-btn"  data-wv-action="zoom-reset" title="${_t('ttWvZoomReset')}">⟲ ${_t('wvReset')}</button>
     </div>
     <div class="wv-right">
-      <button class="wv-btn"  data-wv-action="print"      title="Print wall">🖨 Print</button>
-      <button class="wv-btn"  data-wv-action="fullscreen" title="Toggle fullscreen">🖥 Fullscreen</button>
+      <button class="wv-btn"  data-wv-action="print"      title="${_t('ttWvPrint')}">🖨 ${_t('wvPrint')}</button>
+      <button class="wv-btn"  data-wv-action="fullscreen" title="${_t('ttWvFullscreen')}">🖥 ${_t('wvFullscreen')}</button>
     </div>
   `;
 
@@ -770,7 +784,7 @@ function _populatePrintHeader() {
   const now  = new Date();
   const date = now.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
 
-  titleEl.textContent = `DACUM Research Chart For — ${occ}`;
+  titleEl.textContent = _tf('wallPrintTitle', { occ: occ });
   subEl.textContent   = job ? `${job} · ${date}` : date;
 }
 
@@ -882,3 +896,16 @@ function _wireWallHandlers() {
   }, true);   // capture phase so we run BEFORE the tab handler
 }
 _wireWallHandlers();
+
+
+/* ── Re-render on language change ───────────────────────────────────
+   Card and wall views bake their labels into innerHTML at render time,
+   so applyTranslations() cannot reach them — it only rewrites elements
+   carrying data-i18n, and these are generated after that pass runs.
+   Re-rendering from state is cheap (the DOM is rebuilt on every edit
+   anyway) and guarantees labels, placeholders and tooltips all follow
+   the switch in one atomic repaint rather than half-updating. */
+window.addEventListener('dacum:langchange', () => {
+  // Guard: the duties tab may never have been opened yet this session.
+  if (document.getElementById('dutiesContainer')) renderDutiesFromState();
+});

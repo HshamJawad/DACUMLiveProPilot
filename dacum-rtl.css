@@ -234,3 +234,70 @@ body.dacum-rtl .cluster-card {
     direction: rtl;
   }
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   3. DUTIES & TASKS  —  added with the Duties tab translation
+   ───────────────────────────────────────────────────────────── */
+
+/* Duty letters and task codes (A, A1, B12) are wrapped in <bdi> by
+   duties.js. <bdi> already isolates them from the surrounding bidi
+   run; this only stops a long code from wrapping mid-token. */
+body.dacum-rtl bdi {
+  white-space: nowrap;
+}
+
+/* Card and wall cards carry their accent as a left border. */
+body.dacum-rtl .dcv-duty-card,
+body.dacum-rtl .dcv-task-card,
+body.dacum-rtl .wv-duty-column {
+  border-left: none;
+  border-right: 4px solid var(--accent, #6366f1);
+}
+
+/* Drag handles sit at the inline-start edge of a row. dir=rtl moves
+   them automatically; what does not move is any absolute positioning. */
+body.dacum-rtl .dcv-duty-drag-handle,
+body.dacum-rtl .dcv-task-drag-handle {
+  left: auto;
+  right: 6px;
+}
+
+/* Remove / add buttons pinned to the opposite edge. */
+body.dacum-rtl .dcv-duty-remove,
+body.dacum-rtl .dcv-task-remove,
+body.dacum-rtl .dcv-duty-add,
+body.dacum-rtl .dcv-task-add {
+  right: auto;
+  left: 6px;
+}
+
+/* WALL VIEW — the one place where mirroring is a judgement call.
+   A DACUM wall is read as a matrix: duties down the inline-start
+   edge, tasks flowing away from them. Arabic facilitators read that
+   matrix right-to-left, so the columns must mirror or the chart
+   contradicts the reading order of its own text. */
+body.dacum-rtl .wall-view-grid,
+body.dacum-rtl .wv-duty-row {
+  direction: rtl;
+}
+
+/* The zoom percentage readout is a number with a % sign — leave it
+   LTR so the sign stays on the correct side of the digits. */
+body.dacum-rtl .wv-zoom-pct {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* The wall toolbar is a fixed overlay; its zoom cluster reads
+   [− 100% +] in every language because the operators are spatial,
+   not linguistic. Locking it to LTR keeps − on the left of +. */
+body.dacum-rtl .wv-zoom-group {
+  direction: ltr;
+}
+
+/* Print header for wall printouts follows the content language. */
+body.dacum-rtl .wall-print-header {
+  direction: rtl;
+  text-align: right;
+}
