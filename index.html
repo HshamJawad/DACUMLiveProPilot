@@ -1339,79 +1339,81 @@
                  _showModuleMappingHelp() for the content. -->
             <div class="tab-header-row">
                 <div class="tab-title-with-help">
-                    <h2>📦 Module Mapping</h2>
+                    <h2>📦 <span data-i18n="h2ModuleMapping">Module Mapping</span></h2>
                     <button type="button" id="mmHelpBtn" class="tab-help-btn"
                             title="Purpose and module grouping strategies"
+                            data-i18n="ttMMHelp" data-i18n-attr="title"
                             aria-label="Purpose and module grouping strategies"
                             aria-haspopup="dialog">?</button>
                 </div>
                 <button data-action="clear-tab" data-tab-id="module-mapping-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
-                    🗑️ Clear This Tab
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
 
             <!-- AI Generation Section — mirrors the card in the Duties tab -->
             <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
-                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ Automatic Module Generation</h3>
-                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;">Build modules from your Learning Outcomes, or keep grouping them manually below</p>
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ <span data-i18n="aiMMTitle">Automatic Module Generation</span></h3>
+                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;" data-i18n="aiMMDesc">Build modules from your Learning Outcomes, or keep grouping them manually below</p>
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                     <button id="mmGenOneToOneBtn" style="background: rgba(255,255,255,0.18); color: white; border: 1.5px solid rgba(255,255,255,0.55); padding: 12px 22px; font-size: 1em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
-                        ⚡ One Module per Outcome
+                        ⚡ <span data-i18n="btnOneModulePerLO">One Module per Outcome</span>
                     </button>
                     <button class="btn-ai-generate" id="mmGenAIBtn" style="background: white; color: #667eea; padding: 12px 22px; font-size: 1em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                        🤖 AI Group &amp; Sequence Modules
+                        🤖 <span data-i18n="btnAIGroupModules">AI Group &amp; Sequence Modules</span>
                     </button>
                 </div>
-                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">⚡ Instant and offline — one module per outcome. 🤖 Groups related outcomes, names each module, and orders them foundational → advanced. Both replace existing modules; your Learning Outcomes are never changed.</p>
+                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;" data-i18n="aiMMHint">⚡ Instant and offline — one module per outcome. 🤖 Groups related outcomes, names each module, and orders them foundational → advanced. Both replace existing modules; your Learning Outcomes are never changed.</p>
             </div>
 
             <!-- Available Learning Outcomes -->
             <div class="clustering-section">
-                <h3>🎓 Available Learning Outcomes</h3>
-                <p style="color: #666; margin-bottom: 15px;">Select Learning Outcomes to create a module.</p>
+                <h3>🎓 <span data-i18n="lblAvailableLOs">Available Learning Outcomes</span></h3>
+                <p style="color: #666; margin-bottom: 15px;" data-i18n="hintAvailableLOs">Select Learning Outcomes to create a module.</p>
                 <div class="module-lo-list" id="moduleLoList">
-                    <div class="no-tasks-message">No Learning Outcomes available. Please create Learning Outcomes first.</div>
+                    <div class="no-tasks-message" data-i18n="msgNoLOsAvailable">No Learning Outcomes available. Please create Learning Outcomes first.</div>
                 </div>
             </div>
 
             <!-- Create Module Button -->
             <button class="btn-create-module" id="btnCreateModule"  disabled>
-                ✨ Create New Module
+                ✨ <span data-i18n="btnCreateModule">Create New Module</span>
             </button>
 
             <!-- Modules Container -->
             <div class="clustering-section">
-                <h3>📦 Modules</h3>
+                <h3>📦 <span data-i18n="lblModules">Modules</span></h3>
                 <div class="modules-container" id="modulesContainer">
-                    <div class="no-clusters-message">No modules created yet.</div>
+                    <div class="no-clusters-message" data-i18n="msgNoModules">No modules created yet.</div>
                 </div>
             </div>
 
             <!-- Export Module Mapping Button -->
             <div style="margin-top: 30px; text-align: center;">
                 <button class="btn-export-json" id="btnExportModuleMapping">
-                    📦 Export Module Mapping (JSON)
+                    📦 <span data-i18n="btnExportMM">Export Module Mapping (JSON)</span>
                 </button>
             </div>
 
             <!-- Module Builder Call-to-Action Banner -->
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 16px; margin-top: 40px; text-align: center; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);">
                 <h3 style="color: white; margin: 0 0 20px 0; font-size: 1.5em; font-weight: 600;">
-                    ✨ Ready to build detailed training modules?
+                    ✨ <span data-i18n="mbBannerTitle">Ready to build detailed training modules?</span>
                 </h3>
                 <button type="button" id="btnOpenModuleBuilder" class="btn-next-step btn-next-strong">
-                    🚀 Proceed to Module Builder
+                    🚀 <span data-i18n="btnOpenModuleBuilder">Proceed to Module Builder</span>
                 </button>
                 <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 0.95em; font-style: italic;">
-                    Export your modules and continue with detailed curriculum development
+                    <span data-i18n="mbBannerHint">Export your modules and continue with detailed curriculum development</span>
                 </p>
             </div>
 
             <!-- Last step in the chain — back only, no "Proceed". -->
             <div class="step-nav-row">
                 <button type="button" class="btn-back-step" data-nav-back="learning-outcomes-tab"
-                        title="Return to Learning Outcomes to review or edit">
-                    ← Back to Learning Outcomes
+                        title="Return to Learning Outcomes to review or edit"
+                        data-i18n="ttBackLO" data-i18n-attr="title">
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackLO">Back to Learning Outcomes</span>
                 </button>
             </div>
         </div>

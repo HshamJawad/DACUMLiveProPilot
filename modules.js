@@ -556,7 +556,7 @@ export function renderModuleLoList() {
   const mm = appState.moduleMappingData;
 
   if (!lo.outcomes || lo.outcomes.length === 0) {
-    container.innerHTML = '<div class="no-tasks-message">No Learning Outcomes available. Please create Learning Outcomes first.</div>';
+    container.innerHTML = `<div class="no-tasks-message">${_t('msgNoLOsAvailable')}</div>`;
     document.getElementById('btnCreateModule').disabled = true;
     return;
   }
@@ -566,7 +566,7 @@ export function renderModuleLoList() {
   const availableLos = lo.outcomes.filter(o => !assignedLoIds.has(o.id));
 
   if (availableLos.length === 0) {
-    container.innerHTML = '<div class="no-tasks-message">All Learning Outcomes have been assigned to modules.</div>';
+    container.innerHTML = `<div class="no-tasks-message">${_t('msgAllLOsAssigned')}</div>`;
     document.getElementById('btnCreateModule').disabled = true;
     return;
   }
@@ -574,7 +574,7 @@ export function renderModuleLoList() {
   let html = '';
   availableLos.forEach(outcome => {
     const criteriaText = outcome.linkedCriteria.map(pc => pc.id).join(', ');
-    let moduleOptions = '<option value="">Select Module</option>';
+    let moduleOptions = `<option value="">${_t('optSelectModule')}</option>`;
     mm.modules.forEach(m => { moduleOptions += `<option value="${m.id}">${m.title}</option>`; });
 
     html += `
@@ -582,8 +582,8 @@ export function renderModuleLoList() {
         <input type="checkbox" id="mlo_${outcome.id}" data-lo-id="${outcome.id}" data-action="update-module-button">
         <div class="module-lo-content">
           <div class="module-lo-number">${outcome.number}</div>
-          <div class="module-lo-statement">${outcome.statement || '<em>No statement provided</em>'}</div>
-          <div class="module-lo-criteria">Mapped PC: ${criteriaText}</div>
+          <div class="module-lo-statement">${outcome.statement || `<em>${_t('msgNoStatementProvided')}</em>`}</div>
+          <div class="module-lo-criteria">${_t('lblMappedPCInline')} ${criteriaText}</div>
         </div>
         ${mm.modules.length > 0 ? `
         <div class="task-dropdown-container">
@@ -614,7 +614,7 @@ export function createModule() {
   if (selectedLoIds.length === 0) return;
 
   mm.moduleCounter++;
-  const newModule = { id: `module_${mm.moduleCounter}`, title: `Module ${mm.moduleCounter}`, learningOutcomes: [] };
+  const newModule = { id: `module_${mm.moduleCounter}`, title: _tf('lblModuleN', { n: mm.moduleCounter }), learningOutcomes: [] };
   selectedLoIds.forEach(loId => {
     const outcome = lo.outcomes.find(o => o.id === loId);
     if (outcome) newModule.learningOutcomes.push(outcome);
@@ -630,7 +630,7 @@ export function renderModules() {
   const mm = appState.moduleMappingData;
 
   if (mm.modules.length === 0) {
-    container.innerHTML = '<div class="no-clusters-message">No modules created yet.</div>';
+    container.innerHTML = `<div class="no-clusters-message">${_t('msgNoModules')}</div>`;
     return;
   }
 
@@ -641,8 +641,8 @@ export function renderModules() {
         <div class="module-header">
           <div class="module-title">${module.title}</div>
           <div class="module-actions">
-            <button class="btn-rename-module" data-action="rename-module" data-module-id="${module.id}">✏️ Rename</button>
-            <button class="btn-delete-module" data-action="delete-module" data-module-id="${module.id}">🗑️ Delete Module</button>
+            <button class="btn-rename-module" data-action="rename-module" data-module-id="${module.id}">✏️ ${_t('btnRename')}</button>
+            <button class="btn-delete-module" data-action="delete-module" data-module-id="${module.id}">🗑️ ${_t('btnDeleteModule')}</button>
           </div>
         </div>
         <div class="module-los-list">
@@ -652,11 +652,11 @@ export function renderModules() {
               <div class="module-lo-assigned">
                 <div class="module-lo-assigned-content">
                   <div class="module-lo-assigned-number">${outcome.number}</div>
-                  <div class="module-lo-assigned-statement">${outcome.statement || '<em>No statement</em>'}</div>
-                  <div class="module-lo-assigned-criteria">Mapped PC: ${criteriaText}</div>
+                  <div class="module-lo-assigned-statement">${outcome.statement || `<em>${_t('msgNoStatement')}</em>`}</div>
+                  <div class="module-lo-assigned-criteria">${_t('lblMappedPCInline')} ${criteriaText}</div>
                 </div>
                 <button class="btn-remove-lo" data-action="remove-lo-from-module"
-                  data-module-id="${module.id}" data-lo-id="${outcome.id}">✕ Remove</button>
+                  data-module-id="${module.id}" data-lo-id="${outcome.id}">✕ ${_t('btnRemove2')}</button>
               </div>`;
           }).join('')}
         </div>
@@ -669,7 +669,7 @@ export function renderModules() {
 export function renameModule(moduleId) {
   const module = appState.moduleMappingData.modules.find(m => m.id === moduleId);
   if (!module) return;
-  const newTitle = prompt('Enter new module title:', module.title);
+  const newTitle = prompt(_t('promptRenameModule'), module.title);
   if (newTitle && newTitle.trim()) {
     module.title = newTitle.trim();
     renderModules();
@@ -680,7 +680,7 @@ export function deleteModule(moduleId) {
   const mm = appState.moduleMappingData;
   const idx = mm.modules.findIndex(m => m.id === moduleId);
   if (idx === -1) return;
-  if (!confirm('Delete this module? All Learning Outcomes will return to the available list.')) return;
+  if (!confirm(_t('confirmDeleteModule'))) return;
   mm.modules.splice(idx, 1);
   renderModuleLoList();
   renderModules();
@@ -732,17 +732,17 @@ export function openModuleBuilderFromMapping() {
   try {
     localStorage.setItem('dacum_modules_export', JSON.stringify(exportObject));
     window.open('Module_Builder.html', '_blank');
-    showStatus('Module data exported! Opening Module Builder...', 'success');
+    showStatus(_t('msgMBExported'), 'success');
   } catch (error) {
     console.error('Error exporting to Module Builder:', error);
-    showStatus('Error exporting data: ' + error.message, 'error');
+    showStatus(_tf('msgMBExportError', { msg: error.message }), 'error');
   }
 }
 
 export function exportModuleMappingJSON() {
   const mm = appState.moduleMappingData;
   if (!mm.modules || mm.modules.length === 0) {
-    showStatus('No modules to export. Please create modules first.', 'error');
+    showStatus(_t('msgNoModulesToExport'), 'error');
     return;
   }
 
@@ -781,10 +781,10 @@ export function exportModuleMappingJSON() {
     link.href = url; link.download = filename;
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    showStatus(`Module Mapping exported successfully: ${filename}`, 'success');
+    showStatus(_tf('msgMMExported', { file: filename }), 'success');
   } catch (error) {
     console.error('Error exporting module mapping:', error);
-    showStatus('Error exporting module mapping: ' + error.message, 'error');
+    showStatus(_tf('msgMMExportError', { msg: error.message }), 'error');
   }
 }
 
@@ -806,4 +806,6 @@ window.addEventListener('dacum:langchange', () => {
      it in the other order would silently discard whatever the user had
      just typed. */
   if (document.getElementById('loBlocksContainer'))  renderLearningOutcomes();
+  if (document.getElementById('moduleLoList'))      renderModuleLoList();
+  if (document.getElementById('modulesContainer'))  renderModules();
 });

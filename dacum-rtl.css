@@ -638,3 +638,40 @@ html[dir="rtl"] .pc-label {
 html[dir="rtl"] .pc-used-badge {
   white-space: nowrap;
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   8. MODULE MAPPING
+   ───────────────────────────────────────────────────────────── */
+
+/* LO numbers and the comma-joined PC id list ("C1-PC2, C1-PC3") are
+   generated identifiers. The separators matter: left to the bidi
+   algorithm, a comma between two Latin codes inside an Arabic block
+   can migrate to the wrong end of the run. */
+html[dir="rtl"] .module-lo-number,
+html[dir="rtl"] .module-lo-assigned-number,
+html[dir="rtl"] .module-lo-criteria,
+html[dir="rtl"] .module-lo-assigned-criteria {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: right;
+}
+
+html[dir="rtl"] .module-lo-item,
+html[dir="rtl"] .module-header,
+html[dir="rtl"] .module-actions,
+html[dir="rtl"] .module-lo-assigned {
+  flex-direction: row-reverse;
+}
+
+/* LO statements inside modules are prose in the content language. */
+html[dir="rtl"] .module-lo-statement,
+html[dir="rtl"] .module-lo-assigned-statement,
+html[dir="rtl"] .module-title {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .btn-remove-lo {
+  white-space: nowrap;
+}

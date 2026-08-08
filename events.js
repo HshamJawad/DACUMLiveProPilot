@@ -1121,11 +1121,13 @@ function _showLearningOutcomesHelp() {
 // strategies are documented here as guidance on how to use the
 // dropdowns below, which is how grouping actually works today.
 function _showModuleMappingHelp() {
+  /* "Mode {n}:" is a key with a slot rather than 'Mode ' + n — the word
+     order differs by language and the number is not always a suffix. */
   const mode = (n, title, detail) =>
     '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;' +
     'padding:11px 13px;margin-bottom:9px;">' +
       '<p style="margin:0;font-size:0.86em;line-height:1.6;color:#334155;">' +
-        '<strong style="color:#4338ca;">Mode ' + n + ':</strong> ' + title +
+        '<strong style="color:#4338ca;">' + _tf('helpMMModeLabel', { n: n }) + '</strong> ' + title +
         '<br><span style="color:#64748b;">' + detail + '</span>' +
       '</p>' +
     '</div>';
@@ -1134,29 +1136,23 @@ function _showModuleMappingHelp() {
     '<div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;' +
     'padding:12px 14px;margin-bottom:16px;">' +
       '<p style="margin:0;font-size:0.87em;line-height:1.6;color:#3730a3;">' +
-        '<strong>📚 Purpose:</strong> Group Learning Outcomes into training modules ' +
-        'or units of competency. Each module represents a logical instructional unit ' +
-        'for curriculum delivery.' +
+        _t('helpMMPurpose') +
       '</p>' +
     '</div>' +
 
     '<p style="margin:0 0 10px;font-size:0.88em;font-weight:700;color:#1e293b;">' +
-      '📋 Module Grouping Strategy</p>' +
+      _t('helpMMStrategy') + '</p>' +
 
-    mode(1, 'One Learning Outcome → One Module',
-            'Each LO creates its own module.') +
-    mode(2, 'Multiple Learning Outcomes → One Module',
-            'Selected LOs are grouped into a single module.') +
-    mode(3, 'Manual / Flexible Grouping',
-            'Use the dropdowns below to assign outcomes freely.');
+    mode(1, _t('helpMMMode1'), _t('helpMMMode1Detail')) +
+    mode(2, _t('helpMMMode2'), _t('helpMMMode2Detail')) +
+    mode(3, _t('helpMMMode3'), _t('helpMMMode3Detail'));
 
   _showHelpModal({
     id:       'mmHelpModal',
-    icon:     '📦',
-    title:    'Module Mapping',
+    icon:     '\u{1F4E6}',
+    title:    _t('helpMMTitle'),
     maxWidth: '540px',
     bodyHtml,
-    note: 'These are ways of thinking about the grouping, not settings to switch ' +
-          'between — build any of them with the module controls below.',
+    note: _t('helpMMNote'),
   });
 }
