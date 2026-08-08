@@ -998,3 +998,43 @@ function _buildCodeIndex(dutiesData) {
   });
   return { dutyLetters, taskCodes };
 }
+
+
+/* ── Re-render on language change ────────────────────────────────────
+   The verification accordion and the dashboard are built once from
+   state and then left alone — deliberately, so an open duty and the
+   scroll position survive a tab switch. That same persistence is what
+   froze "Duty A:" in Arabic after switching to French: nothing rebuilds
+   the header, and applyTranslations() cannot reach text that lives
+   inside a generated innerHTML string.
+
+   loadDutiesForVerification() is safe to call here: it renders purely
+   from appState, so every rating, count and comment is preserved. What
+   it does NOT do is prompt about orphaned ratings — refreshVerificationTab()
+   would, and a confirm() dialog triggered by picking a language would be
+   both baffling and destructive if dismissed.
+
+   The guard matters: if nothing has been built yet (the user has never
+   opened this tab), building it now from a language switch would be a
+   surprising side effect, and syncVerificationTab() will build it
+   correctly on first entry anyway. */
+window.addEventListener('dacum:langchange', () => {
+  const container = document.getElementById('verificationAccordionContainer');
+  if (container && container.querySelector('.duty-accordion')) {
+    loadDutiesForVerification();
+  }
+
+  // The dashboard has its own render path and its own headers.
+  const dash = document.getElementById('resultsDashboard');
+  if (dash && dash.style.display !== 'none') {
+    refreshDashboard();
+  }
+
+  /* The "Current Method: Advanced" label is written straight to the DOM
+     by this function and belongs to neither render path above, so it
+     needs its own nudge. Calling the setter (rather than duplicating the
+     markup here) also refreshes the duty-level summary body, whose rows
+     are generated the same way. It reads the radios and is idempotent —
+     safe to call with nothing changed. */
+  updateTrainingLoadMethod();
+});

@@ -340,3 +340,18 @@ export function removeCustomSection(sectionId) {
     if (section) { section.remove(); showStatus('Section removed! ✓', 'success'); }
   }
 }
+
+
+/* ── Re-render on language change ────────────────────────────────────
+   Custom sections added by the facilitator are generated here as
+   innerHTML, so their Rename/Clear/Remove buttons and placeholder are
+   outside applyTranslations()' reach — the same gap that froze the
+   Add Duty button and the verification accordion.
+
+   renderSkillsLevel() is the safe re-entry point: it rebuilds from
+   appState, so selections are preserved. Custom SECTION headings are
+   not rebuilt on purpose — they may carry a name the user typed, and
+   their default text is handled by data-i18n-once in the markup. */
+window.addEventListener('dacum:langchange', () => {
+  if (document.getElementById('skillsLevelContainer')) renderSkillsLevel();
+});
