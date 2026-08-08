@@ -349,6 +349,73 @@
         border-color: #94a3b8;
       }
 
+      /* ── Forward step button ──────────────────────────────────
+         Deliberately built from the SAME token set as .btn-back-step
+         above — identical padding, font-size, font-weight, radius,
+         border width, gap and transition. Only the colour differs.
+
+         The two halves of every step-nav row used to disagree on
+         almost everything: the Proceed buttons carried inline styles
+         with 12px 24px padding, no font-size (so they inherited a
+         larger one), no border, no font-family and no transition,
+         while Back was 8px 16px at 0.88em with a 1px border. Two
+         buttons of different heights and different type sizes sat
+         side by side in the same row, which reads as clutter rather
+         than as a pair.
+
+         The colour difference is kept on purpose. The visual noise
+         came from mismatched SIZE and SHAPE, not from hue; making
+         both neutral grey would remove the noise but also erase the
+         distinction between "go back and review" and "this is the
+         main next step". Same geometry, different weight — a pair,
+         not twins. */
+      .btn-next-step {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #667eea;
+        color: #ffffff;
+        border: 1px solid #667eea;   /* 1px, not none — matching height */
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 0.88em;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+      }
+
+      .btn-next-step:hover {
+        background: #5a67d8;
+        border-color: #5a67d8;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
+      }
+
+      .btn-next-step:disabled,
+      .btn-next-step[disabled] {
+        background: #cbd5e1;
+        border-color: #cbd5e1;
+        color: #f8fafc;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      /* Emphasis variant for the two buttons that are a bigger
+         commitment than a plain step forward — skipping verification,
+         and generating the modules. Same geometry again; only the
+         accent changes, so they still belong to the family. */
+      .btn-next-step.btn-next-strong {
+        background: #f59e0b;
+        border-color: #f59e0b;
+      }
+      .btn-next-step.btn-next-strong:hover {
+        background: #d97706;
+        border-color: #d97706;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
+      }
+
       /* Step navigation footer: back on the left, proceed on the right.
          Matches the 30px top margin the plain right-aligned "Proceed"
          blocks use on the other tabs, so the rhythm stays consistent. */

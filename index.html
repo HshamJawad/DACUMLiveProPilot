@@ -104,7 +104,7 @@
       // Bump these together with EXPECTED_SW / CACHE_VERSION on every
       // release, so a trainer can read the running build off the
       // screen instead of digging through DevTools.
-      var APP_VERSION = '3.15';
+      var APP_VERSION = '3.16';
       var APP_RELEASED = '2026-08-03';
 
       // Per-version reload guard — prevents infinite refresh loops
@@ -474,8 +474,15 @@
                     <textarea id="panelMembers" placeholder="Enter panel member names (one per line)" style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
                 </div>
                 
-                <div style="margin-top: 30px; text-align: right;">
-                    <button onclick="window.switchTab('duties-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                <!-- Chart Info is the first step so it has no Back button,
+                     but it uses the same .step-nav-row wrapper as every
+                     other step. That keeps the top margin, the gap and the
+                     mobile full-width behaviour identical instead of
+                     re-declaring them inline; justify-content:flex-end
+                     pushes the single button to the same edge the Proceed
+                     buttons sit on everywhere else. -->
+                <div class="step-nav-row" style="justify-content: flex-end;">
+                    <button type="button" class="btn-next-step" data-nav-next="duties-tab">
                         Proceed to Duties & Tasks →
                     </button>
                 </div>
@@ -602,7 +609,7 @@
                         title="Return to Chart Info to review or edit">
                     ← Back to Chart Info
                 </button>
-                <button onclick="window.switchTab('additional-info-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                <button type="button" class="btn-next-step" data-nav-next="additional-info-tab">
                     Proceed to Additional Info →
                 </button>
             </div>
@@ -769,7 +776,7 @@
                         title="Return to Duties & Tasks to review or edit">
                     ← Back to Duties & Tasks
                 </button>
-                <button onclick="window.switchTab('verification-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                <button type="button" class="btn-next-step" data-nav-next="verification-tab">
                     Proceed to Task Verification →
                 </button>
             </div>
@@ -1011,7 +1018,7 @@
                         <button class="btn-primary"  id="btnLWFinalize" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
                             🔒 Finalize & Create Live Voting Session
                         </button>
-                        <button class="btn-bypass-verification"  id="btnBypassToClustering" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        <button type="button" class="btn-bypass-verification btn-next-step btn-next-strong" id="btnBypassToClustering">
                             ⚡ Proceed to Competency Clustering Without Verification
                         </button>
                         <button  id="btnResetDecision" style="display: none; background: #ef4444; color: white; padding: 15px 30px; font-size: 1.1em; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
@@ -1160,7 +1167,7 @@
                         title="Return to Additional Info to review or edit">
                     ← Back to Additional Info
                 </button>
-                <button id="btnProceedToClustering" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                <button type="button" id="btnProceedToClustering" class="btn-next-step">
                     Proceed to Competency Clustering →
                 </button>
             </div>
@@ -1227,7 +1234,7 @@
                         title="Return to Task Verification to review or edit">
                     ← Back to Task Verification
                 </button>
-                <button onclick="window.switchTab('learning-outcomes-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                <button type="button" class="btn-next-step" data-nav-next="learning-outcomes-tab">
                     Proceed to Learning Outcomes →
                 </button>
             </div>
@@ -1300,7 +1307,7 @@
                         title="Return to Competency Clusters to edit clusters or criteria">
                     ← Back to Competency Clusters
                 </button>
-                <button onclick="window.switchTab('module-mapping-tab')" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                <button type="button" class="btn-next-step" data-nav-next="module-mapping-tab">
                     Proceed to Module Mapping →
                 </button>
             </div>
@@ -1373,7 +1380,7 @@
                 <h3 style="color: white; margin: 0 0 20px 0; font-size: 1.5em; font-weight: 600;">
                     ✨ Ready to build detailed training modules?
                 </h3>
-                <button id="btnOpenModuleBuilder" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 16px 40px; font-size: 1.2em; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); transition: all 0.3s ease; margin-bottom: 15px;">
+                <button type="button" id="btnOpenModuleBuilder" class="btn-next-step btn-next-strong">
                     🚀 Proceed to Module Builder
                 </button>
                 <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 0.95em; font-style: italic;">

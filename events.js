@@ -157,6 +157,18 @@ export function setupEvents() {
     switchTab(btn.getAttribute('data-nav-back'));
   });
 
+  // Forward navigation, mirroring the block above. The "Proceed to …"
+  // buttons previously used inline onclick="window.switchTab(...)",
+  // which is why they also carried inline style attributes and had
+  // drifted out of visual step with their Back counterparts — nothing
+  // tied the two halves of a step-nav row together. They now share the
+  // same delegation and the same .btn-next-step / .btn-back-step pair.
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-nav-next]');
+    if (!btn) return;
+    switchTab(btn.getAttribute('data-nav-next'));
+  });
+
   // ── Tab "?" help modals ─────────────────────────────────────
   _on('addInfoHelpBtn',    'click', () => _showAdditionalInfoHelp());
   _on('dutiesHelpBtn',        'click', () => _showDutiesHelp());
