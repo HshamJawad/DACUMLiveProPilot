@@ -8,6 +8,11 @@ import { showStatus } from './renderer.js';
 import { lwExtractDutiesAndTasks } from './workshop.js';
 import { getTaskCode, getDutyLabel } from './codes.js';
 
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+
 // switchTab is exposed on window by app.js to avoid circular deps
 function switchTab(tabId) { window.switchTab(tabId); }
 
@@ -78,7 +83,7 @@ export function renderAvailableTasks() {
   const container = document.getElementById('availableTasksList');
 
   if (cd.availableTasks.length === 0) {
-    container.innerHTML = '<div class="no-tasks-message">All tasks have been assigned to clusters.</div>';
+    container.innerHTML = `<div class="no-tasks-message">${_t('msgAllTasksAssigned')}</div>`;
     document.getElementById('btnCreateCluster').disabled = true;
     return;
   }
@@ -86,7 +91,7 @@ export function renderAvailableTasks() {
   let html = '';
   cd.availableTasks.forEach((task, index) => {
     const taskCode = getTaskCode(task.id);
-    let clusterOptions = '<option value="">Select Cluster</option>';
+    let clusterOptions = `<option value="">${_t('optSelectCluster')}</option>`;
     cd.clusters.forEach(cluster => {
       clusterOptions += `<option value="${cluster.id}">${cluster.name}</option>`;
     });
@@ -100,7 +105,7 @@ export function renderAvailableTasks() {
         ${task.priorityIndex !== null ? `<span class="task-priority-badge">PI: ${task.priorityIndex.toFixed(2)}</span>` : ''}
         ${cd.clusters.length > 0 ? `
         <div class="task-dropdown-container">
-          <span class="task-dropdown-label">Add to:</span>
+          <span class="task-dropdown-label">${_t('lblAddTo')}</span>
           <select class="task-reassign-dropdown" data-action="add-task-to-cluster-dropdown" data-task-index="${index}">
             ${clusterOptions}
           </select>
@@ -128,7 +133,7 @@ export function createCluster() {
   cd.clusterCounter++;
   const newCluster = {
     id: `cluster_${cd.clusterCounter}`,
-    name: `Cluster ${cd.clusterCounter}`,
+    name: _tf('lblClusterN', { n: cd.clusterCounter }),
     tasks: [],
     range: '',
     performanceCriteria: []
@@ -150,7 +155,7 @@ export function renderClusters() {
   const container = document.getElementById('clustersContainer');
 
   if (cd.clusters.length === 0) {
-    container.innerHTML = '<div class="no-clusters-message">No clusters created yet.</div>';
+    container.innerHTML = `<div class="no-clusters-message">${_t('msgNoClusters')}</div>`;
     return;
   }
 
@@ -170,14 +175,14 @@ export function renderClusters() {
           <div class="cluster-title">${cluster.name}</div>
           <div class="cluster-actions">
             <button class="btn-rename-cluster" data-action="regen-cluster-criteria" data-cluster-id="${cluster.id}"
-                    title="Regenerate this cluster's Range and Performance Criteria only">🤖 AI Criteria</button>
-            <button class="btn-rename-cluster" data-action="rename-cluster" data-cluster-id="${cluster.id}">✏️ Rename</button>
-            <button class="btn-delete-cluster" data-action="delete-cluster" data-cluster-id="${cluster.id}">🗑️ Delete</button>
+                    title="${_t('ttRegenCriteria')}">🤖 ${_t('btnAICriteria')}</button>
+            <button class="btn-rename-cluster" data-action="rename-cluster" data-cluster-id="${cluster.id}">✏️ ${_t('btnRename')}</button>
+            <button class="btn-delete-cluster" data-action="delete-cluster" data-cluster-id="${cluster.id}">🗑️ ${_t('btnDelete')}</button>
           </div>
         </div>
 
         <div class="cluster-section">
-          <h4>📋 Related Tasks (from Occupational Profile)</h4>
+          <h4>📋 ${_t('lblRelatedTasks')}</h4>
           <div class="related-tasks-list">
             ${cluster.tasks.map((task, taskIndex) => {
               const taskCode = getTaskCode(task.id);
@@ -187,32 +192,32 @@ export function renderClusters() {
                   <button class="btn-remove-task" data-action="remove-task-from-cluster"
                     data-cluster-id="${cluster.id}" data-task-index="${taskIndex}" style="margin-left:10px;">✕</button>
                 </div>`;
-            }).join('') || '<div style="color:#999;font-style:italic;">No tasks assigned</div>'}
+            }).join('') || `<div style="color:#999;font-style:italic;">${_t('msgNoTasksAssigned')}</div>`}
           </div>
         </div>
 
         <div class="cluster-section">
           <div class="cluster-section-header">
-            <h4>🎯 Range</h4>
-            <button type="button" class="tab-help-btn" data-action="show-pc-range-help" title="What are Performance Criteria and Range?" aria-label="What are Performance Criteria and Range?" aria-haspopup="dialog">?</button>
+            <h4>🎯 ${_t('lblRange')}</h4>
+            <button type="button" class="tab-help-btn" data-action="show-pc-range-help" title="${_t('ttPCRangeHelp')}" aria-label="${_t('ttPCRangeHelp')}" aria-haspopup="dialog">?</button>
           </div>
-          <div class="cluster-helper-text">Define the range of situations, contexts, or conditions for this competency.</div>
+          <div class="cluster-helper-text">${_t('hintRange')}</div>
           <textarea id="range_${cluster.id}" data-action="update-cluster-range" data-cluster-id="${cluster.id}">${cluster.range || ''}</textarea>
         </div>
 
         <div class="cluster-section">
           <div class="cluster-section-header">
-            <h4>✅ Performance Criteria</h4>
-            <button type="button" class="tab-help-btn" data-action="show-pc-range-help" title="What are Performance Criteria and Range?" aria-label="What are Performance Criteria and Range?" aria-haspopup="dialog">?</button>
+            <h4>✅ ${_t('lblPerformanceCriteria')}</h4>
+            <button type="button" class="tab-help-btn" data-action="show-pc-range-help" title="${_t('ttPCRangeHelp')}" aria-label="${_t('ttPCRangeHelp')}" aria-haspopup="dialog">?</button>
           </div>
-          <div class="cluster-helper-text">Press Enter to add new criterion. Numbers are auto-generated.</div>
+          <div class="cluster-helper-text">${_t('hintCriteria')}</div>
           <textarea id="criteria_${cluster.id}"
             data-cluster-number="${clusterNumber}"
             data-cluster-id="${cluster.id}"
             data-action-focus="init-criteria-number"
             data-action-keydown="handle-criteria-keydown"
             data-action-blur="update-cluster-criteria-numbered"
-            placeholder="Click to start first criterion..."
+            placeholder="${_t('phFirstCriterion')}"
             style="min-height:120px;">${displayValue}</textarea>
         </div>
       </div>`;
@@ -224,7 +229,7 @@ export function renderClusters() {
 export function renameCluster(clusterId) {
   const cluster = appState.clusteringData.clusters.find(c => c.id === clusterId);
   if (!cluster) return;
-  const newName = prompt('Enter new cluster name:', cluster.name);
+  const newName = prompt(_t('promptRenameCluster'), cluster.name);
   if (newName && newName.trim()) {
     cluster.name = newName.trim();
     renderClusters();
@@ -582,7 +587,7 @@ export function renderModuleLoList() {
         </div>
         ${mm.modules.length > 0 ? `
         <div class="task-dropdown-container">
-          <span class="task-dropdown-label">Add to:</span>
+          <span class="task-dropdown-label">${_t('lblAddTo')}</span>
           <select class="task-reassign-dropdown" data-action="add-lo-to-module-dropdown" data-lo-id="${outcome.id}">
             ${moduleOptions}
           </select>
@@ -782,3 +787,15 @@ export function exportModuleMappingJSON() {
     showStatus('Error exporting module mapping: ' + error.message, 'error');
   }
 }
+
+
+/* ── Re-render on language change ────────────────────────────────────
+   Both lists are innerHTML-generated and survive tab switches, so they
+   are outside applyTranslations()' reach. Rendering is pure from
+   appState — no user input is held in the DOM alone — so a rebuild is
+   lossless. Guarded on the containers existing so a language switch
+   never constructs a tab the user has not opened. */
+window.addEventListener('dacum:langchange', () => {
+  if (document.getElementById('availableTasksList')) renderAvailableTasks();
+  if (document.getElementById('clustersContainer'))  renderClusters();
+});

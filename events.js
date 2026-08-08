@@ -917,37 +917,29 @@ function _showAdditionalInfoHelp() {
 function _showClusteringHelp() {
   _showHelpModal({
     id:    'clusteringHelpModal',
-    icon:  '🎯',
-    title: 'Create Competence Clusters',
-    intro: 'Group related tasks into competence clusters based on:',
+    icon:  '\u{1F3AF}',
+    title: _t('helpClusterTitle'),
+    intro: _t('helpClusterIntro'),
     items: [
-      ['🎯', '', 'Common purpose or industry objective'],
-      ['🔄', '', 'Similar workflow or process'],
-      ['🧠', '', 'Shared knowledge and skills required'],
+      ['\u{1F3AF}', '', _t('helpClusterV1')],
+      ['\u{1F504}', '', _t('helpClusterV2')],
+      ['\u{1F9E0}', '', _t('helpClusterV3')],
     ],
-    note: '<strong>Important:</strong> Tasks from different duties can be grouped ' +
-          'together if they are related by purpose, process, or required skills!',
+    note: _t('helpClusterNote'),
   });
 }
 
 function _showClusterNamingHelp() {
   _showHelpModal({
     id:    'clusterNamingHelpModal',
-    icon:  '✍️',
-    title: 'Competence Statement Format',
-    intro: 'Clusters are created as "Cluster 1", "Cluster 2"… Rename each one to a ' +
-           'competence statement so the cluster says what the worker can DO, not just ' +
-           'which group it is.',
+    icon:  '\u270D\uFE0F',
+    title: _t('helpNamingTitle'),
+    intro: _t('helpNamingIntro'),
     items: [
-      ['🧩', 'Structure',
-       'Action Verb + Task/Activity (What) + Context (Where/How/Why if relevant)'],
-      ['💬', 'Example',
-       '"Calibrate testing equipment according to manufacturer specifications"'],
+      ['\u{1F9E9}', _t('helpNamingK1'), _t('helpNamingV1')],
+      ['\u{1F4AC}', _t('helpNamingK2'), _t('helpNamingV2')],
     ],
-    note: 'Good competence statements are clear, measurable, and include the context ' +
-          'or standards that guide performance. Keep the standard (<em>"according to…", ' +
-          '"within ±0.5 mm"</em>) and leave out the purpose (<em>"to ensure…"</em>) — ' +
-          'the standard is what can be assessed.',
+    note: _t('helpNamingNote'),
   });
 }
 
@@ -960,6 +952,11 @@ function _showClusterNamingHelp() {
 function _showPCRangeHelp() {
   const P  = 'margin:0 0 8px;font-size:0.88em;color:#475569;line-height:1.6;';
   const LI = 'font-size:0.87em;line-height:1.7;color:#334155;';
+
+  /* padding-inline-start, not padding-left. These lists are built as
+     inline style strings, which no stylesheet can override — so the RTL
+     fix has to be made here, at the point the markup is written. */
+  const LIST = 'margin:0 0 16px;padding-inline-start:20px;';
 
   const component = (label, colour, desc) =>
     '<div style="flex:1 1 150px;min-width:0;background:#fff;border:1px solid #e2e8f0;' +
@@ -975,45 +972,47 @@ function _showPCRangeHelp() {
     'font-style:italic;white-space:nowrap;">(' + text + ')</span>';
 
   const bodyHtml =
-    '<p style="' + P + '"><strong style="color:#1e293b;">Performance Criteria</strong> ' +
-      'define the standards to which a competency must be performed. They should be:</p>' +
-    '<ol style="margin:0 0 16px;padding-left:20px;">' +
-      '<li style="' + LI + '"><strong>Observable</strong> — can be seen or detected during assessment</li>' +
-      '<li style="' + LI + '"><strong>Measurable</strong> — can be evaluated against a standard</li>' +
-      '<li style="' + LI + '"><strong>Learner-focused</strong> — describes what the learner must demonstrate</li>' +
+    '<p style="' + P + '">' + _t('helpPCLead') + '</p>' +
+    '<ol style="' + LIST + '">' +
+      '<li style="' + LI + '">' + _t('helpPCLi1') + '</li>' +
+      '<li style="' + LI + '">' + _t('helpPCLi2') + '</li>' +
+      '<li style="' + LI + '">' + _t('helpPCLi3') + '</li>' +
     '</ol>' +
 
-    '<p style="' + P + '"><strong style="color:#1e293b;">Range</strong> defines the scope ' +
-      'and context in which the competency is applied, including:</p>' +
-    '<ul style="margin:0 0 16px;padding-left:20px;">' +
-      '<li style="' + LI + '">Different situations, environments, or conditions</li>' +
-      '<li style="' + LI + '">Types of equipment, tools, or materials used</li>' +
-      '<li style="' + LI + '">Variable contexts that may affect performance</li>' +
+    '<p style="' + P + '">' + _t('helpPCRangeLead') + '</p>' +
+    '<ul style="' + LIST + '">' +
+      '<li style="' + LI + '">' + _t('helpPCRange1') + '</li>' +
+      '<li style="' + LI + '">' + _t('helpPCRange2') + '</li>' +
+      '<li style="' + LI + '">' + _t('helpPCRange3') + '</li>' +
     '</ul>' +
 
     '<p style="margin:0 0 10px;font-size:0.88em;font-weight:700;color:#1e293b;">' +
-      'Components of an effective performance criterion:</p>' +
+      _t('helpPCComponents') + '</p>' +
     '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;">' +
-      component('What (Object)',  '#2563eb', 'The thing being acted upon') +
-      component('Action (Verb)',  '#16a34a', 'The precise action being performed') +
-      component('Qualifier',      '#9333ea', 'Specific conditions, standards, or requirements') +
+      component(_t('helpPCWhat'),      '#2563eb', _t('helpPCWhatDesc')) +
+      component(_t('helpPCAction'),    '#16a34a', _t('helpPCActionDesc')) +
+      component(_t('helpPCQualifier'), '#9333ea', _t('helpPCQualifierDesc')) +
     '</div>' +
 
+    /* The example is assembled from three labelled fragments rather than
+       one interpolated sentence: Arabic places the verb before its
+       object, so a fixed English word order would be baked in. */
     '<div style="background:linear-gradient(135deg,#3b82f6,#2563eb);border-radius:10px;' +
     'padding:14px 16px;margin-bottom:4px;">' +
-      '<p style="margin:0 0 8px;font-size:0.86em;font-weight:800;color:#fff;">Example Structure:</p>' +
+      '<p style="margin:0 0 8px;font-size:0.86em;font-weight:800;color:#fff;">' +
+        _t('helpPCExampleLabel') + '</p>' +
       '<p style="margin:0;font-size:0.87em;color:#fff;line-height:2;">' +
-        '"Equipment calibration ' + chip('What', '#bfdbfe', '#1e3a8a') +
-        ' is verified ' + chip('Action', '#bbf7d0', '#14532d') +
-        ' to be within manufacturer\'s tolerance ranges ' + chip('Qualifier', '#e9d5ff', '#581c87') +
-        '"' +
+        '\u201C' + _t('helpPCExPart1') + ' ' + chip(_t('chipWhat'), '#bfdbfe', '#1e3a8a') +
+        ' ' + _t('helpPCExPart2') + ' ' + chip(_t('chipAction'), '#bbf7d0', '#14532d') +
+        ' ' + _t('helpPCExPart3') + ' ' + chip(_t('chipQualifier'), '#e9d5ff', '#581c87') +
+        '\u201D' +
       '</p>' +
     '</div>';
 
   _showHelpModal({
     id:       'pcRangeHelpModal',
-    icon:     '📐',
-    title:    'What are Performance Criteria and Range?',
+    icon:     '\u{1F4D0}',
+    title:    _t('helpPCTitle'),
     maxWidth: '620px',
     bodyHtml,
   });

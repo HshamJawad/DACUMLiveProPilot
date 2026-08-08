@@ -1191,65 +1191,68 @@
         <div class="tab-content" id="clustering-tab">
             <div class="tab-header-row">
                 <div class="tab-title-with-help">
-                    <h2>🎯 Competency Clusters</h2>
+                    <h2>🎯 <span data-i18n="h2Clustering">Competency Clusters</span></h2>
                     <button type="button" id="clusteringHelpBtn" class="tab-help-btn"
                             title="How should I group tasks into clusters?"
+                            data-i18n="ttClusteringHelp" data-i18n-attr="title"
                             aria-label="How should I group tasks into clusters?"
                             aria-haspopup="dialog">?</button>
                 </div>
                 <button data-action="clear-tab" data-tab-id="clustering-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
-                    🗑️ Clear This Tab
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
             
             <!-- AI Generation Section — mirrors the card in the Duties tab -->
             <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
-                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ AI Clustering Assistant</h3>
-                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;">Two separate steps — review the clusters before generating their criteria</p>
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ <span data-i18n="aiClusterTitle">AI Clustering Assistant</span></h3>
+                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;" data-i18n="aiClusterDesc">Two separate steps — review the clusters before generating their criteria</p>
                 <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                     <button class="btn-ai-generate" id="aiSuggestClustersBtn" style="background: white; color: #667eea; padding: 12px 22px; font-size: 1em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                        🤖 Suggest Competency Clusters
+                        🤖 <span data-i18n="btnSuggestClusters">Suggest Competency Clusters</span>
                     </button>
                     <button id="aiGenCriteriaBtn" style="background: rgba(255,255,255,0.18); color: white; border: 1.5px solid rgba(255,255,255,0.55); padding: 12px 22px; font-size: 1em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
-                        📐 Generate Range &amp; Criteria
+                        📐 <span data-i18n="btnGenRangeCriteria">Generate Range &amp; Criteria</span>
                     </button>
                 </div>
-                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 Step 1 groups tasks across duties by shared purpose, process or skills. Step 2 writes the Range and observable, measurable criteria for whichever clusters exist — including ones you built by hand.</p>
+                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 <span data-i18n="aiClusterHint">Step 1 groups tasks across duties by shared purpose, process or skills. Step 2 writes the Range and observable, measurable criteria for whichever clusters exist — including ones you built by hand.</span></p>
             </div>
 
             <!-- Available Tasks Section -->
             <div class="clustering-section">
-                <h3>📋 Available Tasks</h3>
-                <p style="color: #666; margin-bottom: 15px;">Select tasks to group into a cluster, then click "Create Cluster".</p>
+                <h3>📋 <span data-i18n="lblAvailableTasks">Available Tasks</span></h3>
+                <p style="color: #666; margin-bottom: 15px;" data-i18n="hintAvailableTasks">Select tasks to group into a cluster, then click "Create Cluster".</p>
                 <div class="available-tasks-list" id="availableTasksList">
-                    <div class="no-tasks-message">No tasks available. Please complete duties and tasks first.</div>
+                    <div class="no-tasks-message" data-i18n="msgNoTasksAvailable">No tasks available. Please complete duties and tasks first.</div>
                 </div>
                 <button class="btn-create-cluster" id="btnCreateCluster"  disabled>
-                    ✨ Create Cluster
+                    ✨ <span data-i18n="btnCreateCluster">Create Cluster</span>
                 </button>
             </div>
 
             <!-- Created Clusters Section -->
             <div class="clustering-section">
                 <div class="section-header-row">
-                    <h3>📦 Created Clusters</h3>
+                    <h3>📦 <span data-i18n="lblCreatedClusters">Created Clusters</span></h3>
                     <button type="button" id="clusterNamingHelpBtn" class="tab-help-btn"
                             title="How should I name a cluster?"
+                            data-i18n="ttClusterNamingHelp" data-i18n-attr="title"
                             aria-label="How should I name a cluster?"
                             aria-haspopup="dialog">?</button>
                 </div>
                 <div class="clusters-container" id="clustersContainer">
-                    <div class="no-clusters-message">No clusters created yet.</div>
+                    <div class="no-clusters-message" data-i18n="msgNoClusters">No clusters created yet.</div>
                 </div>
             </div>
             
             <div class="step-nav-row">
                 <button type="button" class="btn-back-step" data-nav-back="verification-tab"
-                        title="Return to Task Verification to review or edit">
-                    ← Back to Task Verification
+                        title="Return to Task Verification to review or edit"
+                        data-i18n="ttBackVerification" data-i18n-attr="title">
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackVerification">Back to Task Verification</span>
                 </button>
                 <button type="button" class="btn-next-step" data-nav-next="learning-outcomes-tab">
-                    Proceed to Learning Outcomes →
+                    <span data-i18n="btnProceedLO">Proceed to Learning Outcomes</span> <span class="rtl-flip">→</span>
                 </button>
             </div>
         </div>
