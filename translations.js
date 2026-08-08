@@ -926,6 +926,68 @@
     return s;
   }
 
+
+  /* ── Stale-text audit ────────────────────────────────────────────
+     Catches a whole class of bug that neither applyTranslations() nor a
+     re-render can fix: an element created once and thereafter only
+     shown/hidden. It has no data-i18n (it was never in index.html) and
+     it is never rebuilt, so its label freezes in whichever language was
+     active when it was first created — the "Add Duty" button that stayed
+     Arabic after switching to French.
+
+     The audit walks visible text and flags any string that exactly
+     matches a translation value belonging to a DIFFERENT locale. False
+     positives are possible (a user could name a duty "Add Duty"), which
+     is why this only ever warns and never mutates anything.
+
+     Off by default. Enable with:
+       localStorage.setItem('dacum_i18n_debug', '1')
+     or call window.i18n.audit() from the console at any time. */
+  function audit() {
+    var foreign = {};
+    for (var code in TRANSLATIONS) {
+      if (code === _current) continue;
+      for (var key in TRANSLATIONS[code]) {
+        var val = TRANSLATIONS[code][key];
+        // Only flag strings the CURRENT locale translates differently —
+        // "PDF" or "Word" are identical everywhere and are not evidence
+        // of staleness.
+        if (typeof val === 'string' && val.length > 2 &&
+            TRANSLATIONS[_current][key] !== undefined &&
+            TRANSLATIONS[_current][key] !== val) {
+          foreign[val] = { key: key, lang: code };
+        }
+      }
+    }
+
+    var hits = [];
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    var node;
+    while ((node = walker.nextNode())) {
+      var txt = (node.nodeValue || '').trim();
+      if (!txt || !foreign[txt]) continue;
+      var el = node.parentElement;
+      // Anything the user typed is their content, not our stale output.
+      if (!el || el.isContentEditable) continue;
+      hits.push({
+        text: txt,
+        expected: TRANSLATIONS[_current][foreign[txt].key],
+        key: foreign[txt].key,
+        stuckIn: foreign[txt].lang,
+        element: el
+      });
+    }
+
+    if (hits.length) {
+      console.warn('[i18n] ' + hits.length +
+        ' element(s) still showing another language after switching to ' +
+        _current + ':', hits);
+    } else {
+      console.info('[i18n] audit clean for ' + _current);
+    }
+    return hits;
+  }
+
   function setLang(code) {
     if (!TRANSLATIONS[code]) return;
     _current = code;
@@ -982,6 +1044,12 @@
 
     _syncSelector();
     window.dispatchEvent(new CustomEvent('dacum:langchange', { detail: { lang: _current } }));
+
+    /* Listeners re-render on the event above, so the audit has to wait a
+       tick for their DOM writes to land. */
+    if (localStorage.getItem('dacum_i18n_debug') === '1') {
+      setTimeout(audit, 0);
+    }
   }
 
   /* Languages that need a mirrored layout. Kept as a list rather than
@@ -1039,7 +1107,8 @@
   window.i18n = {
     t: t, tf: tf, setLang: setLang, getLang: getLang, apply: applyTranslations,
     isRTL: function () { return RTL_LANGS.indexOf(_current) !== -1; },
-    has: function (key) { return TRANSLATIONS.en[key] !== undefined; }
+    has: function (key) { return TRANSLATIONS.en[key] !== undefined; },
+    audit: audit
   };
 
   function _init() { _injectSelector(); applyTranslations(); }

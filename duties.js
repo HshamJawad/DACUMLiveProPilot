@@ -282,7 +282,6 @@ function _setAddDutyVisibility(mode) {
       cardBtn           = document.createElement('button');
       cardBtn.id        = 'btnAddDutyCard';
       cardBtn.className = 'dcv-add-duty-btn';
-      cardBtn.innerHTML = '＋ ' + _t('btnAddDuty');
       // Insert after dutiesContainer
       const container = document.getElementById('dutiesContainer');
       if (container && container.parentNode) {
@@ -291,6 +290,16 @@ function _setAddDutyVisibility(mode) {
       // Wire ONCE with onclick — never accumulates extra listeners
       cardBtn.onclick = () => addDuty();
     }
+
+    /* Label set on EVERY call, not only at creation. This button is
+       created once and then merely shown/hidden, so it is invisible to
+       both translation passes: applyTranslations() skips it (no
+       data-i18n, since it has no markup in index.html) and a re-render
+       does not rebuild it. Setting the text inside the creation branch
+       froze it in whichever language happened to be active the first
+       time Card or Wall view was opened. */
+    cardBtn.innerHTML = '＋ ' + _t('btnAddDuty');
+
     cardBtn.style.display = 'inline-flex';
   } else {
     if (orig)    orig.style.display    = '';
