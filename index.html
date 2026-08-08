@@ -1265,54 +1265,55 @@
                  works in. -->
             <div class="tab-header-row">
                 <div class="tab-title-with-help">
-                    <h2>🎓 Learning Outcomes</h2>
+                    <h2>🎓 <span data-i18n="h2LearningOutcomes">Learning Outcomes</span></h2>
                     <button type="button" id="loHelpBtn" class="tab-help-btn"
                             title="Learning Outcome design patterns"
+                            data-i18n="ttLOHelp" data-i18n-attr="title"
                             aria-label="Learning Outcome design patterns"
                             aria-haspopup="dialog">?</button>
                 </div>
                 <button data-action="clear-tab" data-tab-id="learning-outcomes-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
-                    🗑️ Clear This Tab
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
 
             <!-- AI Generation Section — mirrors the card in the Duties tab -->
             <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; text-align: center;">
-                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ Generate Learning Outcomes</h3>
-                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;">Choose the design pattern — you can use a different one for each cluster</p>
+                <h3 style="color: white; margin: 0 0 10px 0; font-size: 1.1em;">✨ <span data-i18n="aiLOTitle">Generate Learning Outcomes</span></h3>
+                <p style="color: rgba(255,255,255,0.9); margin: 0 0 15px 0; font-size: 0.95em;" data-i18n="aiLODesc">Choose the design pattern — you can use a different one for each cluster</p>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <button id="loGenPatternABtn" style="background: rgba(255,255,255,0.18); color: white; border: 1.5px solid rgba(255,255,255,0.55); padding: 11px 18px; font-size: 0.95em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
-                        🎯 Pattern A — One-to-One
+                        🎯 <span data-i18n="btnPatternA">Pattern A — One-to-One</span>
                     </button>
                     <button id="loGenPatternBBtn" style="background: rgba(255,255,255,0.18); color: white; border: 1.5px solid rgba(255,255,255,0.55); padding: 11px 18px; font-size: 0.95em; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
-                        🧩 Pattern B — Many-to-One
+                        🧩 <span data-i18n="btnPatternB">Pattern B — Many-to-One</span>
                     </button>
                     <button class="btn-ai-generate" id="loGenPatternCBtn" style="background: white; color: #667eea; padding: 11px 18px; font-size: 0.95em; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-                        ⚖️ Pattern C — Hybrid
+                        ⚖️ <span data-i18n="btnPatternC">Pattern C — Hybrid</span>
                     </button>
                 </div>
-                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 Tick criteria below to generate from just those; with none ticked, all unused criteria are used. New outcomes are added — existing ones are never replaced.</p>
+                <p style="color: rgba(255,255,255,0.8); margin: 15px 0 0 0; font-size: 0.85em;">💡 <span data-i18n="aiLOHint">Tick criteria below to generate from just those; with none ticked, all unused criteria are used. New outcomes are added — existing ones are never replaced.</span></p>
             </div>
 
             <!-- Section 2: Performance Criteria Source List -->
             <div class="clustering-section">
-                <h3>📋 Performance Criteria (Source)</h3>
-                <p style="color: #666; margin-bottom: 15px;">Select Performance Criteria to create a Learning Outcome.</p>
+                <h3>📋 <span data-i18n="lblPCSource">Performance Criteria (Source)</span></h3>
+                <p style="color: #666; margin-bottom: 15px;" data-i18n="hintPCSource">Select Performance Criteria to create a Learning Outcome.</p>
                 <div class="pc-source-list" id="pcSourceList">
-                    <div class="no-tasks-message">No Performance Criteria available. Please create Competency Clusters with Performance Criteria first.</div>
+                    <div class="no-tasks-message" data-i18n="msgNoPCAvailable">No Performance Criteria available. Please create Competency Clusters with Performance Criteria first.</div>
                 </div>
             </div>
 
             <!-- Section 3: Create Learning Outcome Button -->
             <button class="btn-create-lo" id="btnCreateLO"  disabled>
-                ✨ Create Learning Outcome from Selected Criteria
+                ✨ <span data-i18n="btnCreateLO">Create Learning Outcome from Selected Criteria</span>
             </button>
 
             <!-- Section 4: Learning Outcome Blocks -->
             <div class="clustering-section">
-                <h3>📖 Learning Outcomes</h3>
+                <h3>📖 <span data-i18n="lblLOBlocks">Learning Outcomes</span></h3>
                 <div class="lo-blocks-container" id="loBlocksContainer">
-                    <div class="no-clusters-message">No Learning Outcomes created yet.</div>
+                    <div class="no-clusters-message" data-i18n="msgNoLOs">No Learning Outcomes created yet.</div>
                 </div>
             </div>
             
@@ -1321,11 +1322,12 @@
                  users already know from the other tabs. -->
             <div class="step-nav-row">
                 <button type="button" class="btn-back-step" data-nav-back="clustering-tab"
-                        title="Return to Competency Clusters to edit clusters or criteria">
-                    ← Back to Competency Clusters
+                        title="Return to Competency Clusters to edit clusters or criteria"
+                        data-i18n="ttBackClustering" data-i18n-attr="title">
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackClustering">Back to Competency Clusters</span>
                 </button>
                 <button type="button" class="btn-next-step" data-nav-next="module-mapping-tab">
-                    Proceed to Module Mapping →
+                    <span data-i18n="btnProceedModuleMapping">Proceed to Module Mapping</span> <span class="rtl-flip">→</span>
                 </button>
             </div>
         </div>

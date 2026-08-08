@@ -61,7 +61,8 @@ import { markAiGenerated, refineResults,
 
 /* i18n access — window.i18n is installed by a plain <script>, so it is
    read lazily on each call rather than captured at module evaluation. */
-const _t = (k) => (window.i18n ? window.i18n.t(k) : k);
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
 
 
 
@@ -1082,36 +1083,32 @@ function _showDutiesHelp() {
 // makes once per programme, not something they need on screen while
 // working through dozens of criteria.
 function _showLearningOutcomesHelp() {
+  /* "Best for X." is its own key with a {what} slot rather than a
+     concatenated prefix: in Arabic the preposition attaches to the noun
+     that follows it, so gluing a fixed lead-in onto a translated tail
+     produces broken grammar. */
   const pattern = (name, rule, best) =>
     '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;' +
     'padding:11px 13px;margin-bottom:9px;">' +
       '<p style="margin:0;font-size:0.86em;line-height:1.6;color:#334155;">' +
         '<strong style="color:#4338ca;">' + name + ':</strong> ' + rule +
-        ' <span style="color:#64748b;">Best for ' + best + '.</span>' +
+        ' <span style="color:#64748b;">' + _tf('helpLOBestFor', { what: best }) + '</span>' +
       '</p>' +
     '</div>';
 
   const bodyHtml =
-    pattern('Pattern A – One-to-One',
-            'Each Performance Criterion maps to one Learning Outcome.',
-            'precise, assessment-driven programs') +
-    pattern('Pattern B – Many-to-One',
-            'Multiple Performance Criteria map to one integrated Learning Outcome.',
-            'competency-based modules') +
-    pattern('Pattern C – Hybrid',
-            'A mix of both patterns, based on expert judgment and instructional design needs.',
-            'most real programmes, where some criteria stand alone and others belong together');
+    pattern(_t('helpLOPatAName'), _t('helpLOPatARule'), _t('helpLOPatABest')) +
+    pattern(_t('helpLOPatBName'), _t('helpLOPatBRule'), _t('helpLOPatBBest')) +
+    pattern(_t('helpLOPatCName'), _t('helpLOPatCRule'), _t('helpLOPatCBest'));
 
   _showHelpModal({
     id:       'loHelpModal',
-    icon:     '📚',
-    title:    'Learning Outcome Design Patterns',
-    intro:    'Choose how Performance Criteria become Learning Outcomes:',
+    icon:     '\u{1F4DA}',
+    title:    _t('helpLOTitle'),
+    intro:    _t('helpLOIntro'),
     maxWidth: '540px',
     bodyHtml,
-    note: '💡 Select Performance Criteria below and create Learning Outcomes that align ' +
-          'with your curriculum design approach. The pattern is a choice, not a setting — ' +
-          'you can apply a different one to each cluster.',
+    note: '\u{1F4A1} ' + _t('helpLONote'),
   });
 }
 

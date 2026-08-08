@@ -345,7 +345,7 @@ export function renderPCSourceList() {
 
   const cd = appState.clusteringData;
   if (!cd.clusters || cd.clusters.length === 0) {
-    container.innerHTML = '<div class="no-tasks-message">No Performance Criteria available. Please create Competency Clusters with Performance Criteria first.</div>';
+    container.innerHTML = `<div class="no-tasks-message">${_t('msgNoPCAvailable')}</div>`;
     return;
   }
 
@@ -370,7 +370,7 @@ export function renderPCSourceList() {
       const pcId = `C${clusterNumber}-PC${criterionIndex + 1}`;
       const isUsed = usedPCIds.has(pcId);
 
-      let loOptions = '<option value="">Assign to LO</option>';
+      let loOptions = `<option value="">${_t('optAssignToLO')}</option>`;
       lo.outcomes.forEach(outcome => {
         loOptions += `<option value="${outcome.id}">${outcome.number}</option>`;
       });
@@ -383,7 +383,7 @@ export function renderPCSourceList() {
           <label for="cb_${pcId}" class="pc-label">
             <span class="pc-number">${pcId}:</span> ${criterion}
           </label>
-          ${isUsed ? '<span class="pc-used-badge">Used</span>' : ''}
+          ${isUsed ? `<span class="pc-used-badge">${_t('lblUsed')}</span>` : ''}
           ${lo.outcomes.length > 0 ? `
           <div class="task-dropdown-container" style="margin-left:10px;">
             <select class="task-reassign-dropdown"
@@ -399,7 +399,7 @@ export function renderPCSourceList() {
   });
 
   if (!hasAnyCriteria || !html) {
-    container.innerHTML = '<div class="no-tasks-message">No Performance Criteria available. Please add Performance Criteria to your Competency Clusters first.</div>';
+    container.innerHTML = `<div class="no-tasks-message">${_t('msgNoPCForModules')}</div>`;
   } else {
     container.innerHTML = html;
   }
@@ -445,7 +445,7 @@ export function renderLearningOutcomes() {
   const lo = appState.learningOutcomesData;
 
   if (lo.outcomes.length === 0) {
-    container.innerHTML = '<div class="no-clusters-message">No Learning Outcomes created yet.</div>';
+    container.innerHTML = `<div class="no-clusters-message">${_t('msgNoLOs')}</div>`;
     return;
   }
 
@@ -458,19 +458,19 @@ export function renderLearningOutcomes() {
           <div class="lo-number">${outcome.number}</div>
           <div class="lo-actions">
             <button class="btn-edit-lo" data-action="toggle-edit-lo" data-lo-id="${outcome.id}">
-              ${isEditing ? '💾 Save' : '✏️ Edit'}
+              ${isEditing ? '💾 ' + _t('btnSave') : '✏️ ' + _t('btnEdit')}
             </button>
-            <button class="btn-delete-lo" data-action="delete-lo" data-lo-id="${outcome.id}">❌ Delete</button>
+            <button class="btn-delete-lo" data-action="delete-lo" data-lo-id="${outcome.id}">❌ ${_t('btnDelete')}</button>
           </div>
         </div>
         <div class="lo-statement" id="statement_${outcome.id}">
           ${isEditing
             ? `<textarea id="textarea_${outcome.id}" data-action-blur="save-lo-statement" data-lo-id="${outcome.id}">${outcome.statement}</textarea>`
-            : `${outcome.statement || '<em style="color:#999;">Click Edit to write the Learning Outcome statement...</em>'}`
+            : `${outcome.statement || `<em style="color:#999;">${_t('phLOStatement')}</em>`}`
           }
         </div>
         <div class="lo-linked-criteria">
-          <h5>📎 Mapped Performance Criteria:</h5>
+          <h5>📎 ${_t('lblMappedPC')}</h5>
           ${outcome.linkedCriteria.map(pc => `
             <div class="lo-linked-item">
               <div style="flex:1"><strong>${pc.id}:</strong> ${pc.text}</div>
@@ -510,7 +510,7 @@ export function saveLOStatement(loId) {
 }
 
 export function deleteLearningOutcome(loId) {
-  if (!confirm('Are you sure you want to delete this Learning Outcome? The linked Performance Criteria will become available again.')) return;
+  if (!confirm(_t('confirmDeleteLO'))) return;
   const data = appState.learningOutcomesData;
   const idx = data.outcomes.findIndex(o => o.id === loId);
   if (idx !== -1) data.outcomes.splice(idx, 1);
@@ -798,4 +798,12 @@ export function exportModuleMappingJSON() {
 window.addEventListener('dacum:langchange', () => {
   if (document.getElementById('availableTasksList')) renderAvailableTasks();
   if (document.getElementById('clustersContainer'))  renderClusters();
+  if (document.getElementById('pcSourceList'))       renderPCSourceList();
+
+  /* An outcome being edited holds its text in an unsaved <textarea>.
+     Clicking the language button blurs it first, which fires the blur
+     handler and commits the text — so the rebuild below is safe. Doing
+     it in the other order would silently discard whatever the user had
+     just typed. */
+  if (document.getElementById('loBlocksContainer'))  renderLearningOutcomes();
 });

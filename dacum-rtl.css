@@ -588,3 +588,53 @@ html[dir="rtl"] .cluster-section textarea {
 html[dir="rtl"] .cluster-title {
   text-align: right;
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   7. LEARNING OUTCOMES
+   ───────────────────────────────────────────────────────────── */
+
+/* PC identifiers (C1-PC2) and LO numbers (LO1) are generated codes:
+   never reordered, never translated, never wrapped mid-token. */
+html[dir="rtl"] .pc-number,
+html[dir="rtl"] .lo-number,
+html[dir="rtl"] .lo-linked-item strong {
+  direction: ltr;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+}
+
+html[dir="rtl"] .pc-checkbox-item,
+html[dir="rtl"] .lo-block-header,
+html[dir="rtl"] .lo-actions,
+html[dir="rtl"] .lo-linked-item {
+  flex-direction: row-reverse;
+}
+
+/* The reassign dropdown and the ✕ button are positioned with inline
+   margin-left, which no stylesheet can override — cancel and mirror. */
+html[dir="rtl"] .pc-checkbox-item .task-dropdown-container,
+html[dir="rtl"] .lo-linked-item .btn-remove-task {
+  margin-left: 0 !important;
+  margin-right: 10px;
+}
+
+/* The LO statement is prose the facilitator writes; the editing
+   textarea must match the direction of the text it will display, or
+   the caret jumps to the wrong end on the first keystroke. */
+html[dir="rtl"] .lo-statement,
+html[dir="rtl"] .lo-statement textarea {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Cluster group headings in the source list. */
+html[dir="rtl"] .pc-cluster-group h4,
+html[dir="rtl"] .pc-label {
+  text-align: right;
+}
+
+/* The "Used" badge sits between the label and the dropdown. */
+html[dir="rtl"] .pc-used-badge {
+  white-space: nowrap;
+}
