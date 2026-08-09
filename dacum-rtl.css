@@ -19,6 +19,38 @@
    ══════════════════════════════════════════════════════════════ */
 
 
+
+/* ══════════════════════════════════════════════════════════════
+   WHY THERE IS NO `flex-direction: row-reverse` IN THIS FILE
+   --------------------------------------------------------------
+   There used to be twelve of them, and every one was a bug.
+
+   `dir="rtl"` on <html> ALREADY reverses the main axis of every flex
+   row: the first DOM child lands on the RIGHT and the row fills
+   leftward. That happens for free, before any CSS here is read.
+
+   Adding `row-reverse` on top reverses it a SECOND time, putting the
+   layout back exactly where it started — which is why the sidebar
+   labels, the Quick Start steps, the Additional Info section headers
+   and the Back/Proceed buttons all still read left-to-right in Arabic
+   while the text inside them was correctly right-aligned. The rules
+   were not failing to apply; they were applying and cancelling the
+   browser out.
+
+   The correct RTL toolkit is:
+     • dir="rtl"                        — reverses flex and inline flow
+     • text-align: right                — only where a base rule hard-codes left
+     • margin/padding-inline-start|end  — instead of physical left/right
+     • unicode-bidi: isolate            — for Latin tokens inside Arabic
+     • direction: ltr                   — for things that must NOT mirror
+                                          (numbers, codes, the 0-3 scale,
+                                          the chart plot)
+
+   `row-reverse` belongs here in exactly one case: when a base rule sets
+   `row-reverse` itself and the RTL layout needs plain `row`. That case
+   does not occur anywhere in this app.
+   ══════════════════════════════════════════════════════════════ */
+
 /* ─────────────────────────────────────────────────────────────
    1. LANGUAGE SWITCHER  (all languages)
    ───────────────────────────────────────────────────────────── */
@@ -124,26 +156,6 @@ body.dacum-rtl pre {
   direction: ltr;
   text-align: left;
   unicode-bidi: isolate;
-}
-
-
-/* ── Flex rows that carry meaning in their order ───────────────
-   A toolbar's left/right grouping is semantic, not decorative:
-   "back" belongs on the side the reader came from. `dir=rtl` on
-   <html> already reverses flex main-axis direction, so most rows
-   need no rule at all — these are the ones with explicit
-   justify-content or row-reverse in the base sheets. */
-body.dacum-rtl .tab-header-row,
-body.dacum-rtl .section-header-editable,
-body.dacum-rtl .image-upload-container {
-  flex-direction: row-reverse;
-}
-
-/* Proceed / Back navigation: the arrow glyphs in the labels are
-   translated (→ becomes ←) inside translations.js, so the button
-   ORDER is all that needs mirroring here. */
-body.dacum-rtl .step-nav-row {
-  flex-direction: row-reverse;
 }
 
 
@@ -436,11 +448,6 @@ html[dir="rtl"] .wall-print-header {
   unicode-bidi: isolate;
 }
 
-/* Section header rows: heading on one edge, button cluster on the other. */
-html[dir="rtl"] .section-header-editable {
-  flex-direction: row-reverse;
-}
-
 /* Textareas in Additional Info hold bulleted lists the facilitator types
    by hand. Forcing RTL on the element (rather than relying on `auto`)
    keeps the bullet glyph on the right even when a line opens with a
@@ -448,11 +455,6 @@ html[dir="rtl"] .section-header-editable {
 html[dir="rtl"] .section-container textarea {
   direction: rtl;
   text-align: right;
-}
-
-/* Skills Level Matrix accordion: the ▼ chevron and title swap sides. */
-html[dir="rtl"] .skills-level-header {
-  flex-direction: row-reverse;
 }
 
 html[dir="rtl"] .skills-level-info-box ul {
@@ -502,16 +504,6 @@ html[dir="rtl"] .count-inputs {
   direction: ltr;
 }
 
-/* Accordion header: duty title on the reading edge, chart button and
-   chevron on the other. */
-html[dir="rtl"] .duty-accordion-header,
-html[dir="rtl"] .duty-header-actions,
-html[dir="rtl"] .results-dashboard-header,
-html[dir="rtl"] .duty-level-header,
-html[dir="rtl"] .tvc-global-bar {
-  flex-direction: row-reverse;
-}
-
 /* Session ID, participant link and QR payload are opaque identifiers:
    never reordered, never wrapped mid-token. */
 html[dir="rtl"] #lwSessionId,
@@ -545,17 +537,6 @@ html[dir="rtl"] .completion-indicator {
 html[dir="rtl"] .task-checkbox-label strong,
 html[dir="rtl"] .related-task-item strong {
   unicode-bidi: isolate;
-}
-
-/* Checkbox before its label, dropdown after — the row reads inward
-   from the start edge in both directions. */
-html[dir="rtl"] .task-checkbox-item,
-html[dir="rtl"] .task-dropdown-container,
-html[dir="rtl"] .cluster-header,
-html[dir="rtl"] .cluster-actions,
-html[dir="rtl"] .cluster-section-header,
-html[dir="rtl"] .section-header-row {
-  flex-direction: row-reverse;
 }
 
 /* The remove-task ✕ is pushed to the far edge with margin-left in the
@@ -604,13 +585,6 @@ html[dir="rtl"] .lo-linked-item strong {
   white-space: nowrap;
 }
 
-html[dir="rtl"] .pc-checkbox-item,
-html[dir="rtl"] .lo-block-header,
-html[dir="rtl"] .lo-actions,
-html[dir="rtl"] .lo-linked-item {
-  flex-direction: row-reverse;
-}
-
 /* The reassign dropdown and the ✕ button are positioned with inline
    margin-left, which no stylesheet can override — cancel and mirror. */
 html[dir="rtl"] .pc-checkbox-item .task-dropdown-container,
@@ -657,13 +631,6 @@ html[dir="rtl"] .module-lo-assigned-criteria {
   text-align: right;
 }
 
-html[dir="rtl"] .module-lo-item,
-html[dir="rtl"] .module-header,
-html[dir="rtl"] .module-actions,
-html[dir="rtl"] .module-lo-assigned {
-  flex-direction: row-reverse;
-}
-
 /* LO statements inside modules are prose in the content language. */
 html[dir="rtl"] .module-lo-statement,
 html[dir="rtl"] .module-lo-assigned-statement,
@@ -674,24 +641,6 @@ html[dir="rtl"] .module-title {
 
 html[dir="rtl"] .btn-remove-lo {
   white-space: nowrap;
-}
-
-
-/* ─────────────────────────────────────────────────────────────
-   9. SIDEBAR INTERNALS
-   ───────────────────────────────────────────────────────────── */
-
-/* Section 2 already docks the panel to the right edge. These rules
-   handle what is INSIDE it, all of which is generated as one innerHTML
-   string by dacum_projects.js at startup. */
-
-html[dir="rtl"] .dps-top,
-html[dir="rtl"] .dps-header,
-html[dir="rtl"] .dps-nav-item,
-html[dir="rtl"] .dps-card,
-html[dir="rtl"] .dps-card-actions,
-html[dir="rtl"] .dps-card-stats {
-  flex-direction: row-reverse;
 }
 
 html[dir="rtl"] .dps-nav-label,
@@ -735,21 +684,6 @@ html[dir="rtl"] #dacumQuotaOverlay strong {
   unicode-bidi: isolate;
 }
 
-
-/* ─────────────────────────────────────────────────────────────
-   10. HELP CENTRE, CHARTS, MODALS
-   ───────────────────────────────────────────────────────────── */
-
-html[dir="rtl"] .hc-header,
-html[dir="rtl"] .hc-card-head,
-html[dir="rtl"] .hc-creator,
-html[dir="rtl"] .hc-contact-item,
-html[dir="rtl"] .hc-callout,
-html[dir="rtl"] .hc-btn-row,
-html[dir="rtl"] .hc-steps li {
-  flex-direction: row-reverse;
-}
-
 html[dir="rtl"] .hc-title,
 html[dir="rtl"] .hc-subtitle,
 html[dir="rtl"] .hc-card-desc,
@@ -774,17 +708,6 @@ html[dir="rtl"] .hc-creator-name {
   unicode-bidi: isolate;
 }
 
-/* CHART MODAL — the chrome mirrors, the PLOT DOES NOT.
-   The x-axis carries tasks in DACUM order and the y-axis is the 0-3
-   scale. Both are ordinal measuring axes; mirroring one without the
-   other is worse than mirroring neither, and every published DACUM
-   chart in any language reads left-to-right here. */
-html[dir="rtl"] .tvc-head,
-html[dir="rtl"] .tvc-controls,
-html[dir="rtl"] .tvc-view-toggle label {
-  flex-direction: row-reverse;
-}
-
 html[dir="rtl"] .tvc-title,
 html[dir="rtl"] .tvc-duty {
   text-align: right;
@@ -802,13 +725,131 @@ html[dir="rtl"] .tvc-duty-nav svg {
   transform: none;
 }
 
-html[dir="rtl"] .qrm-dialog,
-html[dir="rtl"] .qrm-header,
-html[dir="rtl"] .qrm-title-row {
-  flex-direction: row-reverse;
-}
-
 html[dir="rtl"] .qrm-title,
 html[dir="rtl"] .qrm-subtitle {
   text-align: right;
+}
+
+
+/* ═════════════════════════════════════════════════════════════
+   11. ALIGNMENT CORRECTIONS
+   -------------------------------------------------------------
+   These exist for one reason: a base rule hard-codes a PHYSICAL
+   left. `dir="rtl"` cannot override an explicit `text-align: left`
+   or `margin-left`, so each one has to be answered by name.
+
+   Everything else in this file is deliberately NOT here — flex
+   order, inline flow and list markers all follow dir="rtl" on
+   their own. See the note at the top of the file.
+   ═════════════════════════════════════════════════════════════ */
+
+/* ── Sidebar navigation ──────────────────────────────────────
+   .dps-nav-item sets `text-align: left` explicitly (needed in LTR
+   because a <button> centres its text by default). In Arabic that
+   pins every label to the left edge of a right-hand panel. */
+html[dir="rtl"] .dps-nav-item {
+  text-align: right;
+}
+
+/* The button is a flex row; with dir=rtl the icon and label already
+   sit right-to-left. justify-content is restated because the base
+   rule may leave it at flex-start, which is direction-aware and
+   therefore already correct — this simply makes it explicit and
+   immune to a later physical override. */
+html[dir="rtl"] .dps-nav-item:not(.dps-collapsed *) {
+  justify-content: flex-start;
+}
+
+/* Project cards: name, date and counts. */
+html[dir="rtl"] .dps-card,
+html[dir="rtl"] .dps-card-name,
+html[dir="rtl"] .dps-card-meta,
+html[dir="rtl"] .dps-card-stats,
+html[dir="rtl"] .dps-title,
+html[dir="rtl"] .dps-empty,
+html[dir="rtl"] .dps-search {
+  text-align: right;
+}
+
+/* ── Help Centre: Quick Start ────────────────────────────────
+   Each step is a flex row of [number][text]. dir=rtl puts the
+   number on the right, which is correct. Only the text block
+   needs its alignment answered. */
+html[dir="rtl"] .hc-steps,
+html[dir="rtl"] .hc-steps li,
+html[dir="rtl"] .hc-steps li div,
+html[dir="rtl"] .hc-tips-block,
+html[dir="rtl"] .hc-tips-block p,
+html[dir="rtl"] .hc-card,
+html[dir="rtl"] .hc-card-desc,
+html[dir="rtl"] .hc-callout,
+html[dir="rtl"] .hc-creator,
+html[dir="rtl"] .hc-contact-item {
+  text-align: right;
+}
+
+/* The ordered list's own indent. */
+html[dir="rtl"] .hc-steps {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* ── Additional Info section headers ─────────────────────────
+   Row is [heading][Number][Bullet][Rename][Clear]. Under dir=rtl
+   the heading takes the right edge and the buttons run leftward
+   from it — the order the user reads. Only the heading's own
+   alignment needs stating, plus space-between to keep the button
+   cluster pinned to the far edge. */
+html[dir="rtl"] .section-header-editable {
+  justify-content: space-between;
+}
+
+html[dir="rtl"] .section-header-editable h3,
+html[dir="rtl"] .section-container h3,
+html[dir="rtl"] .section-container label {
+  text-align: right;
+}
+
+/* ── Step navigation (Back / Proceed) ────────────────────────
+   The row is [Back][Proceed] in the DOM with space-between. Under
+   dir=rtl that puts Back on the RIGHT and Proceed on the LEFT,
+   which is what an Arabic reader expects: forward motion runs
+   leftward. No rule is needed for the order itself — this only
+   guards the justification. */
+html[dir="rtl"] .step-nav-row {
+  justify-content: space-between;
+}
+
+/* ── Card and cluster headers ────────────────────────────────*/
+html[dir="rtl"] .cluster-header,
+html[dir="rtl"] .lo-block-header,
+html[dir="rtl"] .module-header,
+html[dir="rtl"] .duty-accordion-header,
+html[dir="rtl"] .tab-header-row,
+html[dir="rtl"] .hc-header,
+html[dir="rtl"] .hc-card-head {
+  justify-content: space-between;
+  text-align: right;
+}
+
+/* ── Generic: any button whose text a base rule left-aligns ──*/
+html[dir="rtl"] button,
+html[dir="rtl"] .task-checkbox-label,
+html[dir="rtl"] .pc-checkbox-item label,
+html[dir="rtl"] .module-lo-item label {
+  text-align: right;
+}
+
+/* …except the ones that are centred on purpose. Restated after
+   the blanket rule above so it does not flatten them. */
+html[dir="rtl"] .dtb-btn,
+html[dir="rtl"] .dacum-lang-btn,
+html[dir="rtl"] .btn-add,
+html[dir="rtl"] .btn-next-step,
+html[dir="rtl"] .btn-back-step,
+html[dir="rtl"] .hc-btn,
+html[dir="rtl"] .qrm-btn,
+html[dir="rtl"] .tvc-close,
+html[dir="rtl"] .dps-new-btn {
+  text-align: center;
 }
