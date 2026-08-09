@@ -150,8 +150,15 @@ export async function lwFinalizeAndCreateSession() {
       const currentPath = window.location.pathname;
       const directory = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
       const participantFileUrl = window.location.origin + directory + 'DACUM_LiveWorkshop_Participant.html';
-      const participantUrl = `${participantFileUrl}?lwsession=${appState.lwSessionId}`;
-      const shortLink = `DACUM_LiveWorkshop_Participant.html?lwsession=${appState.lwSessionId}`;
+      /* The participant page is opened on someone else's phone, where
+         nothing about this workshop is known — no stored preference, no
+         shared localStorage. Carrying the language in the link means a
+         participant scans the QR code and simply gets the workshop's
+         language, with no setup and no instructions from the floor.
+         They can still override it with the switcher on that page. */
+      const lang = (window.i18n ? window.i18n.getLang() : 'en');
+      const participantUrl = `${participantFileUrl}?lwsession=${appState.lwSessionId}&lang=${lang}`;
+      const shortLink = `DACUM_LiveWorkshop_Participant.html?lwsession=${appState.lwSessionId}&lang=${lang}`;
       const linkElement = document.getElementById('lwParticipantLink');
       linkElement.textContent = shortLink;
       linkElement.setAttribute('data-full-url', participantUrl);

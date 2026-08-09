@@ -4,7 +4,7 @@
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v51';
+const CACHE_VERSION = 'v52';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -21,6 +21,10 @@ const NETWORK_FIRST_EXT = /\.(html|js|css|json)(\?.*)?$/i;
 // app breaks offline at the point it is first imported.
 const PRECACHE_URLS = [
   BASE + 'index.html',
+  // Participants open this from a QR code, often on strained
+  // conference wifi. Precaching it means the facilitator's own
+  // device can serve it instantly and it survives a flaky network.
+  BASE + 'DACUM_LiveWorkshop_Participant.html',
 
   // ── Stylesheets ──────────────────────────────────────────
   BASE + 'dacum-styles.css',

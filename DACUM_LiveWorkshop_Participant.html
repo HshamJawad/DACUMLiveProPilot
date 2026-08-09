@@ -295,6 +295,29 @@
             display: block;
         }
 
+        /* Language switcher — three pills, one tap, active language
+           always visible. Sized for a thumb on a phone. */
+        #ptLangWrap {
+            display: flex; justify-content: center; gap: 4px;
+            margin: 0 auto 14px; padding: 3px; width: fit-content;
+            background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 99px;
+        }
+        .pt-lang-btn {
+            border: none; background: transparent; color: #64748b;
+            font: 600 0.8em/1 inherit; letter-spacing: 0.03em;
+            padding: 8px 14px; min-width: 44px; border-radius: 99px; cursor: pointer;
+        }
+        .pt-lang-btn.is-active { background: #fff; color: #4f46e5; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+
+        /* RTL: mirror the layout, never the 0-3 scale. The rating
+           columns read as an ordinal axis and a participant calling out
+           numbers in a live room must not meet a reversed one. */
+        body.pt-rtl { direction: rtl; font-family: 'Cairo','Tajawal','Segoe UI',Tahoma,sans-serif; }
+        body.pt-rtl .task-table { direction: rtl; }
+        body.pt-rtl .task-cell { text-align: right; }
+        body.pt-rtl .rating-column, body.pt-rtl .rating-cell { direction: ltr; }
+        body.pt-rtl .info-box { text-align: right; }
+
         .loading {
             text-align: center;
             padding: 50px;
@@ -306,17 +329,23 @@
 <body>
     <div class="container">
         <h1>🎯 DACUM Live Pro</h1>
-        <p style="text-align: center; color: #666; margin-bottom: 20px;">Participant Voting</p>
+        <p style="text-align: center; color: #666; margin-bottom: 20px;" data-pt="subtitle">Participant Voting</p>
+
+        <div id="ptLangWrap" role="group" aria-label="Language">
+            <button type="button" class="pt-lang-btn" data-lang="en" onclick="setParticipantLang('en')">EN</button>
+            <button type="button" class="pt-lang-btn" data-lang="fr" onclick="setParticipantLang('fr')">FR</button>
+            <button type="button" class="pt-lang-btn" data-lang="ar" onclick="setParticipantLang('ar')">AR</button>
+        </div>
 
         <div id="loadingSection" class="loading">
-            <p>Loading voting session...</p>
+            <p data-pt="loading">Loading voting session…</p>
         </div>
 
         <div id="votingSection" style="display: none;">
             <div class="info-box">
-                <h3>📋 Occupation: <span id="occupationTitle"></span></h3>
-                <p><strong>Job Title:</strong> <span id="jobTitle"></span></p>
-                <p style="margin-top: 10px;">Rate each task on three dimensions (0-3). Your votes will be aggregated with other participants to determine training priorities.</p>
+                <h3>📋 <span data-pt="occupation">Occupation:</span> <span id="occupationTitle"></span></h3>
+                <p><strong data-pt="jobTitle">Job Title:</strong> <span id="jobTitle"></span></p>
+                <p style="margin-top: 10px;" data-pt="instructions">Rate each task on three dimensions (0-3). Your votes will be aggregated with other participants to determine training priorities.</p>
             </div>
 
             <div id="votingContainer">
@@ -324,12 +353,145 @@
             </div>
 
             <button class="btn-success" onclick="submitVotes()" id="btnSubmitVotes">
-                ✅ Submit All Votes
+                <span data-pt="submit">✅ Submit All Votes</span>
             </button>
         </div>
     </div>
 
     <div id="statusMessage" class="status"></div>
+
+
+    <script>
+    /* ── Self-contained i18n ─────────────────────────────────────────
+       Deliberately NOT loading translations.js. This page opens from a
+       QR code on a participant's phone, frequently on strained
+       conference wifi, and often as the only page of the app that
+       device will ever fetch. A failed dictionary request here means a
+       room full of people who cannot vote. Twenty strings inline
+       always work.
+
+       Language arrives in the link (&lang=ar) so participants need no
+       setup; the switcher is there for anyone who wants otherwise. */
+    const PT = {
+      en: {
+        subtitle: 'Participant Voting',
+        loading: 'Loading voting session\u2026',
+        occupation: 'Occupation:',
+        jobTitle: 'Job Title:',
+        instructions: 'Rate each task on three dimensions (0-3). Your votes will be aggregated with other participants to determine training priorities.',
+        submit: '\u2705 Submit All Votes',
+        thTask: 'Task', thImportance: 'Importance', thFrequency: 'Frequency',
+        thDifficulty: 'Difficulty', thScore: 'Task Score', thStatus: 'Status',
+        scaleImp: '(0=Not, 3=Critical)', scaleFreq: '(0=Rarely, 3=Daily)', scaleDiff: '(0=Easy, 3=Very)',
+        complete: 'Completed', incomplete: 'Incomplete',
+        closedTitle: '\u{1F512} Voting Session Closed',
+        closedBody: 'Voting has been closed by the facilitator.',
+        closedThanks: 'Thank you for your participation!',
+        errNoSession: 'No session ID provided. Please use the link provided by your facilitator.',
+        errLoadFailed: 'Failed to load voting session. Please check your link.',
+        errLoading: 'Error loading session: {msg}',
+        errClosed: 'Voting has been closed by the facilitator.',
+        errIncomplete: 'Please complete all three ratings for at least one task',
+        okSubmitted: '\u2705 Votes submitted successfully! Thank you for participating.',
+        errSubmit: 'Error submitting votes: {msg}'
+      },
+      fr: {
+        subtitle: 'Vote des participants',
+        loading: 'Chargement de la session\u2026',
+        occupation: 'M\u00e9tier :',
+        jobTitle: 'Titre du poste :',
+        instructions: '\u00c9valuez chaque t\u00e2che sur trois dimensions (0-3). Vos votes seront agr\u00e9g\u00e9s avec ceux des autres participants pour d\u00e9terminer les priorit\u00e9s de formation.',
+        submit: '\u2705 Envoyer tous les votes',
+        thTask: 'T\u00e2che', thImportance: 'Importance', thFrequency: 'Fr\u00e9quence',
+        thDifficulty: 'Difficult\u00e9', thScore: 'Score', thStatus: 'Statut',
+        scaleImp: '(0=Nulle, 3=Critique)', scaleFreq: '(0=Rare, 3=Quotidien)', scaleDiff: '(0=Facile, 3=Tr\u00e8s)',
+        complete: 'Termin\u00e9', incomplete: 'Incomplet',
+        closedTitle: '\u{1F512} Session de vote cl\u00f4tur\u00e9e',
+        closedBody: 'Le vote a \u00e9t\u00e9 cl\u00f4tur\u00e9 par l\u2019animateur.',
+        closedThanks: 'Merci de votre participation !',
+        errNoSession: 'Aucun identifiant de session. Utilisez le lien fourni par votre animateur.',
+        errLoadFailed: '\u00c9chec du chargement. V\u00e9rifiez votre lien.',
+        errLoading: 'Erreur de chargement : {msg}',
+        errClosed: 'Le vote a \u00e9t\u00e9 cl\u00f4tur\u00e9 par l\u2019animateur.',
+        errIncomplete: 'Compl\u00e9tez les trois \u00e9valuations pour au moins une t\u00e2che',
+        okSubmitted: '\u2705 Votes envoy\u00e9s. Merci de votre participation !',
+        errSubmit: 'Erreur lors de l\u2019envoi : {msg}'
+      },
+      ar: {
+        subtitle: '\u062a\u0635\u0648\u064a\u062a \u0627\u0644\u0645\u0634\u0627\u0631\u0643\u064a\u0646',
+        loading: '\u062c\u0627\u0631\u064d \u062a\u062d\u0645\u064a\u0644 \u062c\u0644\u0633\u0629 \u0627\u0644\u062a\u0635\u0648\u064a\u062a\u2026',
+        occupation: '\u0627\u0644\u0645\u0647\u0646\u0629:',
+        jobTitle: '\u0627\u0644\u0645\u0633\u0645\u0651\u0649 \u0627\u0644\u0648\u0638\u064a\u0641\u064a:',
+        instructions: '\u0642\u064a\u0651\u0645 \u0643\u0644 \u0645\u0647\u0645\u0629 \u0639\u0644\u0649 \u062b\u0644\u0627\u062b\u0629 \u0623\u0628\u0639\u0627\u062f (0-3). \u0648\u0633\u062a\u064f\u062c\u0645\u0651\u0639 \u0623\u0635\u0648\u0627\u062a\u0643 \u0645\u0639 \u0628\u0642\u064a\u0629 \u0627\u0644\u0645\u0634\u0627\u0631\u0643\u064a\u0646 \u0644\u062a\u062d\u062f\u064a\u062f \u0623\u0648\u0644\u0648\u064a\u0627\u062a \u0627\u0644\u062a\u062f\u0631\u064a\u0628.',
+        submit: '\u2705 \u0625\u0631\u0633\u0627\u0644 \u062c\u0645\u064a\u0639 \u0627\u0644\u0623\u0635\u0648\u0627\u062a',
+        thTask: '\u0627\u0644\u0645\u0647\u0645\u0629', thImportance: '\u0627\u0644\u0623\u0647\u0645\u064a\u0629', thFrequency: '\u0627\u0644\u062a\u0643\u0631\u0627\u0631',
+        thDifficulty: '\u0627\u0644\u0635\u0639\u0648\u0628\u0629', thScore: '\u062f\u0631\u062c\u0629 \u0627\u0644\u0645\u0647\u0645\u0629', thStatus: '\u0627\u0644\u062d\u0627\u0644\u0629',
+        scaleImp: '(0=\u063a\u064a\u0631 \u0645\u0647\u0645\u0629\u060c 3=\u062d\u0631\u062c\u0629)',
+        scaleFreq: '(0=\u0646\u0627\u062f\u0631\u0627\u064b\u060c 3=\u064a\u0648\u0645\u064a\u0627\u064b)',
+        scaleDiff: '(0=\u0633\u0647\u0644\u0629\u060c 3=\u0635\u0639\u0628\u0629 \u062c\u062f\u0627\u064b)',
+        complete: '\u0645\u0643\u062a\u0645\u0644\u0629', incomplete: '\u063a\u064a\u0631 \u0645\u0643\u062a\u0645\u0644\u0629',
+        closedTitle: '\u{1F512} \u0623\u064f\u063a\u0644\u0642\u062a \u062c\u0644\u0633\u0629 \u0627\u0644\u062a\u0635\u0648\u064a\u062a',
+        closedBody: '\u0623\u063a\u0644\u0642 \u0627\u0644\u0645\u064f\u064a\u0633\u0651\u0631 \u0628\u0627\u0628 \u0627\u0644\u062a\u0635\u0648\u064a\u062a.',
+        closedThanks: '\u0634\u0643\u0631\u0627\u064b \u0644\u0645\u0634\u0627\u0631\u0643\u062a\u0643!',
+        errNoSession: '\u0644\u0645 \u064a\u064f\u0642\u062f\u0651\u0645 \u0645\u0639\u0631\u0651\u0641 \u0627\u0644\u062c\u0644\u0633\u0629. \u0627\u0633\u062a\u062e\u062f\u0645 \u0627\u0644\u0631\u0627\u0628\u0637 \u0627\u0644\u0630\u064a \u0632\u0648\u0651\u062f\u0643 \u0628\u0647 \u0627\u0644\u0645\u064f\u064a\u0633\u0651\u0631.',
+        errLoadFailed: '\u062a\u0639\u0630\u0651\u0631 \u062a\u062d\u0645\u064a\u0644 \u062c\u0644\u0633\u0629 \u0627\u0644\u062a\u0635\u0648\u064a\u062a. \u062a\u062d\u0642\u0651\u0642 \u0645\u0646 \u0627\u0644\u0631\u0627\u0628\u0637.',
+        errLoading: '\u062e\u0637\u0623 \u0641\u064a \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u062c\u0644\u0633\u0629: {msg}',
+        errClosed: '\u0623\u063a\u0644\u0642 \u0627\u0644\u0645\u064f\u064a\u0633\u0651\u0631 \u0628\u0627\u0628 \u0627\u0644\u062a\u0635\u0648\u064a\u062a.',
+        errIncomplete: '\u0623\u0643\u0645\u0650\u0644 \u0627\u0644\u062a\u0642\u064a\u064a\u0645\u0627\u062a \u0627\u0644\u062b\u0644\u0627\u062b\u0629 \u0644\u0645\u0647\u0645\u0629 \u0648\u0627\u062d\u062f\u0629 \u0639\u0644\u0649 \u0627\u0644\u0623\u0642\u0644',
+        okSubmitted: '\u2705 \u0623\u064f\u0631\u0633\u0644\u062a \u0627\u0644\u0623\u0635\u0648\u0627\u062a \u0628\u0646\u062c\u0627\u062d! \u0634\u0643\u0631\u0627\u064b \u0644\u0645\u0634\u0627\u0631\u0643\u062a\u0643.',
+        errSubmit: '\u062e\u0637\u0623 \u0641\u064a \u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0623\u0635\u0648\u0627\u062a: {msg}'
+      }
+    };
+
+    let PLANG = 'en';
+
+    function pt(k, vars) {
+      let v = (PT[PLANG] && PT[PLANG][k] !== undefined) ? PT[PLANG][k] : PT.en[k];
+      if (v === undefined) return k;
+      if (vars) for (const n in vars) v = v.split('{' + n + '}').join(vars[n]);
+      return v;
+    }
+
+    function setParticipantLang(code) {
+      PLANG = PT[code] ? code : 'en';
+      localStorage.setItem('dacum_pt_lang', PLANG);
+      const rtl = (PLANG === 'ar');
+      document.documentElement.lang = PLANG;
+      document.documentElement.setAttribute('dir', rtl ? 'rtl' : 'ltr');
+      document.body.classList.toggle('pt-rtl', rtl);
+
+      document.querySelectorAll('[data-pt]').forEach(el => {
+        el.textContent = pt(el.getAttribute('data-pt'));
+      });
+      document.querySelectorAll('.pt-lang-btn').forEach(b => {
+        b.classList.toggle('is-active', b.getAttribute('data-lang') === PLANG);
+      });
+
+      /* The voting table is generated, so it has to be rebuilt. Votes
+         live in participantVotes, not in the DOM, so nothing a
+         participant has already selected is lost — the radios are
+         re-checked from that object below. */
+      if (typeof sessionData !== 'undefined' && sessionData &&
+          document.getElementById('votingSection').style.display !== 'none') {
+        renderVotingInterface(sessionData);
+        restoreVotes();
+      }
+    }
+
+    /* Re-tick the radios and recompute each row after a rebuild. */
+    function restoreVotes() {
+      Object.keys(participantVotes || {}).forEach(taskId => {
+        const v = participantVotes[taskId] || {};
+        ['importance', 'frequency', 'difficulty'].forEach(dim => {
+          if (v[dim] === undefined) return;
+          const el = document.querySelector(
+            `input[name="${taskId}_${dim}"][value="${v[dim]}"]`);
+          if (el) el.checked = true;
+        });
+        if (typeof updateTaskScore === 'function') updateTaskScore(taskId);
+      });
+    }
+    </script>
 
     <script>
         // Backend API endpoint
@@ -369,9 +531,9 @@
                         document.getElementById('loadingSection').style.display = 'none';
                         document.getElementById('votingSection').innerHTML = `
                             <div style="text-align: center; padding: 40px; background: #fee2e2; border-radius: 12px; border: 2px solid #ef4444;">
-                                <h2 style="color: #991b1b; margin-bottom: 15px;">🔒 Voting Session Closed</h2>
-                                <p style="color: #7f1d1d; font-size: 1.1em;">Voting has been closed by the facilitator.</p>
-                                <p style="color: #7f1d1d; margin-top: 15px;">Thank you for your participation!</p>
+                                <h2 style="color: #991b1b; margin-bottom: 15px;">${pt('closedTitle')}</h2>
+                                <p style="color: #7f1d1d; font-size: 1.1em;">${pt('closedBody')}</p>
+                                <p style="color: #7f1d1d; margin-top: 15px;">${pt('closedThanks')}</p>
                             </div>
                         `;
                         document.getElementById('votingSection').style.display = 'block';
@@ -383,9 +545,9 @@
                 document.getElementById('loadingSection').style.display = 'none';
                 document.getElementById('votingSection').innerHTML = `
                     <div style="text-align: center; padding: 40px; background: #fee2e2; border-radius: 12px; border: 2px solid #ef4444;">
-                        <h2 style="color: #991b1b; margin-bottom: 15px;">🔒 Voting Session Closed</h2>
-                        <p style="color: #7f1d1d; font-size: 1.1em;">This voting session has been closed by the facilitator.</p>
-                        <p style="color: #7f1d1d; margin-top: 15px;">Thank you for your participation!</p>
+                        <h2 style="color: #991b1b; margin-bottom: 15px;">${pt('closedTitle')}</h2>
+                        <p style="color: #7f1d1d; font-size: 1.1em;">${pt('closedBody')}</p>
+                        <p style="color: #7f1d1d; margin-top: 15px;">${pt('closedThanks')}</p>
                     </div>
                 `;
                 document.getElementById('votingSection').style.display = 'block';
@@ -401,8 +563,8 @@
                 
             } catch (error) {
                 console.error('Error loading session:', error);
-                showStatus(`Error loading session: ${error.message}`, 'error');
-                document.getElementById('loadingSection').innerHTML = '<p style="color: #ef4444;">Failed to load voting session. Please check your link.</p>';
+                showStatus(pt('errLoading', { msg: error.message }), 'error');
+                document.getElementById('loadingSection').innerHTML = `<p style="color: #ef4444;">${pt('errLoadFailed')}</p>`;
             }
         }
         
@@ -428,12 +590,12 @@
                     <table class="task-table">
                         <thead>
                             <tr>
-                                <th style="width: 35%;">Task</th>
-                                <th style="width: 13%;">Importance<br><span style="font-size: 0.75em; font-weight: 400;">(0=Not, 3=Critical)</span></th>
-                                <th style="width: 13%;">Frequency<br><span style="font-size: 0.75em; font-weight: 400;">(0=Rarely, 3=Daily)</span></th>
-                                <th style="width: 13%;">Difficulty<br><span style="font-size: 0.75em; font-weight: 400;">(0=Easy, 3=Very)</span></th>
-                                <th style="width: 13%;">Task Score</th>
-                                <th style="width: 13%;">Status</th>
+                                <th style="width: 35%;">${pt('thTask')}</th>
+                                <th style="width: 13%;">${pt('thImportance')}<br><span style="font-size: 0.75em; font-weight: 400;">${pt('scaleImp')}</span></th>
+                                <th style="width: 13%;">${pt('thFrequency')}<br><span style="font-size: 0.75em; font-weight: 400;">${pt('scaleFreq')}</span></th>
+                                <th style="width: 13%;">${pt('thDifficulty')}<br><span style="font-size: 0.75em; font-weight: 400;">${pt('scaleDiff')}</span></th>
+                                <th style="width: 13%;">${pt('thScore')}</th>
+                                <th style="width: 13%;">${pt('thStatus')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -492,7 +654,7 @@
                             <td class="score-cell" id="score_${task.id}">—</td>
                             
                             <td class="status-cell">
-                                <span class="status-badge status-incomplete" id="status_${task.id}">Incomplete</span>
+                                <span class="status-badge status-incomplete" id="status_${task.id}">${pt('incomplete')}</span>
                             </td>
                         </tr>
                     `;
@@ -538,12 +700,12 @@
                 scoreElement.textContent = totalScore;
                 
                 // Update status badge to complete
-                statusElement.textContent = 'Completed';
+                statusElement.textContent = pt('complete');
                 statusElement.className = 'status-badge status-complete';
             } else {
                 // Incomplete
                 scoreElement.textContent = '—';
-                statusElement.textContent = 'Incomplete';
+                statusElement.textContent = pt('incomplete');
                 statusElement.className = 'status-badge status-incomplete';
             }
         }
@@ -552,7 +714,7 @@
         async function submitVotes() {
             // Check localStorage flag first
             if (localStorage.getItem('dacumVotingClosed_' + sessionId) === 'true') {
-                showStatus('Voting has been closed by the facilitator.', 'error');
+                showStatus(pt('errClosed'), 'error');
                 document.getElementById('btnSubmitVotes').disabled = true;
                 return;
             }
@@ -568,7 +730,7 @@
             
             // Validate that at least one task is fully rated
             if (Object.keys(completedVotes).length === 0) {
-                showStatus('Please complete all three ratings for at least one task', 'error');
+                showStatus(pt('errIncomplete'), 'error');
                 return;
             }
             
@@ -579,7 +741,7 @@
                 const checkResult = await checkResponse.json();
                 
                 if (checkResult.success && checkResult.data.closed) {
-                    showStatus('This voting session has been closed by the facilitator', 'error');
+                    showStatus(pt('errClosed'), 'error');
                     return;
                 }
             } catch (error) {
@@ -606,7 +768,7 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    showStatus('✅ Votes submitted successfully! Thank you for participating.', 'success');
+                    showStatus(pt('okSubmitted'), 'success');
                     document.getElementById('btnSubmitVotes').disabled = true;
                     document.getElementById('votingContainer').style.opacity = '0.5';
                 } else {
@@ -615,7 +777,7 @@
                 
             } catch (error) {
                 console.error('Error submitting votes:', error);
-                showStatus(`Error submitting votes: ${error.message}`, 'error');
+                showStatus(pt('errSubmit', { msg: error.message }), 'error');
             }
         }
         
@@ -630,11 +792,23 @@
         window.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             sessionId = urlParams.get('lwsession');
-            
+
+            /* Precedence: an explicit choice this participant already
+               made on this device wins, then the language the
+               facilitator put in the link, then English. Storing their
+               choice matters because a participant who switches to
+               Arabic and later re-scans the QR code should not be
+               dragged back to the facilitator's language. */
+            setParticipantLang(
+              localStorage.getItem('dacum_pt_lang') ||
+              urlParams.get('lang') ||
+              'en'
+            );
+
             if (sessionId) {
                 loadSession(sessionId);
             } else {
-                document.getElementById('loadingSection').innerHTML = '<p style="color: #ef4444;">No session ID provided. Please use the link provided by your facilitator.</p>';
+                document.getElementById('loadingSection').innerHTML = `<p style="color: #ef4444;">${pt('errNoSession')}</p>`;
             }
         });
     </script>
