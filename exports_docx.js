@@ -43,6 +43,14 @@ const _start = (A) => (_rtl() ? A.RIGHT : A.LEFT);
    pretty one. */
 const _font = () => (_rtl() ? 'Arial' : 'Calibri');
 
+/* Dates in the exported document follow the EXPORT language, not the
+   browser's locale — those are frequently different, and a report is a
+   deliverable that must be internally consistent. */
+const _today = () => new Date().toLocaleDateString(
+  window.i18n ? window.i18n.getLang() : undefined
+);
+
+
 /* A filename built with /[^a-z0-9]/gi turns an Arabic occupation title
    into a row of underscores — every Arabic export arrived as
    "________.docx". Keep Unicode letters and digits; strip only what a
@@ -100,7 +108,7 @@ export async function exportTaskVerificationWord() {
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: 'Task Verification & Training Priority Analysis',
+                            text: _t('expTaskVerification'),
                             bold: true,
                             size: 32,
                         }),
@@ -112,7 +120,7 @@ export async function exportTaskVerificationWord() {
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: `Occupation: ${occupationTitle}`,
+                            text: _tf('expOccupation', { v: occupationTitle }),
                             bold: true,
                             size: 28,
                         }),
@@ -121,11 +129,11 @@ export async function exportTaskVerificationWord() {
                     bidirectional: _rtl(),
                 }));
                 
-                const today = new Date().toLocaleDateString();
+                const today = _today();
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: `Date of Analysis: ${today}`,
+                            text: _tf('expDateOfAnalysis', { v: today }),
                             size: 24,
                         }),
                     ],
@@ -136,7 +144,7 @@ export async function exportTaskVerificationWord() {
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: `This Task Verification is based on the DACUM Chart for ${occupationTitle}.`,
+                            text: _tf('expBasedOn', { v: occupationTitle }),
                             italics: true,
                             size: 20,
                         }),
@@ -149,7 +157,7 @@ export async function exportTaskVerificationWord() {
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: 'Methodology Summary',
+                            text: _t('expMethodologySummary'),
                             bold: true,
                             size: 28,
                         }),
@@ -161,7 +169,7 @@ export async function exportTaskVerificationWord() {
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: `Data Collection Mode: ${appState.collectionMode === 'workshop' ? 'Workshop (Facilitated)' : 'Individual/Survey'}`,
+                            text: _tf('expCollectionMode', { v: _t(appState.collectionMode === 'workshop' ? 'modeWorkshop' : 'expIndividualSurvey') }),
                             size: 22,
                         }),
                     ],
@@ -177,7 +185,7 @@ export async function exportTaskVerificationWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: `Number of Participants: ${appState.workshopParticipants}`,
+                                text: _tf('expParticipants', { v: appState.workshopParticipants }),
                                 size: 22,
                             }),
                         ],
@@ -191,7 +199,7 @@ export async function exportTaskVerificationWord() {
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: `Coverage: ${tvCoverage.label}`,
+                            text: _tf('expCoverage', { v: tvCoverage.label }),
                             size: 22,
                             bold: !tvCoverage.complete,
                             color: tvCoverage.complete ? '000000' : 'B91C1C',
@@ -204,7 +212,7 @@ export async function exportTaskVerificationWord() {
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: `Workflow Mode: ${appState.workflowMode === 'standard' ? 'Standard (DACUM)' : 'Extended (DACUM)'}`,
+                            text: _tf('expWorkflowMode', { v: _t(appState.workflowMode === 'standard' ? 'modeStandard' : 'modeExtended') }),
                             size: 22,
                         }),
                     ],
@@ -215,7 +223,7 @@ export async function exportTaskVerificationWord() {
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: `Priority Formula: ${appState.priorityFormula === 'if' ? 'Importance × Frequency' : 'Importance × Frequency × Difficulty'}`,
+                            text: _tf('expPriorityFormula', { v: _t(appState.priorityFormula === 'if' ? 'formulaIF' : 'formulaIFD') }),
                             size: 22,
                         }),
                     ],
@@ -227,7 +235,7 @@ export async function exportTaskVerificationWord() {
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: 'Priority Rankings',
+                            text: _t('expPriorityRankings'),
                             bold: true,
                             size: 28,
                         }),
@@ -280,31 +288,31 @@ export async function exportTaskVerificationWord() {
                 tableRows.push(new TableRow({
                     children: [
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: 'Rank', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expRank'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                             shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: 'Duty', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                             shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: 'Task', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expTaskLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                             shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: 'Mean I', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanI'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                             shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: 'Mean F', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanF'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                             shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: 'Mean D', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanD'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                             shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: 'Priority', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                             shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                     ],
@@ -334,13 +342,13 @@ export async function exportTaskVerificationWord() {
                 children.push(new Paragraph({ spacing: { after: 400 } }));
                 
                 children.push(new Paragraph({
-                    children: [new TextRun({ text: 'Duty-Level Summary', bold: true, size: 28 })],
+                    children: [new TextRun({ text: _t('expDutyLevelSummary'), bold: true, size: 28 })],
                     spacing: { after: 200 },
                     bidirectional: _rtl(),
                 }));
                 
                 children.push(new Paragraph({
-                    children: [new TextRun({ text: `Training Load Method: ${appState.trainingLoadMethod === 'advanced' ? 'Advanced (Σ Priority × Difficulty)' : 'Simple (Avg Priority × Tasks)'}`, size: 20, italics: true })],
+                    children: [new TextRun({ text: _tf('expTrainingLoadMethod', { v: _t(appState.trainingLoadMethod === 'advanced' ? 'expAdvancedMethod' : 'expSimpleMethod') }), size: 20, italics: true })],
                     spacing: { after: 200 },
                     bidirectional: _rtl(),
                 }));
@@ -387,10 +395,10 @@ export async function exportTaskVerificationWord() {
                 const dutyTableRows = [
                     new TableRow({
                         children: [
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Duty Title', bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Tasks', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Avg Priority', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Training Load', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyTitle'), bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTasks'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expAvgPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTrainingLoad'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
                         ],
                     })
                 ];
@@ -417,7 +425,7 @@ export async function exportTaskVerificationWord() {
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: 'Notes & Methodology',
+                            text: _t('expNotesMethodology'),
                             bold: true,
                             size: 24,
                         }),
@@ -566,7 +574,7 @@ export async function exportToWord() {
                 children.push(new Paragraph({
                     children: [
                         new TextRun({
-                            text: `Occupation Title: ${occupationTitle}`,
+                            text: _tf('expOccupationTitle', { v: occupationTitle }),
                             bold: true,
                             size: 28, // 14pt
                         }),
@@ -582,7 +590,7 @@ export async function exportToWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: 'Scope of Work / Occupational Definition:',
+                                text: _t('expScopeOfWork'),
                                 bold: true,
                                 size: 24, // 12pt
                             }),
@@ -607,7 +615,7 @@ export async function exportToWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: `Job Title: ${jobTitle}`,
+                                text: _tf('expJobTitle', { v: jobTitle }),
                                 bold: true,
                                 size: 28, // 14pt
                             }),
@@ -622,7 +630,7 @@ export async function exportToWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: `DACUM Date: ${dacumDate}`,
+                                text: _tf('expDacumDate', { v: dacumDate }),
                                 bold: true,
                                 size: 24, // 12pt
                             }),
@@ -638,7 +646,7 @@ export async function exportToWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: `Venue: ${venueValue}`,
+                                text: _tf('expVenue', { v: venueValue }),
                                 bold: true,
                                 size: 24, // 12pt
                             }),
@@ -653,7 +661,7 @@ export async function exportToWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: `Produced For: ${producedFor}`,
+                                text: _tf('expProducedFor', { v: producedFor }),
                                 bold: true,
                                 size: 24, // 12pt
                             }),
@@ -691,7 +699,7 @@ export async function exportToWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: `Produced By: ${producedBy}`,
+                                text: _tf('expProducedBy', { v: producedBy }),
                                 bold: true,
                                 size: 24, // 12pt
                             }),
@@ -738,7 +746,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: 'Facilitators',
+                                    text: _t('expFacilitators'),
                                     bold: true,
                                     size: 24, // 12pt
                                 }),
@@ -780,7 +788,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: 'Observers',
+                                    text: _t('expObservers'),
                                     bold: true,
                                     size: 24, // 12pt
                                 }),
@@ -822,7 +830,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: 'Panel Members',
+                                    text: _t('expPanelMembers'),
                                     bold: true,
                                     size: 24, // 12pt
                                 }),
@@ -863,7 +871,7 @@ export async function exportToWord() {
                     children: [
                         new PageBreak(),
                         new TextRun({
-                            text: 'Duties and Tasks',
+                            text: _t('expDutiesAndTasks'),
                             bold: true,
                             size: 28, // 14pt
                         }),
@@ -1011,7 +1019,7 @@ export async function exportToWord() {
                     children: [
                         new PageBreak(),
                         new TextRun({
-                            text: 'Additional Information',
+                            text: _t('expAdditionalInfo'),
                             bold: true,
                             size: 24, // 12pt
                         }),
@@ -1266,7 +1274,7 @@ export async function exportToWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: 'Employability Competencies by Occupational Level',
+                                text: _t('expEmployability'),
                                 bold: true,
                                 size: 24, // 12pt
                             }),
@@ -1316,7 +1324,7 @@ export async function exportToWord() {
                                         new Paragraph({
                                             children: [
                                                 new TextRun({
-                                                    text: 'Competency',
+                                                    text: _t('expCompetency'),
                                                     bold: true,
                                                     size: 22,
                                                 }),
@@ -1336,7 +1344,7 @@ export async function exportToWord() {
                                         new Paragraph({
                                             children: [
                                                 new TextRun({
-                                                    text: 'Craftsman/\nSupervisor',
+                                                    text: _t('expCraftsman'),
                                                     bold: true,
                                                     size: 20,
                                                 }),
@@ -1356,7 +1364,7 @@ export async function exportToWord() {
                                         new Paragraph({
                                             children: [
                                                 new TextRun({
-                                                    text: 'Skilled',
+                                                    text: _t('expSkilled'),
                                                     bold: true,
                                                     size: 20,
                                                 }),
@@ -1376,7 +1384,7 @@ export async function exportToWord() {
                                         new Paragraph({
                                             children: [
                                                 new TextRun({
-                                                    text: 'Semi-skilled',
+                                                    text: _t('expSemiSkilled'),
                                                     bold: true,
                                                     size: 20,
                                                 }),
@@ -1396,7 +1404,7 @@ export async function exportToWord() {
                                         new Paragraph({
                                             children: [
                                                 new TextRun({
-                                                    text: 'Foundation\nskills',
+                                                    text: _t('expFoundation'),
                                                     bold: true,
                                                     size: 20,
                                                 }),
@@ -1530,7 +1538,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: 'Task Verification & Training Priority Analysis (Appendix)',
+                                    text: _t('expTaskVerifAppendix'),
                                     bold: true,
                                     size: 32, // 16pt
                                 }),
@@ -1543,7 +1551,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: 'Methodology Summary',
+                                    text: _t('expMethodologySummary'),
                                     bold: true,
                                     size: 28, // 14pt
                                 }),
@@ -1556,7 +1564,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: `Data Collection Mode: ${appState.collectionMode === 'workshop' ? 'Workshop (Facilitated)' : 'Individual/Survey'}`,
+                                    text: _tf('expCollectionMode', { v: _t(appState.collectionMode === 'workshop' ? 'modeWorkshop' : 'expIndividualSurvey') }),
                                     size: 22,
                                 }),
                             ],
@@ -1567,7 +1575,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: `Number of Participants: ${appState.workshopParticipants}`,
+                                    text: _tf('expParticipants', { v: appState.workshopParticipants }),
                                     size: 22,
                                 }),
                             ],
@@ -1578,7 +1586,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: `Workflow Mode: ${appState.workflowMode === 'standard' ? 'Standard (DACUM)' : 'Extended (DACUM)'}`,
+                                    text: _tf('expWorkflowMode', { v: _t(appState.workflowMode === 'standard' ? 'modeStandard' : 'modeExtended') }),
                                     size: 22,
                                 }),
                             ],
@@ -1589,7 +1597,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: `Priority Formula: ${appState.priorityFormula === 'if' ? 'Importance × Frequency' : 'Importance × Frequency × Difficulty'}`,
+                                    text: _tf('expPriorityFormula', { v: _t(appState.priorityFormula === 'if' ? 'formulaIF' : 'formulaIFD') }),
                                     size: 22,
                                 }),
                             ],
@@ -1601,7 +1609,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: 'Priority Rankings',
+                                    text: _t('expPriorityRankings'),
                                     bold: true,
                                     size: 28,
                                 }),
@@ -1654,31 +1662,31 @@ export async function exportToWord() {
                         tableRows.push(new TableRow({
                             children: [
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: 'Rank', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expRank'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                                     shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: 'Duty', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                                     shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: 'Task', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expTaskLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                                     shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: 'Mean I', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanI'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                                     shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: 'Mean F', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanF'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                                     shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: 'Mean D', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanD'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                                     shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: 'Priority', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
                                     shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                             ],
@@ -1708,13 +1716,13 @@ export async function exportToWord() {
                         children.push(new Paragraph({ spacing: { after: 400 } }));
                         
                         children.push(new Paragraph({
-                            children: [new TextRun({ text: 'Duty-Level Summary', bold: true, size: 28 })],
+                            children: [new TextRun({ text: _t('expDutyLevelSummary'), bold: true, size: 28 })],
                             spacing: { after: 200 },
                             bidirectional: _rtl(),
                         }));
                         
                         children.push(new Paragraph({
-                            children: [new TextRun({ text: `Training Load Method: ${appState.trainingLoadMethod === 'advanced' ? 'Advanced (Σ Priority × Difficulty)' : 'Simple (Avg Priority × Tasks)'}`, size: 20, italics: true })],
+                            children: [new TextRun({ text: _tf('expTrainingLoadMethod', { v: _t(appState.trainingLoadMethod === 'advanced' ? 'expAdvancedMethod' : 'expSimpleMethod') }), size: 20, italics: true })],
                             spacing: { after: 200 },
                             bidirectional: _rtl(),
                         }));
@@ -1761,10 +1769,10 @@ export async function exportToWord() {
                         const dutyTableRows = [
                             new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Duty Title', bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Tasks', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Avg Priority', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Training Load', bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyTitle'), bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTasks'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expAvgPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTrainingLoad'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
                                 ],
                             })
                         ];
@@ -1791,7 +1799,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: 'Notes',
+                                    text: _t('expNotes'),
                                     bold: true,
                                     size: 24,
                                 }),
@@ -1831,7 +1839,7 @@ export async function exportToWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: 'DACUM Live Pro - Verified (Post-Vote) Results (Appendix)',
+                                text: _t('expPostVoteResults'),
                                 bold: true,
                                 size: 32,
                             }),
@@ -1842,29 +1850,29 @@ export async function exportToWord() {
                     
                     // Metadata
                     children.push(new Paragraph({
-                        children: [new TextRun({ text: `Occupation: ${appState.lwFinalizedData.occupation}`, size: 22 })],
+                        children: [new TextRun({ text: _tf('expOccupation', { v: appState.lwFinalizedData.occupation }), size: 22 })],
                         spacing: { after: 100 },
                         bidirectional: _rtl(),
                     }));
                     children.push(new Paragraph({
-                        children: [new TextRun({ text: `Job Title: ${appState.lwFinalizedData.jobTitle}`, size: 22 })],
+                        children: [new TextRun({ text: _tf('expJobTitle', { v: appState.lwFinalizedData.jobTitle }), size: 22 })],
                         spacing: { after: 100 },
                         bidirectional: _rtl(),
                     }));
                     children.push(new Paragraph({
-                        children: [new TextRun({ text: `Date: ${new Date().toLocaleDateString()}`, size: 22 })],
+                        children: [new TextRun({ text: _tf('expDate', { v: _today() }), size: 22 })],
                         spacing: { after: 100 },
                         bidirectional: _rtl(),
                     }));
                     const vFormula = appState.lwFinalizedData.appState.priorityFormula || 'if';
                     const vFormulaText = vFormula === 'ifd' ? 'Importance × Frequency × Difficulty' : 'Importance × Frequency';
                     children.push(new Paragraph({
-                        children: [new TextRun({ text: `Priority Formula: ${vFormulaText}`, size: 22 })],
+                        children: [new TextRun({ text: _tf('expPriorityFormula', { v: vFormulaText }), size: 22 })],
                         spacing: { after: 100 },
                         bidirectional: _rtl(),
                     }));
                     children.push(new Paragraph({
-                        children: [new TextRun({ text: `Total Participants: ${appState.lwAggregatedResults.totalVotes}`, size: 22 })],
+                        children: [new TextRun({ text: _tf('expTotalParticipants', { v: appState.lwAggregatedResults.totalVotes }), size: 22 })],
                         spacing: { after: 300 },
                         bidirectional: _rtl(),
                     }));
@@ -1894,13 +1902,13 @@ export async function exportToWord() {
                     const verifiedTableRows = [
                         new TableRow({
                             children: [
-                                new TableCell({ children: [new Paragraph({ text: 'Rank', bold: true, bidirectional: _rtl() })], width: { size: 8, type: WidthType.PERCENTAGE } }),
-                                new TableCell({ children: [new Paragraph({ text: 'Duty', bold: true, bidirectional: _rtl() })], width: { size: 22, type: WidthType.PERCENTAGE } }),
-                                new TableCell({ children: [new Paragraph({ text: 'Task', bold: true, bidirectional: _rtl() })], width: { size: 35, type: WidthType.PERCENTAGE } }),
-                                new TableCell({ children: [new Paragraph({ text: 'I', bold: true, bidirectional: _rtl() })], width: { size: 8, type: WidthType.PERCENTAGE } }),
-                                new TableCell({ children: [new Paragraph({ text: 'F', bold: true, bidirectional: _rtl() })], width: { size: 8, type: WidthType.PERCENTAGE } }),
-                                new TableCell({ children: [new Paragraph({ text: 'D', bold: true, bidirectional: _rtl() })], width: { size: 8, type: WidthType.PERCENTAGE } }),
-                                new TableCell({ children: [new Paragraph({ text: 'PI', bold: true, bidirectional: _rtl() })], width: { size: 11, type: WidthType.PERCENTAGE } })
+                                new TableCell({ children: [new Paragraph({ text: _t('expRank'), bold: true, bidirectional: _rtl() })], width: { size: 8, type: WidthType.PERCENTAGE } }),
+                                new TableCell({ children: [new Paragraph({ text: _t('expDutyLabel'), bold: true, bidirectional: _rtl() })], width: { size: 22, type: WidthType.PERCENTAGE } }),
+                                new TableCell({ children: [new Paragraph({ text: _t('expTaskLabel'), bold: true, bidirectional: _rtl() })], width: { size: 35, type: WidthType.PERCENTAGE } }),
+                                new TableCell({ children: [new Paragraph({ text: _t('expInitialI'), bold: true, bidirectional: _rtl() })], width: { size: 8, type: WidthType.PERCENTAGE } }),
+                                new TableCell({ children: [new Paragraph({ text: _t('expInitialF'), bold: true, bidirectional: _rtl() })], width: { size: 8, type: WidthType.PERCENTAGE } }),
+                                new TableCell({ children: [new Paragraph({ text: _t('expInitialD'), bold: true, bidirectional: _rtl() })], width: { size: 8, type: WidthType.PERCENTAGE } }),
+                                new TableCell({ children: [new Paragraph({ text: _t('expPI'), bold: true, bidirectional: _rtl() })], width: { size: 11, type: WidthType.PERCENTAGE } })
                             ]
                         })
                     ];
@@ -1934,7 +1942,7 @@ export async function exportToWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: 'Competency Clusters',
+                                text: _t('expClusters'),
                                 bold: true,
                                 size: 32, // 16pt
                             }),
@@ -1951,7 +1959,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: `Competency ${clusterNumber}: ${cluster.name}`,
+                                    text: _tf('expCompetencyN', { n: clusterNumber, name: cluster.name }),
                                     bold: true,
                                     size: 28, // 14pt
                                 }),
@@ -1965,7 +1973,7 @@ export async function exportToWord() {
                             children.push(new Paragraph({
                                 children: [
                                     new TextRun({
-                                        text: 'Range:',
+                                        text: _t('expRangeLabel'),
                                         bold: true,
                                         size: 24, // 12pt
                                     }),
@@ -1992,7 +2000,7 @@ export async function exportToWord() {
                             children.push(new Paragraph({
                                 children: [
                                     new TextRun({
-                                        text: 'Related Tasks:',
+                                        text: _t('expRelatedTasks'),
                                         bold: true,
                                         size: 24, // 12pt
                                     }),
@@ -2022,7 +2030,7 @@ export async function exportToWord() {
                             children.push(new Paragraph({
                                 children: [
                                     new TextRun({
-                                        text: 'Performance Criteria:',
+                                        text: _t('expPCLabel'),
                                         bold: true,
                                         size: 24, // 12pt
                                     }),
@@ -2055,7 +2063,7 @@ export async function exportToWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: 'Learning Outcomes',
+                                text: _t('expLearningOutcomes'),
                                 bold: true,
                                 size: 32, // 16pt
                             }),
@@ -2131,7 +2139,7 @@ export async function exportToWord() {
                             children.push(new Paragraph({
                                 children: [
                                     new TextRun({
-                                        text: 'Mapped Performance Criteria:',
+                                        text: _t('expMappedPC'),
                                         italic: true,
                                         size: 20, // 10pt
                                     }),
@@ -2165,7 +2173,7 @@ export async function exportToWord() {
                     children.push(new Paragraph({
                         children: [
                             new TextRun({
-                                text: 'Module Mapping',
+                                text: _t('expModuleMapping'),
                                 bold: true,
                                 size: 32, // 16pt
                             }),
@@ -2193,7 +2201,7 @@ export async function exportToWord() {
                         children.push(new Paragraph({
                             children: [
                                 new TextRun({
-                                    text: 'Learning Outcomes:',
+                                    text: _t('expLOsLabel'),
                                     bold: true,
                                     size: 24, // 12pt
                                 }),
@@ -2235,7 +2243,7 @@ export async function exportToWord() {
                             children.push(new Paragraph({
                                 children: [
                                     new TextRun({
-                                        text: 'Referenced PC:',
+                                        text: _t('expReferencedPC'),
                                         italic: true,
                                         size: 18, // 9pt
                                     }),
