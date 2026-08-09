@@ -674,6 +674,15 @@
       quotaStep1: 'Export the projects you need (Export Project in the toolbar)',
       quotaStep2: 'Delete projects you no longer need from the sidebar',
       quotaStep3: 'Remove large logos in Chart Info if you added any',
+      /* ── Export messages ── */
+      msgDocxLibMissing: 'Error: Word export library not loaded. Please refresh the page.',
+      msgGeneratingTVWord: 'Generating Task Verification Word document…',
+      msgGeneratingWord: 'Generating Word document…',
+      msgWordExported: 'Word document exported successfully!',
+      msgWordError: 'Error generating Word document: {msg}',
+      msgTVWordError: 'Error generating Task Verification Word document: {msg}',
+      msgOccupationRequiredExport: 'Occupation Title is required for export.',
+      fileUntitled: 'DACUM_Chart',
     },
 
     fr: {
@@ -1345,6 +1354,15 @@
       quotaStep1: 'Exportez les projets dont vous avez besoin (Exporter dans la barre d’outils)',
       quotaStep2: 'Supprimez les projets inutiles depuis le panneau',
       quotaStep3: 'Retirez les logos volumineux dans la fiche DACUM si vous en avez ajouté',
+      /* ── Export messages ── */
+      msgDocxLibMissing: 'Erreur : bibliothèque d’export Word non chargée. Actualisez la page.',
+      msgGeneratingTVWord: 'Génération du document Word de vérification…',
+      msgGeneratingWord: 'Génération du document Word…',
+      msgWordExported: 'Document Word exporté avec succès !',
+      msgWordError: 'Erreur lors de la génération du document Word : {msg}',
+      msgTVWordError: 'Erreur lors de la génération du document Word de vérification : {msg}',
+      msgOccupationRequiredExport: 'L’intitulé du métier est requis pour l’export.',
+      fileUntitled: 'Fiche_DACUM',
     },
 
     ar: {
@@ -1974,6 +1992,15 @@
       quotaStep1: 'صدّر المشاريع التي تحتاجها (زر «تصدير» في شريط الأدوات)',
       quotaStep2: 'احذف المشاريع التي لم تعد تحتاجها من الشريط الجانبي',
       quotaStep3: 'احذف الشعارات الكبيرة في تبويب بيانات المخطط إن كنت أضفتها',
+      /* ── Export messages ── */
+      msgDocxLibMissing: 'خطأ: لم تُحمَّل مكتبة تصدير Word. يرجى تحديث الصفحة.',
+      msgGeneratingTVWord: 'جارٍ توليد مستند Word للتحقق من المهام…',
+      msgGeneratingWord: 'جارٍ توليد مستند Word…',
+      msgWordExported: 'تم تصدير مستند Word بنجاح!',
+      msgWordError: 'خطأ في توليد مستند Word: {msg}',
+      msgTVWordError: 'خطأ في توليد مستند Word للتحقق من المهام: {msg}',
+      msgOccupationRequiredExport: 'اسم المهنة مطلوب للتصدير.',
+      fileUntitled: 'مخطط_DACUM',
     },
   };
 
