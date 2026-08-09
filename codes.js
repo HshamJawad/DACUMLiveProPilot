@@ -18,18 +18,58 @@
 
 import { appState } from './state.js';
 
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+// ── Alphabets ────────────────────────────────────────────────
+//
+// The Latin sequence is A, B, C … the ordinal alphabet everyone reads
+// as "first, second, third". Arabic has two orderings and only one of
+// them carries that meaning:
+//
+//   • hija'i  (أ ب ت ث ج ح …) — the DICTIONARY order, grouped by
+//     letter shape. Familiar, but it is not how Arabic numbers things.
+//   • abjadi  (أ ب ج د ه و ز …) — the historical ORDINAL sequence,
+//     still used exactly where English uses (a), (b), (c): legal
+//     clauses, exam questions, outline levels.
+//
+// abjadi is therefore the correct choice: «الواجب ج» reads as "Duty
+// three" to an Arabic reader in a way «الواجب ت» does not. 28 letters
+// against Latin's 26, so an Arabic chart reaches two-letter codes
+// slightly later.
+const ABJAD = [
+  'أ','ب','ج','د','ه','و','ز','ح','ط','ي',
+  'ك','ل','م','ن','س','ع','ف','ص','ق','ر',
+  'ش','ت','ث','خ','ذ','ض','ظ','غ'
+];
+
 // ── Letter generator ─────────────────────────────────────────
 //
 // 0 → A, 1 → B, … 25 → Z, 26 → AA, 27 → AB … 701 → ZZ.
-// Covers any realistic DACUM chart; returns '' for negative input.
+// In Arabic: 0 → أ, 1 → ب … 27 → غ, 28 → أأ …
+//
+// DISPLAY ONLY. Codes are recomputed from each item's CURRENT position
+// on every render and are never stored, so switching language changes
+// what is drawn and nothing else — a project created in Arabic still
+// opens with Latin codes in English, and no saved file is rewritten.
+// This is the same rule applied to cluster and module names, and it is
+// what makes the change safe: there is no data to migrate.
+
+function _alphabet() {
+  return (window.i18n && window.i18n.getLang() === 'ar') ? ABJAD : null;
+}
 
 export function getDutyLetter(index) {
   if (typeof index !== 'number' || index < 0 || !isFinite(index)) return '';
+  const alpha = _alphabet();
+  const base  = alpha ? alpha.length : 26;
   let n = Math.floor(index);
   let s = '';
   do {
-    s = String.fromCharCode(65 + (n % 26)) + s;
-    n = Math.floor(n / 26) - 1;
+    const d = n % base;
+    s = (alpha ? alpha[d] : String.fromCharCode(65 + d)) + s;
+    n = Math.floor(n / base) - 1;
   } while (n >= 0);
   return s;
 }
@@ -100,7 +140,7 @@ export function getTaskCodeShort(taskInputId) {
  */
 export function getTaskCode(taskInputId) {
   const short = getTaskCodeShort(taskInputId);
-  return short ? `Task ${short}` : '';
+  return short ? _tf('lblTask', { code: short }) : '';
 }
 
 /**
@@ -119,5 +159,6 @@ export function getDutyLabel(dutyId, title) {
   const letter = getDutyCode(dutyId);
   if (!letter) return title || '';
   const t = (title || '').trim();
-  return t ? `Duty ${letter}: ${t}` : `Duty ${letter}`;
+  const label = _tf('lblDuty', { code: letter });
+  return t ? `${label}: ${t}` : label;
 }

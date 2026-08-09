@@ -747,7 +747,7 @@ export function refreshDashboard() {
       const dutyId    = result.dutyId || taskKey.split('_task_')[0];
       const dutyCode  = codeIndex.dutyLetters[dutyId] || '';
       const taskCode  = codeIndex.taskCodes[taskKey]   || '';
-      const dutyLabel = dutyCode ? `Duty ${dutyCode}: ${dutyText}` : dutyText;
+      const dutyLabel = dutyCode ? `${_tf('lblDuty', { code: dutyCode })}: ${dutyText}` : dutyText;
       const taskLabel = taskCode ? `${taskCode} — ${taskText}`    : taskText;
       validResults.push({
         duty: dutyLabel, task: taskLabel,
@@ -887,7 +887,7 @@ function updateDutyLevelSummaryFromSource(resultsSource) {
     return;
   }
   tableBody.innerHTML = dutyResults.map(duty => `<tr>
-    <td><strong>${duty.dutyCode ? `Duty ${duty.dutyCode}: ` : ''}${escapeHtml(duty.dutyTitle)}</strong></td>
+    <td><strong>${duty.dutyCode ? `${_tf('lblDuty', { code: _bdi(duty.dutyCode) })}: ` : ''}${escapeHtml(duty.dutyTitle)}</strong></td>
     <td style="text-align:center;">${duty.totalTasks}</td>
     <td style="text-align:center;">${duty.validTasks}</td>
     <td style="text-align:center;"><span class="mean-value">${duty.avgImportance.toFixed(2)}</span></td>

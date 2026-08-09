@@ -31,6 +31,8 @@ import { buildVerificationDataset, getVerificationCoverage } from './exports_sha
 
    A broken PDF is worse than no PDF: it looks like a finished
    deliverable and gets emailed to a ministry before anyone opens it. */
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
 function _blockArabicPDF() {
   if (!window.i18n || !window.i18n.isRTL()) return false;
   showStatus(window.i18n.t('msgPdfArabicUnsupported'), 'error');
@@ -784,7 +786,7 @@ export function exportToPDF() {
                 pdf.setFont(undefined, 'normal');
                 let rowHeight = 15;
                 const cellLines = rowTasks.map((taskText, c) => {
-                    const label = `Task ${letter}${i + c + 1}:`;
+                    const label = `${_tf('lblTask', { code: `${letter}${i + c + 1}` })}:`;
                     const lines = pdf.splitTextToSize(
                         `${label}\n${taskText}`, colWidth - (CELL_PAD_X * 2)
                     );

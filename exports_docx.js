@@ -959,7 +959,7 @@ export async function exportToWord() {
                             const taskIndex = row * tasksPerRow + col;
                             
                             if (taskIndex < dutyData.tasks.length) {
-                                const taskLabel = `Task ${dutyLetter}${taskIndex + 1}`;
+                                const taskLabel = _tf('lblTask', { code: `${dutyLetter}${taskIndex + 1}` });
                                 const taskText = `${taskLabel}: ${dutyData.tasks[taskIndex]}`;
                                 
                                 rowCells.push(
