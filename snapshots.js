@@ -13,6 +13,11 @@ import { loadDutiesForVerification } from './tasks.js';
 import { importProjectFromData, loadProject, renderProjectsSidebar } from './dacum_projects.js';
 import { reportError } from './error-handler.js';
 
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+
 // ── DACUM file validator ─────────────────────────────────────
 // Returns true only when the parsed object looks like a file that
 // was exported by DACUM Live Pro.  Rejects random JSON files
@@ -158,10 +163,10 @@ export function saveToJSON() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    showStatus('Data saved successfully! ✓', 'success');
+    showStatus(_t('msgDataSaved') + ' ✓', 'success');
   } catch (error) {
     console.error('Error saving data:', error);
-    showStatus('Error saving data: ' + error.message, 'error');
+    showStatus(_tf('msgSaveError', { msg: error.message }), 'error');
     reportError(error, 'snapshots.js → saveToJSON');
   }
 }
@@ -250,17 +255,17 @@ export function loadFromJSON(event) {
 
         // Load the newly created project (applies state + renders UI)
         loadProject(id);
-        showStatus(`✅ Imported as new project: "${label}"`, 'success');
+        showStatus('✅ ' + _tf('msgImportedAsNew', { name: label }), 'success');
 
       } catch (parseErr) {
         console.error('Import error:', parseErr);
-        showStatus('❌ Invalid JSON file: ' + parseErr.message, 'error');
+        showStatus('❌ ' + _tf('msgInvalidJSONFile', { msg: parseErr.message }), 'error');
         reportError(parseErr, 'snapshots.js → loadFromJSON (single file)');
       }
     };
     reader.readAsText(file);
   } catch(err) {
-    showStatus('❌ Error reading file: ' + err.message, 'error');
+    showStatus('❌ ' + _tf('msgFileReadError', { msg: err.message }), 'error');
     reportError(err, 'snapshots.js → loadFromJSON (file read)');
   }
 }
@@ -468,18 +473,18 @@ export function loadFromJSONLegacy(event) {
         document.querySelector('[data-tab="info-tab"]').classList.add('active');
         document.getElementById('info-tab').classList.add('active');
 
-        showStatus('Data loaded successfully! ✓', 'success');
+        showStatus(_t('msgDataLoaded') + ' ✓', 'success');
         event.target.value = '';
       } catch (parseError) {
         console.error('Error parsing JSON:', parseError);
-        showStatus('Error: Invalid JSON file', 'error');
+        showStatus(_t('msgInvalidJSON'), 'error');
         reportError(parseError, 'snapshots.js → loadFromJSONLegacy');
       }
     };
     reader.readAsText(file);
   } catch (error) {
     console.error('Error loading file:', error);
-    showStatus('Error loading file: ' + error.message, 'error');
+    showStatus(_tf('msgLoadFileError', { msg: error.message }), 'error');
     reportError(error, 'snapshots.js → loadFromJSONLegacy (file read)');
   }
 }

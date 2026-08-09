@@ -6,6 +6,11 @@
 import { appState } from './state.js';
 import { showStatus } from './renderer.js';
 
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+
 export const LW_API_BASE = 'https://live-session-backend-production.up.railway.app/api';
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -92,23 +97,23 @@ export async function lwFinalizeAndCreateSession() {
   const jobTitle   = jobTitleField?.value.trim() || '';
 
   if (!occupation || !jobTitle) {
-    showStatus('Please enter Occupation Title and Job Title in the Basic Information tab', 'error');
+    showStatus(_t('lwNeedTitles'), 'error');
     return;
   }
 
   const duties = lwExtractDutiesAndTasks();
   if (Object.keys(duties).length === 0) {
-    showStatus('Please add at least one duty with tasks in the Duties & Tasks tab', 'error');
+    showStatus(_t('lwNeedDuties'), 'error');
     return;
   }
 
   let valid = true;
   Object.keys(duties).forEach(dutyId => {
     const duty = duties[dutyId];
-    if (!duty.title.trim()) { showStatus(`Duty "${dutyId}" needs a title`, 'error'); valid = false; }
-    if (duty.tasks.length === 0) { showStatus(`Duty "${duty.title}" needs at least one task`, 'error'); valid = false; }
+    if (!duty.title.trim()) { showStatus(_tf('lwDutyNeedsTitle', { id: dutyId }), 'error'); valid = false; }
+    if (duty.tasks.length === 0) { showStatus(_tf('lwDutyNeedsTask', { title: duty.title }), 'error'); valid = false; }
     duty.tasks.forEach(task => {
-      if (!task.text.trim()) { showStatus('Please fill in all task descriptions', 'error'); valid = false; }
+      if (!task.text.trim()) { showStatus(_t('lwFillTaskDesc'), 'error'); valid = false; }
     });
   });
   if (!valid) return;
@@ -136,7 +141,7 @@ export async function lwFinalizeAndCreateSession() {
     const result = await response.json();
 
     if (result.success) {
-      showStatus('✅ Live Workshop session created successfully!', 'success');
+      showStatus('✅ ' + _t('lwSessionCreated'), 'success');
 
       appState.verificationDecisionMade = true;
       appState.clusteringAllowed = true;
@@ -167,7 +172,7 @@ export async function lwFinalizeAndCreateSession() {
     }
   } catch (error) {
     console.error('Error creating session:', error);
-    showStatus(`Error creating session: ${error.message}`, 'error');
+    showStatus(_tf('lwSessionError', { msg: error.message }), 'error');
     appState.lwIsFinalized = false;
     appState.lwSessionId = null;
     document.getElementById('btnLWFinalize').disabled = false;
@@ -184,8 +189,8 @@ export function lwCopyLink() {
   navigator.clipboard.writeText(fullUrl).then(() => {
     feedback.style.display = 'inline';
     setTimeout(() => { feedback.style.display = 'none'; }, 2000);
-    showStatus('✅ Participant link copied to clipboard!', 'success');
-  }).catch(() => { showStatus('Failed to copy link', 'error'); });
+    showStatus('✅ ' + _t('lwLinkCopied'), 'success');
+  }).catch(() => { showStatus(_t('lwCopyFailed'), 'error'); });
 }
 
 // ── QR Code ───────────────────────────────────────────────────
@@ -194,16 +199,16 @@ let lwQRInstance = null;
 
 export function lwShowQRCode() {
   const linkElement = document.getElementById('lwParticipantLink');
-  if (!linkElement) { showStatus('Participant link element not found', 'error'); return; }
+  if (!linkElement) { showStatus(_t('lwNoLinkElement'), 'error'); return; }
   const fullUrl = linkElement.getAttribute('data-full-url');
-  if (!fullUrl) { showStatus('No participant link available', 'error'); return; }
-  if (typeof QRCode === 'undefined') { showStatus('QR Code library not loaded', 'error'); return; }
+  if (!fullUrl) { showStatus(_t('lwNoLink'), 'error'); return; }
+  if (typeof QRCode === 'undefined') { showStatus(_t('lwQRLibMissing'), 'error'); return; }
 
   const modal = document.getElementById('lwQRModal');
   if (modal) modal.style.display = 'block';
 
   const container = document.getElementById('qrCodeContainer');
-  if (!container) { showStatus('QR container not found', 'error'); return; }
+  if (!container) { showStatus(_t('lwQRContainerMissing'), 'error'); return; }
 
   container.innerHTML = '';
   lwQRInstance = null;
@@ -351,7 +356,7 @@ export function lwUpdateDOMWithReorderedTasks() {
 // ── Fetch results ─────────────────────────────────────────────
 
 export async function lwFetchResults() {
-  if (!appState.lwSessionId) { showStatus('No active session', 'error'); return; }
+  if (!appState.lwSessionId) { showStatus(_t('lwNoSession'), 'error'); return; }
 
   try {
     const response = await fetch(`${LW_API_BASE}/get-results/${appState.lwSessionId}`);
@@ -368,7 +373,7 @@ export async function lwFetchResults() {
         appState._onResultsRefreshed();
       }
 
-      showStatus('✅ Results refreshed and tasks reordered by priority', 'success');
+      showStatus('✅ ' + _t('lwResultsRefreshed'), 'success');
       const exportBtns = document.getElementById('lwExportButtons');
       if (exportBtns) exportBtns.style.display = 'block';
     } else {
@@ -376,7 +381,7 @@ export async function lwFetchResults() {
     }
   } catch (error) {
     console.error('Error fetching results:', error);
-    showStatus(`Error fetching results: ${error.message}`, 'error');
+    showStatus(_tf('lwFetchError', { msg: error.message }), 'error');
   }
 }
 
@@ -472,17 +477,17 @@ export function lwDisplayResults() {
 // ── Close voting ──────────────────────────────────────────────
 
 export function lwCloseVoting() {
-  if (!appState.lwSessionId) { showStatus('No active session found', 'error'); return; }
-  if (!confirm('Are you sure you want to close this voting session? Participants will no longer be able to submit or change votes.')) return;
+  if (!appState.lwSessionId) { showStatus(_t('lwNoSessionFound'), 'error'); return; }
+  if (!confirm(_t('lwConfirmClose'))) return;
   localStorage.setItem('dacumVotingClosed_' + appState.lwSessionId, 'true');
-  showStatus('✅ Voting session closed successfully. Participants can no longer submit votes.', 'success');
+  showStatus('✅ ' + _t('lwClosed'), 'success');
 }
 
 // ── Export JSON ───────────────────────────────────────────────
 
 export function lwExportJSON() {
   if (!appState.lwFinalizedData || !appState.lwAggregatedResults) {
-    showStatus('No results available to export', 'error'); return;
+    showStatus(_t('lwNoResultsExport'), 'error'); return;
   }
 
   const exportData = {
@@ -550,13 +555,13 @@ export function lwExportJSON() {
   a.download = `${appState.lwFinalizedData.occupation}_${appState.lwFinalizedData.jobTitle}_LiveWorkshop_Results.json`.replace(/[^a-z0-9_]/gi, '_');
   a.click();
   URL.revokeObjectURL(url);
-  showStatus('✅ JSON file exported with tasks in priority order!', 'success');
+  showStatus('✅ ' + _t('lwJSONExported'), 'success');
 }
 
 // ── Export CSV ────────────────────────────────────────────────
 
 export function lwExportCSV() {
-  if (!appState.lwAggregatedResults) { showStatus('No results available to export', 'error'); return; }
+  if (!appState.lwAggregatedResults) { showStatus(_t('lwNoResultsExport'), 'error'); return; }
   const { taskResults } = appState.lwAggregatedResults;
   const sortedTasks = Object.keys(taskResults)
     .map(k => taskResults[k])
@@ -574,13 +579,13 @@ export function lwExportCSV() {
   a.download = `${appState.lwFinalizedData.occupation}_${appState.lwFinalizedData.jobTitle}_LiveWorkshop_Results.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  showStatus('✅ CSV file exported successfully!', 'success');
+  showStatus('✅ ' + _t('lwCSVExported'), 'success');
 }
 
 // ── Export Snapshot (pre-voting) ──────────────────────────────
 
 export function lwExportSnapshot() {
-  if (!appState.lwFinalizedData) { showStatus('No snapshot available to export', 'error'); return; }
+  if (!appState.lwFinalizedData) { showStatus(_t('lwNoSnapshotExport'), 'error'); return; }
 
   const snapshotData = {
     version: '1.0', savedDate: new Date().toISOString(),
@@ -630,14 +635,14 @@ export function lwExportSnapshot() {
   a.download = `${appState.lwFinalizedData.occupation}_${appState.lwFinalizedData.jobTitle}_PreVoting_Snapshot.json`.replace(/[^a-z0-9_]/gi, '_');
   a.click();
   URL.revokeObjectURL(url);
-  showStatus('✅ Snapshot downloaded successfully! (v1.0 compatible format)', 'success');
+  showStatus('✅ ' + _t('lwSnapshotDownloaded'), 'success');
 }
 
 // ── Export Verified PDF ───────────────────────────────────────
 
 export async function lwExportVerifiedPDF() {
   if (!appState.lwFinalizedData || !appState.lwAggregatedResults) {
-    showStatus('No verified results available. Please refresh voting results first.', 'error'); return;
+    showStatus(_t('lwNoVerified'), 'error'); return;
   }
 
   const { jsPDF } = window.jspdf;
@@ -699,14 +704,14 @@ export async function lwExportVerifiedPDF() {
   });
 
   doc.save(`${appState.lwFinalizedData.occupation}_${appState.lwFinalizedData.jobTitle}_Verified_Results.pdf`.replace(/[^a-z0-9_]/gi, '_'));
-  showStatus('✅ PDF exported successfully!', 'success');
+  showStatus('✅ ' + _t('lwPDFExported'), 'success');
 }
 
 // ── Export Verified DOCX ──────────────────────────────────────
 
 export async function lwExportVerifiedDOCX() {
   if (!appState.lwFinalizedData || !appState.lwAggregatedResults) {
-    showStatus('No verified results available. Please refresh voting results first.', 'error'); return;
+    showStatus(_t('lwNoVerified'), 'error'); return;
   }
 
   const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
@@ -773,6 +778,6 @@ export async function lwExportVerifiedDOCX() {
     a.download = `${appState.lwFinalizedData.occupation}_${appState.lwFinalizedData.jobTitle}_Verified_Results.docx`.replace(/[^a-z0-9_]/gi, '_');
     a.click();
     URL.revokeObjectURL(url);
-    showStatus('✅ DOCX exported successfully!', 'success');
+    showStatus('✅ ' + _t('lwDOCXExported'), 'success');
   });
 }

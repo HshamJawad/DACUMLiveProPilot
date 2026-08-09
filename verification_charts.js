@@ -21,13 +21,23 @@
 
 import { appState } from './state.js';
 
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+
 // ── Series definitions ────────────────────────────────────────
 // Colours echo the app's existing indigo/sky/amber accents.
 const SERIES = {
-  importance: { key: 'importance', label: 'Importance', color: '#4f46e5' },
-  frequency:  { key: 'frequency',  label: 'Frequency',  color: '#0ea5e9' },
-  difficulty: { key: 'difficulty', label: 'Difficulty', color: '#f59e0b' }
+  importance: { key: 'importance', labelKey: 'thImportance', color: '#4f46e5' },
+  frequency:  { key: 'frequency',  labelKey: 'thFrequency',  color: '#0ea5e9' },
+  difficulty: { key: 'difficulty', labelKey: 'thDifficulty', color: '#f59e0b' }
 };
+
+/* Read at draw time, not at module load: the chart is redrawn on every
+   open and on every duty change, so resolving here means a language
+   switch is reflected without a reload. */
+const _seriesLabel = (k) => _t(SERIES[k].labelKey);
 
 // Two views, named by the QUESTION they answer rather than by how
 // many bars they draw — the point of the toggle is methodological,
@@ -53,6 +63,18 @@ let _dutyIdx = 0;
 let _duties  = [];
 
 // ── Helpers ───────────────────────────────────────────────────
+
+/* THE CHART ITSELF IS NOT MIRRORED — a considered choice, not an
+   omission. The x-axis carries tasks in DACUM order (A1, A2, A3…) and
+   the y-axis is the 0-3 scale rising upward. Both are ordinal axes, and
+   a bar chart is read as a measuring instrument: reversing it would put
+   task A1 on the right in Arabic but leave the y-axis unreversed, which
+   is the worst of both. Every published DACUM chart, in every language,
+   reads left-to-right on this axis.
+
+   What DOES follow the language: the labels, the legend, the duty name
+   and the modal chrome around the plot. */
+const _rtlChart = () => (window.i18n ? window.i18n.isRTL() : false);
 
 function _esc(s) {
   return String(s == null ? '' : s)
@@ -118,7 +140,7 @@ function _collectDuties() {
 
     out.push({
       id: header ? header.getAttribute('data-duty') : '',
-      title: title || 'Duty',
+      title: title || _t('chartUntitledDuty'),
       tasks
     });
   });
@@ -197,8 +219,8 @@ function _buildChartSVG(duty) {
   rated.forEach(t => keys.forEach(k => { sum += t[k]; cnt++; }));
   const avg    = cnt ? sum / cnt : 0;
   const avgY   = yFor(avg);
-  const avgTxt = 'Duty average ' + avg.toFixed(2);
-  const plateW = avgTxt.length * 5.4 + 10;
+  const avgTxt = _tf('chartDutyAverage', { v: avg.toFixed(2) });
+  const plateW = avgTxt.length * (_rtlChart() ? 6.6 : 5.4) + 10;
   let avgMarkup = '';
   avgMarkup += '<line x1="' + PAD.left + '" y1="' + avgY + '" x2="' + (width - PAD.right) + '" y2="' + avgY +
          '" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6 4"/>';
@@ -226,7 +248,7 @@ function _buildChartSVG(duty) {
         const y = yFor(t[k]);
         const h = Math.max(PAD.top + PLOT_H - y, t[k] > 0 ? 1.5 : 0);
         svg += '<rect x="' + x + '" y="' + y + '" width="' + BAR_W + '" height="' + h +
-               '" fill="' + s.color + '"><title>' + _esc(t.code) + ' — ' + s.label + ': ' +
+               '" fill="' + s.color + '"><title>' + _esc(t.code) + ' — ' + _seriesLabel(s.key) + ': ' +
                t[k].toFixed(2) + '</title></rect>';
         if (showValues && t[k] > 0) {
           svg += '<text x="' + (x + BAR_W / 2) + '" y="' + (y - 4) + '" text-anchor="middle" ' +
@@ -261,7 +283,7 @@ function _buildChartSVG(duty) {
 function _buildLegend() {
   return VIEWS[_view].series.map(k =>
     '<span class="tvc-legend-item"><i style="background:' + SERIES[k].color + '"></i>' +
-    SERIES[k].label + '</span>'
+    _esc(_seriesLabel(k)) + '</span>'
   ).join('') +
   '<span class="tvc-legend-item"><i class="tvc-legend-dash"></i>Duty average</span>';
 }
@@ -392,12 +414,12 @@ export function openVerificationChart(startIndex) {
   overlay.id = 'tvcModal';
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
-  overlay.setAttribute('aria-label', 'Task Verification Results chart');
+  overlay.setAttribute('aria-label', _t('chartAriaLabel'));
   overlay.innerHTML =
     '<div class="tvc-dialog">' +
       '<div class="tvc-head">' +
         '<div class="tvc-head-text">' +
-          '<p class="tvc-title">\ud83d\udcca Task Verification Results</p>' +
+          '<p class="tvc-title">\ud83d\udcca ' + _esc(_t('chartTitle')) + '</p>' +
           '<p class="tvc-duty" id="tvcDutyLabel"></p>' +
         '</div>' +
         // Icons are inline SVG, not text glyphs. A glyph is positioned by
@@ -405,7 +427,7 @@ export function openVerificationChart(startIndex) {
         // font and per character, so ✕ / ◀ / ▶ sat visibly off-centre
         // inside their buttons. An SVG path is centred by its viewBox,
         // which is identical everywhere and on every platform.
-        '<button type="button" class="tvc-close" id="tvcClose" aria-label="Close chart">' +
+        '<button type="button" class="tvc-close" id="tvcClose" aria-label="' + _esc(_t('chartClose')) + '">' +
           '<svg viewBox="0 0 16 16" aria-hidden="true">' +
             '<path d="M4 4 L12 12 M12 4 L4 12" stroke="currentColor" ' +
               'stroke-width="1.9" stroke-linecap="round" fill="none"/>' +
@@ -415,27 +437,27 @@ export function openVerificationChart(startIndex) {
 
       '<div class="tvc-controls">' +
         '<div class="tvc-duty-nav">' +
-          '<button type="button" id="tvcPrevDuty" aria-label="Previous duty">' +
+          '<button type="button" id="tvcPrevDuty" aria-label="' + _esc(_t('chartPrevDuty')) + '">' +
             '<svg viewBox="0 0 16 16" aria-hidden="true">' +
               '<path d="M10.5 3 L5.5 8 L10.5 13" stroke="currentColor" stroke-width="2" ' +
                 'stroke-linecap="round" stroke-linejoin="round" fill="none"/>' +
             '</svg>' +
           '</button>' +
           '<span id="tvcDutyPos"></span>' +
-          '<button type="button" id="tvcNextDuty" aria-label="Next duty">' +
+          '<button type="button" id="tvcNextDuty" aria-label="' + _esc(_t('chartNextDuty')) + '">' +
             '<svg viewBox="0 0 16 16" aria-hidden="true">' +
               '<path d="M5.5 3 L10.5 8 L5.5 13" stroke="currentColor" stroke-width="2" ' +
                 'stroke-linecap="round" stroke-linejoin="round" fill="none"/>' +
             '</svg>' +
           '</button>' +
         '</div>' +
-        '<div class="tvc-view-toggle" role="radiogroup" aria-label="Chart view">' +
+        '<div class="tvc-view-toggle" role="radiogroup" aria-label="' + _esc(_t('chartViewLabel')) + '">' +
           '<label><input type="radio" name="tvcView" value="full"' +
-            (_view === 'full' ? ' checked' : '') + '> Full profile ' +
-            '<small>(Importance / Frequency / Difficulty)</small></label>' +
+            (_view === 'full' ? ' checked' : '') + '> ' + _esc(_t('chartViewFull')) + ' ' +
+            '<small>' + _esc(_t('chartViewFullSub')) + '</small></label>' +
           '<label><input type="radio" name="tvcView" value="curriculum"' +
-            (_view === 'curriculum' ? ' checked' : '') + '> Curriculum decision view ' +
-            '<small>(Importance \u00d7 Difficulty)</small></label>' +
+            (_view === 'curriculum' ? ' checked' : '') + '> ' + _esc(_t('chartViewCurriculum')) + ' ' +
+            '<small>' + _esc(_t('chartViewCurriculumSub')) + '</small></label>' +
         '</div>' +
       '</div>' +
 

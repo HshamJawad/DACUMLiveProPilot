@@ -734,3 +734,81 @@ html[dir="rtl"] #dacumQuotaOverlay {
 html[dir="rtl"] #dacumQuotaOverlay strong {
   unicode-bidi: isolate;
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   10. HELP CENTRE, CHARTS, MODALS
+   ───────────────────────────────────────────────────────────── */
+
+html[dir="rtl"] .hc-header,
+html[dir="rtl"] .hc-card-head,
+html[dir="rtl"] .hc-creator,
+html[dir="rtl"] .hc-contact-item,
+html[dir="rtl"] .hc-callout,
+html[dir="rtl"] .hc-btn-row,
+html[dir="rtl"] .hc-steps li {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .hc-title,
+html[dir="rtl"] .hc-subtitle,
+html[dir="rtl"] .hc-card-desc,
+html[dir="rtl"] .hc-steps li div,
+html[dir="rtl"] .hc-tips-block p,
+html[dir="rtl"] .copyright {
+  text-align: right;
+}
+
+/* Step numbers, the version number, the email address and the LinkedIn
+   handle are all Latin tokens inside Arabic prose. */
+html[dir="rtl"] .hc-step-num,
+html[dir="rtl"] .hc-contact-value,
+html[dir="rtl"] #dacumFooterVersion {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* The creator's name renders in whichever script it is written in and
+   is never mirrored — a proper noun is not UI text. */
+html[dir="rtl"] .hc-creator-name {
+  unicode-bidi: isolate;
+}
+
+/* CHART MODAL — the chrome mirrors, the PLOT DOES NOT.
+   The x-axis carries tasks in DACUM order and the y-axis is the 0-3
+   scale. Both are ordinal measuring axes; mirroring one without the
+   other is worse than mirroring neither, and every published DACUM
+   chart in any language reads left-to-right here. */
+html[dir="rtl"] .tvc-head,
+html[dir="rtl"] .tvc-controls,
+html[dir="rtl"] .tvc-view-toggle label {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .tvc-title,
+html[dir="rtl"] .tvc-duty {
+  text-align: right;
+}
+
+html[dir="rtl"] .tvc-plot,
+html[dir="rtl"] .tvc-duty-nav {
+  direction: ltr;
+}
+
+/* The chevrons point along the duty sequence, which stays LTR with the
+   plot, so they must NOT be flipped. Stated explicitly so a later
+   blanket mirror rule does not quietly reverse them. */
+html[dir="rtl"] .tvc-duty-nav svg {
+  transform: none;
+}
+
+html[dir="rtl"] .qrm-dialog,
+html[dir="rtl"] .qrm-header,
+html[dir="rtl"] .qrm-title-row {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .qrm-title,
+html[dir="rtl"] .qrm-subtitle {
+  text-align: right;
+}

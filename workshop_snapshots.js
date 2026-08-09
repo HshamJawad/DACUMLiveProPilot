@@ -16,6 +16,11 @@ import { renderLearningOutcomes, renderPCSourceList,
          renderClusters, renderAvailableTasks } from './modules.js';
 import { resetHistoryToCurrentState } from './history.js';
 
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
+
 const LS_KEY    = 'dacum_snapshots';
 const MAX_SNAPS = 30;
 let   _counter  = 0;   // runtime counter for unique IDs within a session
@@ -46,7 +51,7 @@ export function saveSnapshot(name) {
 
   _save(snaps);
   renderSnapshotPanel();
-  showStatus(`✅ Snapshot saved: "${snap.name}"`, 'success');
+  showStatus('✅ ' + _tf('msgSnapshotSaved', { name: snap.name }), 'success');
 }
 
 /** Return all saved snapshots (newest first for display). */
@@ -62,9 +67,9 @@ export function getSnapshots() {
 export function restoreSnapshot(id) {
   const snaps = _load();
   const snap  = snaps.find(s => s.id === id);
-  if (!snap) { showStatus('❌ Snapshot not found.', 'error'); return; }
+  if (!snap) { showStatus('❌ ' + _t('msgSnapshotNotFound'), 'error'); return; }
 
-  if (!confirm(`Restore snapshot "${snap.name}"?\n\nThis will replace your current work.`)) return;
+  if (!confirm(_tf('confirmRestoreSnapshot', { name: snap.name }))) return;
 
   _applyFullState(snap.state);
   renderAll();
@@ -73,7 +78,7 @@ export function restoreSnapshot(id) {
   // Close modal after restore
   const m = document.getElementById('snapModal');
   if (m) m.style.display = 'none';
-  showStatus(`✅ Restored: "${snap.name}"`, 'success');
+  showStatus('✅ ' + _tf('msgSnapshotRestored', { name: snap.name }), 'success');
 }
 
 /**
@@ -84,7 +89,7 @@ export function deleteSnapshot(id) {
   const snaps = _load().filter(s => s.id !== id);
   _save(snaps);
   renderSnapshotPanel();
-  showStatus('🗑️ Snapshot deleted.', 'success');
+  showStatus('🗑️ ' + _t('msgSnapshotDeleted'), 'success');
 }
 
 /** Render the snapshot list panel into #snapshotList. */
@@ -357,7 +362,7 @@ function _save(snaps) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(snaps));
   } catch (e) {
-    showStatus('⚠️ localStorage full — oldest snapshots removed.', 'error');
+    showStatus('⚠️ ' + _t('msgStorageFullSnapshots'), 'error');
     // Emergency: drop half and retry
     const trimmed = snaps.slice(Math.floor(snaps.length / 2));
     try { localStorage.setItem(LS_KEY, JSON.stringify(trimmed)); } catch {}
