@@ -88,17 +88,21 @@ export function openDraftModal() {
   overlay.setAttribute('dir', (window.i18n && window.i18n.isRTL()) ? 'rtl' : 'ltr');
   document.body.appendChild(overlay);
 
-  _phase = 'setup';
-  renderModal();
-
-  /* Escape closes only while idle. During a run it would look like a
-     cancel but leave the pipeline going invisibly. */
+  /* ESCAPE ROUTES FIRST.
+     These were attached after renderModal(). If renderModal() threw,
+     openDraftModal() aborted before reaching them — leaving a
+     full-screen blurred backdrop with no dialog, no close button and
+     no way out but a page reload. Whatever else breaks, the user must
+     always be able to dismiss this. */
   overlay.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && _phase !== 'running') closeDraftModal();
   });
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay && _phase !== 'running') closeDraftModal();
   });
+
+  _phase = 'setup';
+  renderModal();
 
   _unsub = onDraftProgress(_onProgress);
   overlay.querySelector('.dg-dialog')?.focus();
@@ -113,6 +117,31 @@ function renderModal() {
   const overlay = document.getElementById('dgOverlay');
   if (!overlay) return;
 
+  try {
+    _renderModalInner(overlay);
+  } catch (err) {
+    /* A blank blurred screen tells the user nothing and offers no way
+       back. Show the failure, and always show a way out. */
+    console.error('[draft] modal render failed', err);
+    overlay.innerHTML = `
+      <div class="dg-dialog" tabindex="-1">
+        <div class="dg-head">
+          <span class="dg-head-icon">\u26A0\uFE0F</span>
+          <h2 class="dg-head-title">${_esc(_t('dgRenderFailed'))}</h2>
+        </div>
+        <div class="dg-body">
+          <p class="dg-intro">${_esc(_t('dgRenderFailedBody'))}</p>
+          <pre class="dg-errbox">${_esc(err && err.message ? err.message : String(err))}</pre>
+        </div>
+        <div class="dg-foot">
+          <button type="button" class="dg-btn dg-btn-go" id="dgFail">${_esc(_t('dgBtnClose'))}</button>
+        </div>
+      </div>`;
+    overlay.querySelector('#dgFail')?.addEventListener('click', closeDraftModal);
+  }
+}
+
+function _renderModalInner(overlay) {
   overlay.innerHTML = `
     <div class="dg-dialog" tabindex="-1">
       <div class="dg-head">
@@ -126,7 +155,15 @@ function renderModal() {
       <div class="dg-foot">${_footButtons()}</div>
     </div>`;
 
-  _wire();
+  /* Wiring failures must not leave a rendered-but-dead dialog: the
+     close button is attached first inside _wire(), and any later
+     failure is logged rather than thrown on. */
+  try {
+    _wire();
+  } catch (err) {
+    console.error('[draft] modal wiring failed', err);
+    showStatus(_t('dgWireFailed'), 'error');
+  }
 }
 
 // ── Setup view ───────────────────────────────────────────────
@@ -298,6 +335,7 @@ function _footButtons() {
 function _wire() {
   const q = (sel) => document.querySelector('#dgOverlay ' + sel);
 
+  // Exits first: if anything below fails, these are already live.
   q('#dgClose')?.addEventListener('click', closeDraftModal);
   q('#dgClose2')?.addEventListener('click', closeDraftModal);
   q('#dgCancel')?.addEventListener('click', closeDraftModal);
@@ -347,6 +385,8 @@ function _wire() {
         console.error('[draft] could not write ' + id, err);
       }
     });
+
+    console.log('[draft] save & continue: wrote', wrote, 'field(s)');
 
     if (!wrote && missingPrerequisites().length) {
       // Still blocked, and nothing was written: say so rather than

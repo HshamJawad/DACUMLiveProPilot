@@ -897,6 +897,9 @@
       dgPrereqTitleV2: 'Occupation Title is needed first',
       dgPrereqBodyV2: 'Every stage starts from the occupation. Without it there is nothing for the chain to build on.',
       dgSaveFailed: 'Could not save those fields. Enter them directly in Chart Info instead.',
+      dgRenderFailed: 'Could not open the generator',
+      dgRenderFailedBody: 'Something failed while building this dialog. Your project is untouched. If this repeats, do a hard refresh (Ctrl+Shift+R) — an outdated cached file is the usual cause.',
+      dgWireFailed: 'Some controls in this dialog could not be activated. Close and reopen it.',
     },
 
     fr: {
@@ -1791,6 +1794,9 @@
       dgPrereqTitleV2: 'L’intitulé du métier est requis',
       dgPrereqBodyV2: 'Chaque étape part du métier. Sans lui, la chaîne n’a rien sur quoi se construire.',
       dgSaveFailed: 'Impossible d’enregistrer ces champs. Saisissez-les directement dans la fiche DACUM.',
+      dgRenderFailed: 'Impossible d’ouvrir le générateur',
+      dgRenderFailedBody: 'Une erreur est survenue en construisant cette boîte de dialogue. Votre projet est intact. Si cela se reproduit, forcez le rechargement (Ctrl+Maj+R) — un fichier en cache obsolète en est la cause habituelle.',
+      dgWireFailed: 'Certains contrôles n’ont pas pu être activés. Fermez et rouvrez la boîte de dialogue.',
     },
 
     ar: {
@@ -2662,6 +2668,9 @@
       dgPrereqTitleV2: 'اسم المهنة مطلوب أولاً',
       dgPrereqBodyV2: 'كل مرحلة تنطلق من المهنة. وبدونها لا شيء تبني عليه السلسلة.',
       dgSaveFailed: 'تعذّر حفظ هذين الحقلين. أدخِلهما مباشرةً في تبويب بيانات المخطط.',
+      dgRenderFailed: 'تعذّر فتح المولّد',
+      dgRenderFailedBody: 'حدث خطأ أثناء بناء هذه النافذة. ومشروعك لم يُمَس. وإن تكرر ذلك، أعد التحميل القسري (Ctrl+Shift+R) — فالسبب المعتاد ملف قديم في الكاش.',
+      dgWireFailed: 'تعذّر تفعيل بعض عناصر هذه النافذة. أغلقها وأعد فتحها.',
     },
   };
 
