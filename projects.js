@@ -11,6 +11,12 @@ import { renderLearningOutcomes, renderPCSourceList, renderModules, renderModule
   renderClusters, renderAvailableTasks } from './modules.js';
 import { checkUsageLimit, incrementUsage, showLoadingModal, hideLoadingModal } from './storage.js';
 import { loadDutiesForVerification, syncVerificationTab } from './tasks.js';
+import { isBatchRun } from './draft_mode.js';
+
+/* i18n access — resolved lazily; see duties.js for why. */
+const _t = (k) => (window.i18n ? window.i18n.t(k) : k);
+
+
 
 const BACKEND_URL = 'https://dacum-ai-backend-production.up.railway.app';
 
@@ -489,8 +495,11 @@ export async function generateAIDacum() {
 
   // ── Hard validation: only Occupation Title is required ──
   if (!inputs.occupationTitle) {
-    alert('Please enter an Occupation Title to generate duties and tasks.');
-    showStatus('Occupation Title is required for AI generation.', 'error');
+    // alert() is a hard block; in a pipeline it freezes the run behind
+    // a native dialog with the progress list still showing "in
+    // progress". The status line carries the same message.
+    if (!isBatchRun()) alert(_t('msgOccupationRequiredAlert'));
+    showStatus(_t('msgOccupationRequired'), 'error');
     return;
   }
 
@@ -500,9 +509,9 @@ export async function generateAIDacum() {
   // the user explicitly decides to proceed without a scope.  Per
   // spec, we do not remember this choice — the card re-appears on
   // every subsequent attempt while Scope stays empty.
-  if (!inputs.scopeOfWork) {
+  if (!inputs.scopeOfWork && !isBatchRun()) {
     _showScopeMissingWarning();
-    showStatus('Add a Scope of Work, or click "Generate Anyway" to proceed without one.', 'error');
+    showStatus(_t('msgAddScopeOrProceed'), 'error');
     return;
   }
 
@@ -523,7 +532,10 @@ async function _runAIGeneration(inputs) {
   let hasContent = false;
   existingDuties.forEach(inp => { if (inp.value.trim()) hasContent = true; });
 
-  if (hasContent) {
+  /* The Full Draft run already confirmed the overwrite once, naming
+     every tab involved. Asking again mid-pipeline stalls it behind a
+     dialog nobody is watching for. */
+  if (hasContent && !isBatchRun()) {
     // Only a real warning when there is real work to lose. On a blank
     // chart this claimed it would "REPLACE ALL EXISTING DUTIES AND
     // TASKS" when there were none — an alarming prompt in front of the

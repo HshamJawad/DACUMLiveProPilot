@@ -1,0 +1,422 @@
+/* ══════════════════════════════════════════════════════════════
+   dacum-draft.css  —  Full Draft generator
+   --------------------------------------------------------------
+   Card (Chart Info tab) + modal. Loaded after dacum-components.css
+   and before dacum-rtl.css, which handles the mirroring.
+
+   No physical left/right anywhere: every offset uses inline-start
+   / inline-end so RTL needs no counterpart rules in dacum-rtl.css.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Card ────────────────────────────────────────────────────── */
+
+.dg-card {
+  margin-top: 22px;
+  padding: 20px 22px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(79, 70, 229, 0.25);
+}
+
+.dg-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.dg-card-icon { font-size: 1.7em; line-height: 1; flex-shrink: 0; }
+.dg-card-text { min-width: 0; }
+
+.dg-card-title {
+  margin: 0 0 5px;
+  font-size: 1.12em;
+  font-weight: 700;
+  color: #fff;
+}
+
+.dg-card-desc {
+  margin: 0;
+  font-size: 0.9em;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dg-card-btn {
+  display: block;
+  width: 100%;
+  padding: 13px 18px;
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+  color: #4f46e5;
+  font: 700 1em/1.2 inherit;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.dg-card-btn:hover  { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+.dg-card-btn:active { transform: translateY(0); }
+
+.dg-card-hint {
+  margin: 12px 0 0;
+  font-size: 0.83em;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* ── Modal shell ─────────────────────────────────────────────── */
+
+#dgOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.dg-dialog {
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.3);
+  outline: none;
+  overflow: hidden;
+}
+
+.dg-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dg-head-icon { font-size: 1.35em; }
+
+.dg-head-title {
+  margin: 0;
+  flex: 1;
+  font-size: 1.08em;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.dg-x {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 1.05em;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.dg-x:hover { background: #f1f5f9; color: #334155; }
+
+.dg-body {
+  padding: 18px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.dg-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding: 14px 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+/* ── Setup view ──────────────────────────────────────────────── */
+
+.dg-intro {
+  margin: 0 0 16px;
+  font-size: 0.9em;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.dg-label {
+  margin: 0 0 8px;
+  font-size: 0.84em;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* The chain. Clicking stage N selects 1..N — the dependency is
+   expressed by the interaction, so there is no invalid combination
+   to validate or explain. */
+.dg-chain {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.dg-chain-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 13px;
+  cursor: pointer;
+  background: #fff;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.12s ease;
+}
+
+.dg-chain-item:last-child { border-bottom: none; }
+.dg-chain-item:hover      { background: #f8fafc; }
+.dg-chain-item:focus-visible { outline: 2px solid #6366f1; outline-offset: -2px; }
+
+.dg-chain-item.is-on { background: #eef2ff; }
+
+.dg-chain-num {
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 0.76em;
+  font-weight: 700;
+  /* The step number is a Latin digit inside a possibly-Arabic row. */
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.dg-chain-item.is-on .dg-chain-num { background: #4f46e5; color: #fff; }
+
+.dg-chain-label { flex: 1; font-size: 0.89em; color: #334155; }
+.dg-chain-item.is-on .dg-chain-label { color: #3730a3; font-weight: 600; }
+
+.dg-chain-check { color: #4f46e5; font-weight: 700; }
+
+.dg-extra {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.dg-extra input { margin-top: 3px; flex-shrink: 0; }
+.dg-extra strong { display: block; font-size: 0.87em; color: #334155; font-weight: 600; }
+.dg-extra small  { display: block; margin-top: 2px; font-size: 0.79em; color: #64748b; }
+
+.dg-note {
+  padding: 12px 14px;
+  border-radius: 9px;
+  margin-bottom: 14px;
+  border-inline-start: 3px solid;
+}
+
+.dg-note strong { display: block; font-size: 0.85em; margin-bottom: 4px; }
+.dg-note p      { margin: 0; font-size: 0.82em; line-height: 1.6; }
+
+.dg-note-info { background: #eff6ff; border-color: #3b82f6; }
+.dg-note-info strong { color: #1e40af; }
+.dg-note-info p      { color: #1e3a8a; }
+
+.dg-note-warn { background: #fffbeb; border-color: #f59e0b; }
+.dg-note-warn strong { color: #92400e; }
+.dg-note-warn p      { color: #78350f; }
+
+/* Quota cost, stated before the run rather than discovered during it. */
+.dg-cost {
+  margin: 0;
+  padding: 10px 13px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  font-size: 0.83em;
+  color: #475569;
+  text-align: center;
+}
+
+.dg-prereq-field { display: block; margin-bottom: 13px; }
+
+.dg-prereq-field > span {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.84em;
+  font-weight: 600;
+  color: #334155;
+}
+
+.dg-prereq-field input,
+.dg-prereq-field textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.9em;
+  resize: vertical;
+}
+
+/* ── Progress view ───────────────────────────────────────────── */
+
+.dg-run-title {
+  margin: 0 0 16px;
+  font-size: 0.98em;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* Named segments, not a spinner. A full run takes minutes, and an
+   unlabelled spinner for that long reads as a hang — people close the
+   tab. Each stage says what it is and what state it is in. */
+.dg-progress {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.dg-prog-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 13px;
+  margin-bottom: 6px;
+  border-radius: 9px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.dg-prog-mark {
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #94a3b8;
+  font-size: 0.78em;
+  font-weight: 700;
+}
+
+.dg-prog-label { font-size: 0.88em; color: #64748b; }
+
+.dg-prog-item.is-done   { background: #f0fdf4; border-color: #bbf7d0; }
+.dg-prog-item.is-done .dg-prog-mark  { background: #16a34a; color: #fff; }
+.dg-prog-item.is-done .dg-prog-label { color: #15803d; }
+
+.dg-prog-item.is-active { background: #eef2ff; border-color: #c7d2fe; }
+.dg-prog-item.is-active .dg-prog-mark  { background: #4f46e5; color: #fff; animation: dg-pulse 1.4s ease-in-out infinite; }
+.dg-prog-item.is-active .dg-prog-label { color: #3730a3; font-weight: 600; }
+
+.dg-prog-item.is-error  { background: #fef2f2; border-color: #fecaca; }
+.dg-prog-item.is-error .dg-prog-mark  { background: #dc2626; color: #fff; }
+.dg-prog-item.is-error .dg-prog-label { color: #991b1b; font-weight: 600; }
+
+@keyframes dg-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .dg-prog-item.is-active .dg-prog-mark { animation: none; }
+}
+
+.dg-run-hint {
+  margin: 0;
+  font-size: 0.83em;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+
+.dg-btn {
+  padding: 9px 17px;
+  border: none;
+  border-radius: 8px;
+  font: 600 0.88em/1.2 inherit;
+  cursor: pointer;
+}
+
+.dg-btn-go    { background: #4f46e5; color: #fff; }
+.dg-btn-go:hover { background: #4338ca; }
+
+.dg-btn-ghost { background: #e2e8f0; color: #475569; }
+.dg-btn-ghost:hover { background: #cbd5e1; }
+
+/* ── Mobile / PWA ────────────────────────────────────────────── */
+
+@media (max-width: 560px) {
+  #dgOverlay { padding: 0; align-items: flex-end; }
+
+  .dg-dialog {
+    max-width: none;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* Full-width stacked buttons: a run is long enough that Stop must be
+     unmissable, and thumb targets beat tidy alignment here. */
+  .dg-foot { flex-direction: column-reverse; }
+  .dg-btn  { width: 100%; padding: 13px; }
+}
+
+.dg-cost-left {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.92em;
+  color: #64748b;
+  /* "3 of 10" is a pair of Latin numerals; isolate so the bidi
+     algorithm cannot reorder them inside an Arabic sentence. */
+  unicode-bidi: isolate;
+}
+
+.dg-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* ── "Regenerate from here" ──────────────────────────────────
+   Sits in each tab's header row beside Clear This Tab. Styled as
+   a quiet secondary action on purpose: it is a repair tool for a
+   draft that already exists, not something to invite a click. */
+
+.rg-host { display: inline-flex; }
+
+.rg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  margin-inline-end: 8px;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #4338ca;
+  font: 600 0.9em/1 inherit;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.rg-btn:hover { background: #e0e7ff; border-color: #a5b4fc; }
+
+.rg-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* The ↻ glyph is rotational, not directional — it means the same
+   thing in both scripts and must NOT be mirrored. Stated so a later
+   blanket flip rule cannot reverse it. */
+html[dir="rtl"] .rg-btn { transform: none; }
+
+@media (max-width: 560px) {
+  .rg-host { display: block; width: 100%; margin-bottom: 8px; }
+  .rg-btn  { width: 100%; justify-content: center; margin-inline-end: 0; }
+}

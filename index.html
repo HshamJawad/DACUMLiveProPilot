@@ -308,6 +308,8 @@
          which rule applies with no error to warn you. See the header
          comment in that file. -->
     <link rel="stylesheet" href="dacum-components.css">
+    <!-- Full Draft generator: card + modal. -->
+    <link rel="stylesheet" href="dacum-draft.css">
     <!-- RTL mirroring + language switcher. MUST be last stylesheet. -->
     <link rel="stylesheet" href="dacum-rtl.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -479,6 +481,15 @@
                     <textarea id="panelMembers" placeholder="Enter panel member names (one per line)" data-i18n="phPanel" data-i18n-attr="placeholder" style="min-height: 80px; font-family: inherit; resize: vertical;"></textarea>
                 </div>
                 
+                <!-- Full Draft generator. Mounted HERE, not in the toolbar:
+                     the two fields it requires (Occupation Title, Scope of
+                     Work) are on this screen, the toolbar is already eight
+                     buttons wide and collapses to icons on mobile, and this
+                     is where a facilitator naturally decides between filling
+                     the chart by hand and generating a draft.
+                     Contents are rendered by draft_ui.js. -->
+                <div id="draftGeneratorCard"></div>
+
                 <!-- Chart Info is the first step so it has no Back button,
                      but it uses the same .step-nav-row wrapper as every
                      other step. That keeps the top margin, the gap and the
@@ -504,6 +515,7 @@
                             aria-label="How do I write duty and task statements?"
                             aria-haspopup="dialog">?</button>
                 </div>
+                <div id="regenHost_duties" class="rg-host"></div>
                 <button data-action="clear-tab" data-tab-id="duties-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
                     🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
@@ -632,6 +644,7 @@
                             aria-label="Why does this section matter?"
                             aria-haspopup="dialog">?</button>
                 </div>
+                <div id="regenHost_additional" class="rg-host"></div>
                 <button data-action="clear-tab" data-tab-id="additional-info-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
                     🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
@@ -1198,6 +1211,7 @@
                             aria-label="How should I group tasks into clusters?"
                             aria-haspopup="dialog">?</button>
                 </div>
+                <div id="regenHost_clusters" class="rg-host"></div>
                 <button data-action="clear-tab" data-tab-id="clustering-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
                     🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
@@ -1272,6 +1286,7 @@
                             aria-label="Learning Outcome design patterns"
                             aria-haspopup="dialog">?</button>
                 </div>
+                <div id="regenHost_outcomes" class="rg-host"></div>
                 <button data-action="clear-tab" data-tab-id="learning-outcomes-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
                     🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
@@ -1346,6 +1361,7 @@
                             aria-label="Purpose and module grouping strategies"
                             aria-haspopup="dialog">?</button>
                 </div>
+                <div id="regenHost_modules" class="rg-host"></div>
                 <button data-action="clear-tab" data-tab-id="module-mapping-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
                     🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>

@@ -35,6 +35,8 @@ import { showStatus }      from './renderer.js';
 import { renderModules, renderModuleLoList } from './modules.js';
 import { checkUsageLimit, incrementUsage,
          showLoadingModal, hideLoadingModal } from './storage.js';
+import { isBatchRun } from './draft_mode.js';
+
 
 /* i18n access — resolved lazily; see duties.js for why. */
 const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
@@ -87,6 +89,11 @@ function _commitModules(modules) {
 function _confirmOverwrite() {
   const existing = appState.moduleMappingData?.modules || [];
   if (existing.length === 0) return true;
+  /* The Full Draft run asks about overwriting ONCE, up front, naming
+     every tab at stake. Re-asking here would mean four or five
+     dialogs during a run the user has already authorised — and each
+     one silently stalls the pipeline until someone notices. */
+  if (isBatchRun()) return true;
   return confirm(
     `⚠️ This will replace the ${existing.length} module` +
     `${existing.length > 1 ? 's' : ''} you already have.\n\n` +

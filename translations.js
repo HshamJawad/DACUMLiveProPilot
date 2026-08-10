@@ -820,6 +820,62 @@
       qrmDownload: 'Download PNG',
       qrmCopy: 'Copy to Clipboard',
       qrmClose: 'Close',
+      /* ── Full Draft generator ── */
+      dgStageDuties: 'Duties & Tasks',
+      dgStageAdditional: 'Supporting Information',
+      dgStageClusters: 'Competency Clusters',
+      dgStageCriteria: 'Range & Performance Criteria',
+      dgStageOutcomes: 'Learning Outcomes',
+      dgStageModules: 'Training Modules',
+      dgCancelled: 'Generation cancelled. Everything already generated has been kept.',
+      dgComplete: 'Full draft generated — {n} stages completed. Review before use.',
+      dgStageFailed: 'Stage “{stage}” failed. Everything before it is saved — you can retry from here.',
+      dgStageEmpty: 'Stage “{stage}” returned nothing usable.',
+      dgNeedOccupation: 'Occupation Title',
+      dgNeedScope: 'Scope of Work',
+      dgPrereqTitle: 'Two details are needed first',
+      dgPrereqBody: 'Every stage below inherits the boundary these set. Without them the same gap compounds through six stages instead of one — so they are required here even though a single generation can proceed without a scope.',
+      dgSaveAndContinue: 'Save & Continue',
+      dgLangLocked: 'Language is locked while generating — switching mid-run would leave the early stages in one language and the rest in another.',
+      /* ── Full Draft: card + modal ── */
+      dgCardTitle: 'Generate Full Draft',
+      dgCardDesc: 'Build a complete DACUM draft — duties, tasks, clusters, criteria, outcomes and modules — from the occupation details above.',
+      dgCardBtn: 'Generate Full Draft',
+      dgCardHint: 'A draft to take INTO the workshop, not a replacement for it. Task Verification stays with the panel.',
+      dgModalTitle: 'Generate Full Draft',
+      dgModalIntro: 'DACUM is a chain: each stage is built from the one before it. Choose how far to go.',
+      dgDepthLabel: 'Generate up to:',
+      dgExtrasLabel: 'Also generate:',
+      dgOptAdditional: 'Supporting Information (knowledge, skills, tools, trends)',
+      dgOptAdditionalHint: 'Not required by any later stage — safe to skip.',
+      dgVerifExcludedTitle: 'Task Verification is not generated',
+      dgVerifExcludedBody: 'Importance, Frequency and Difficulty are the judgement of a panel of practitioners. Their value comes from who produced them — generated numbers would look identical on the chart and carry none of the authority.',
+      dgCostLabel: 'This run will use {n} of your {max} daily generations.',
+      dgOverwriteTitle: 'Existing content will be replaced',
+      dgOverwriteBody: 'These tabs already contain work: {tabs}. Generating will overwrite them.',
+      dgBtnStart: 'Start Generating',
+      dgBtnCancel: 'Cancel',
+      dgBtnClose: 'Close',
+      dgBtnStop: 'Stop',
+      dgBtnRetry: 'Retry from here',
+      dgBtnReview: 'Review the draft',
+      dgStopping: 'Stopping after this stage…',
+      dgRunningTitle: 'Generating your draft',
+      dgRunningHint: 'This takes a few minutes. You can leave this open — stopping keeps whatever is already done.',
+      dgDoneTitle: 'Draft ready',
+      dgDoneHint: 'Review each tab before use. Every tab has a “Regenerate from here” button if you change something upstream.',
+      msgOccupationRequiredAlert: 'Please enter an Occupation Title to generate duties and tasks.',
+      msgAddScopeOrProceed: 'Add a Scope of Work, or click “Generate Anyway” to proceed without one.',
+      dgQuotaTitle: 'Not enough daily generations left',
+      dgQuotaBody: 'This run needs {need} generations but only {left} of {max} remain today. Reduce how far the chain goes, or try again tomorrow.',
+      dgQuotaRemaining: '{left} of {max} generations left today',
+      /* ── Regenerate from here ── */
+      rgBtn: 'Regenerate from here',
+      rgTooltip: 'Rebuild this stage and every stage after it, using what you have now',
+      rgConfirmTitle: 'Rebuild from “{stage}” onward?',
+      rgConfirmBody: 'These stages will be regenerated and their current content replaced:\n\n{stages}\n\nEverything before “{stage}” is kept exactly as it is.\n\nThis run will use {n} of your {max} daily generations.',
+      rgQuotaShort: 'Not enough daily generations left: this needs {need}, only {left} remain.',
+      rgRunning: 'Regenerating from “{stage}”…',
     },
 
     fr: {
@@ -1637,6 +1693,62 @@
       qrmDownload: 'Télécharger PNG',
       qrmCopy: 'Copier',
       qrmClose: 'Fermer',
+      /* ── Full Draft generator ── */
+      dgStageDuties: 'Tâches & activités',
+      dgStageAdditional: 'Informations d’appui',
+      dgStageClusters: 'Grappes de compétences',
+      dgStageCriteria: 'Champ et critères',
+      dgStageOutcomes: 'Résultats d’apprentissage',
+      dgStageModules: 'Modules de formation',
+      dgCancelled: 'Génération annulée. Tout ce qui a déjà été généré est conservé.',
+      dgComplete: 'Brouillon complet généré — {n} étapes. À vérifier avant usage.',
+      dgStageFailed: 'L’étape « {stage} » a échoué. Tout ce qui précède est enregistré — vous pouvez reprendre ici.',
+      dgStageEmpty: 'L’étape « {stage} » n’a rien produit d’exploitable.',
+      dgNeedOccupation: 'Intitulé du métier',
+      dgNeedScope: 'Champ d’activité',
+      dgPrereqTitle: 'Deux informations sont requises',
+      dgPrereqBody: 'Chaque étape ci-dessous hérite du cadre qu’ils définissent. Sans eux, la même lacune se propage sur six étapes au lieu d’une.',
+      dgSaveAndContinue: 'Enregistrer et continuer',
+      dgLangLocked: 'La langue est verrouillée pendant la génération — changer en cours laisserait les premières étapes dans une langue et le reste dans une autre.',
+      /* ── Full Draft: card + modal ── */
+      dgCardTitle: 'Générer un brouillon complet',
+      dgCardDesc: 'Élaborez un brouillon DACUM complet — activités, tâches, grappes, critères, résultats et modules — à partir des informations ci-dessus.',
+      dgCardBtn: 'Générer le brouillon',
+      dgCardHint: 'Un brouillon à emporter EN atelier, non un substitut. La vérification des tâches reste au panel.',
+      dgModalTitle: 'Générer un brouillon complet',
+      dgModalIntro: 'DACUM est une chaîne : chaque étape se construit sur la précédente. Choisissez jusqu’où aller.',
+      dgDepthLabel: 'Générer jusqu’à :',
+      dgExtrasLabel: 'Générer aussi :',
+      dgOptAdditional: 'Informations d’appui (connaissances, compétences, outils, tendances)',
+      dgOptAdditionalHint: 'Non requis par les étapes suivantes — peut être ignoré.',
+      dgVerifExcludedTitle: 'La vérification des tâches n’est pas générée',
+      dgVerifExcludedBody: 'Importance, fréquence et difficulté relèvent du jugement d’un panel de praticiens. Leur valeur vient de qui les a produites — des chiffres générés paraîtraient identiques sans en avoir l’autorité.',
+      dgCostLabel: 'Cette exécution utilisera {n} de vos {max} générations quotidiennes.',
+      dgOverwriteTitle: 'Le contenu existant sera remplacé',
+      dgOverwriteBody: 'Ces onglets contiennent déjà du travail : {tabs}. La génération les écrasera.',
+      dgBtnStart: 'Lancer la génération',
+      dgBtnCancel: 'Annuler',
+      dgBtnClose: 'Fermer',
+      dgBtnStop: 'Arrêter',
+      dgBtnRetry: 'Reprendre ici',
+      dgBtnReview: 'Vérifier le brouillon',
+      dgStopping: 'Arrêt après cette étape…',
+      dgRunningTitle: 'Génération du brouillon',
+      dgRunningHint: 'Cela prend quelques minutes. Vous pouvez laisser ouvert — l’arrêt conserve ce qui est fait.',
+      dgDoneTitle: 'Brouillon prêt',
+      dgDoneHint: 'Vérifiez chaque onglet. Chacun dispose d’un bouton « Regénérer à partir d’ici ».',
+      msgOccupationRequiredAlert: 'Saisissez un intitulé de métier pour générer les activités et tâches.',
+      msgAddScopeOrProceed: 'Ajoutez un champ d’activité, ou cliquez sur « Générer quand même ».',
+      dgQuotaTitle: 'Quota quotidien insuffisant',
+      dgQuotaBody: 'Cette exécution demande {need} générations, il n’en reste que {left} sur {max}. Réduisez la portée ou réessayez demain.',
+      dgQuotaRemaining: '{left} sur {max} générations restantes',
+      /* ── Regenerate from here ── */
+      rgBtn: 'Regénérer à partir d’ici',
+      rgTooltip: 'Reconstruire cette étape et toutes les suivantes, à partir de l’état actuel',
+      rgConfirmTitle: 'Reconstruire à partir de « {stage} » ?',
+      rgConfirmBody: 'Ces étapes seront regénérées et leur contenu remplacé :\n\n{stages}\n\nTout ce qui précède « {stage} » est conservé tel quel.\n\nCette exécution utilisera {n} de vos {max} générations quotidiennes.',
+      rgQuotaShort: 'Quota insuffisant : il en faut {need}, il n’en reste que {left}.',
+      rgRunning: 'Regénération à partir de « {stage} »…',
     },
 
     ar: {
@@ -2431,6 +2543,62 @@
       qrmDownload: 'تنزيل PNG',
       qrmCopy: 'نسخ إلى الحافظة',
       qrmClose: 'إغلاق',
+      /* ── Full Draft generator ── */
+      dgStageDuties: 'الواجبات والمهام',
+      dgStageAdditional: 'المعلومات الداعمة',
+      dgStageClusters: 'تجمعات الكفاءات',
+      dgStageCriteria: 'المدى ومعايير الأداء',
+      dgStageOutcomes: 'محصلات التعلم',
+      dgStageModules: 'الوحدات التعلمية',
+      dgCancelled: 'أُلغي التوليد. وكل ما أُنتج قبل الإلغاء محفوظ.',
+      dgComplete: 'تم توليد المسودة الكاملة — {n} مراحل. راجعها قبل الاستخدام.',
+      dgStageFailed: 'تعثّرت المرحلة «{stage}». وكل ما سبقها محفوظ — يمكنك إعادة المحاولة من هنا.',
+      dgStageEmpty: 'لم تُنتج المرحلة «{stage}» شيئاً قابلاً للاستخدام.',
+      dgNeedOccupation: 'اسم المهنة',
+      dgNeedScope: 'نطاق العمل',
+      dgPrereqTitle: 'مطلوب أمران أولاً',
+      dgPrereqBody: 'كل مرحلة أدناه ترث الحدود التي يرسمانها. وبدونهما تتراكم الفجوة نفسها عبر ست مراحل بدل واحدة — لذلك هما مطلوبان هنا، وإن كان التوليد المفرد يمضي دون نطاق عمل.',
+      dgSaveAndContinue: 'حفظ ومتابعة',
+      dgLangLocked: 'اللغة مقفلة أثناء التوليد — تبديلها في المنتصف يترك المراحل الأولى بلغة والباقي بأخرى.',
+      /* ── Full Draft: card + modal ── */
+      dgCardTitle: 'توليد مسودة كاملة',
+      dgCardDesc: 'ابنِ مسودة DACUM كاملة — الواجبات والمهام والتجمعات والمعايير والمحصلات والوحدات — انطلاقاً من بيانات المهنة أعلاه.',
+      dgCardBtn: 'توليد مسودة كاملة',
+      dgCardHint: 'مسودة تدخل بها إلى الورشة، لا بديل عنها. ويبقى التحقق من المهام من اختصاص اللجنة.',
+      dgModalTitle: 'توليد مسودة كاملة',
+      dgModalIntro: 'DACUM سلسلة: كل مرحلة تُبنى على سابقتها. اختر إلى أي مدى تريد الوصول.',
+      dgDepthLabel: 'ولّد حتى:',
+      dgExtrasLabel: 'ولّد أيضاً:',
+      dgOptAdditional: 'المعلومات الداعمة (المعارف، المهارات، الأدوات، الاتجاهات)',
+      dgOptAdditionalHint: 'لا تحتاجها أي مرحلة لاحقة — يمكن تخطّيها.',
+      dgVerifExcludedTitle: 'التحقق من المهام لا يُولَّد',
+      dgVerifExcludedBody: 'الأهمية والتكرار والصعوبة حُكم لجنة من ممارسي المهنة. وقيمتها آتية من مصدرها — والأرقام المولَّدة ستبدو مطابقة على المخطط دون أن تحمل شيئاً من حجّيتها.',
+      dgCostLabel: 'ستستهلك هذه التشغيلة {n} من أصل {max} توليدة يومية.',
+      dgOverwriteTitle: 'سيُستبدل المحتوى الموجود',
+      dgOverwriteBody: 'هذه التبويبات تحوي عملاً بالفعل: {tabs}. وسيكتب التوليد فوقها.',
+      dgBtnStart: 'ابدأ التوليد',
+      dgBtnCancel: 'إلغاء',
+      dgBtnClose: 'إغلاق',
+      dgBtnStop: 'إيقاف',
+      dgBtnRetry: 'أعد المحاولة من هنا',
+      dgBtnReview: 'راجع المسودة',
+      dgStopping: 'سيتوقف بعد هذه المرحلة…',
+      dgRunningTitle: 'جارٍ توليد مسودتك',
+      dgRunningHint: 'يستغرق هذا بضع دقائق. يمكنك إبقاء النافذة مفتوحة — والإيقاف يحفظ ما أُنجز.',
+      dgDoneTitle: 'المسودة جاهزة',
+      dgDoneHint: 'راجع كل تبويب قبل الاستخدام. ولكل تبويب زر «أعد التوليد من هنا» إن غيّرت شيئاً في مرحلة سابقة.',
+      msgOccupationRequiredAlert: 'أدخل اسم المهنة لتوليد الواجبات والمهام.',
+      msgAddScopeOrProceed: 'أضف نطاق العمل، أو انقر «ولّد على أي حال» للمتابعة بدونه.',
+      dgQuotaTitle: 'الحصة اليومية لا تكفي',
+      dgQuotaBody: 'تحتاج هذه التشغيلة {need} توليدة، ولم يتبقَّ اليوم سوى {left} من أصل {max}. قلّل عمق السلسلة، أو أعد المحاولة غداً.',
+      dgQuotaRemaining: 'بقي {left} من أصل {max} توليدة اليوم',
+      /* ── Regenerate from here ── */
+      rgBtn: 'أعد التوليد من هنا',
+      rgTooltip: 'إعادة بناء هذه المرحلة وكل ما بعدها، انطلاقاً مما لديك الآن',
+      rgConfirmTitle: 'إعادة البناء من «{stage}» فما بعدها؟',
+      rgConfirmBody: 'ستُعاد هذه المراحل ويُستبدل محتواها الحالي:\n\n{stages}\n\nأما كل ما يسبق «{stage}» فيبقى كما هو تماماً.\n\nوستستهلك هذه التشغيلة {n} من أصل {max} توليدة يومية.',
+      rgQuotaShort: 'الحصة اليومية لا تكفي: يلزم {need}، ولم يتبقَّ سوى {left}.',
+      rgRunning: 'جارٍ إعادة التوليد من «{stage}»…',
     },
   };
 
@@ -2616,7 +2784,26 @@
     return tf(key, merged);
   }
 
+  /* Set by the Full Draft generator while a run is in flight. A run
+     makes five or six model calls, each told to answer in whatever
+     language was active when it started; switching halfway would leave
+     the duties in Arabic and the modules in French, with no way to tell
+     afterwards which half is which. Blocking the switch is cruder than
+     re-translating, and far more honest than silently producing a
+     mixed-language project. */
+  var _langLocked = false;
+
+  function lockLang(on)  { _langLocked = !!on; _syncSelector(); }
+  function isLangLocked() { return _langLocked; }
+
   function setLang(code) {
+    if (_langLocked) {
+      /* Tell the user WHY rather than letting the click do nothing —
+         a dead control reads as a bug. */
+      if (window.showStatus) window.showStatus(t('dgLangLocked'), 'error');
+      else console.warn('[i18n] ' + t('dgLangLocked'));
+      return;
+    }
     if (!TRANSLATIONS[code]) return;
     _current = code;
     localStorage.setItem('dacum_lang', code);
@@ -2716,7 +2903,10 @@
       var on = b.getAttribute('data-lang') === _current;
       b.classList.toggle('is-active', on);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.disabled = _langLocked && !on;
+      b.title = _langLocked ? t('dgLangLocked') : (b.getAttribute('data-title') || b.title);
     });
+    wrap.classList.toggle('is-locked', _langLocked);
   }
 
   /* A three-way <select> costs two taps (open, choose) and hides the
@@ -2738,6 +2928,7 @@
       b.setAttribute('data-lang', L.code);
       b.textContent = L.label;
       b.title = L.title;
+      b.setAttribute('data-title', L.title);
       b.addEventListener('click', function () { setLang(L.code); });
       wrap.appendChild(b);
     });
@@ -2752,6 +2943,8 @@
     isRTL: function () { return RTL_LANGS.indexOf(_current) !== -1; },
     has: function (key) { return TRANSLATIONS.en[key] !== undefined; },
     audit: audit,
+    lockLang: lockLang,
+    isLangLocked: isLangLocked,
     aiDirective: aiDirective,
     tp: tp
   };

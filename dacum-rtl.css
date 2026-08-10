@@ -853,3 +853,23 @@ html[dir="rtl"] .tvc-close,
 html[dir="rtl"] .dps-new-btn {
   text-align: center;
 }
+
+
+/* ── Language switcher: locked state ─────────────────────────
+   Set while a Full Draft run is in flight. The active pill stays
+   readable so the user can still see WHICH language is locked —
+   greying all three would look like a failure rather than a
+   deliberate hold. */
+#dacumLangWrap.is-locked {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+#dacumLangWrap.is-locked .dacum-lang-btn:disabled {
+  cursor: not-allowed;
+  color: #b0b0b6;
+}
+
+#dacumLangWrap.is-locked .dacum-lang-btn.is-active {
+  color: #4f46e5;
+}

@@ -30,6 +30,8 @@ import { appState }   from './state.js';
 import { showStatus } from './renderer.js';
 import { checkUsageLimit, incrementUsage,
          showLoadingModal, hideLoadingModal } from './storage.js';
+import { isBatchRun } from './draft_mode.js';
+
 
 /* i18n access — resolved lazily; see duties.js for why. */
 const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
@@ -253,7 +255,11 @@ export async function generateAdditionalInfoAI() {
 
   // ── Overwrite guard — name exactly which sections are at risk ──
   const filled = _collectFilledFields();
-  if (filled.length) {
+  /* The Full Draft run asks about overwriting ONCE, up front, naming
+     every tab at stake. Re-asking here would mean four or five
+     dialogs during a run the user has already authorised — and each
+     one silently stalls the pipeline until someone notices. */
+  if (!isBatchRun() && filled.length) {
     const names = filled.map(f => `  • ${f.label}`).join('\n');
     if (!confirm(
       '⚠️ AI GENERATION WILL REPLACE THE CONTENT OF THESE SECTIONS:\n\n' +

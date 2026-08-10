@@ -5,9 +5,19 @@
 
 import { appState } from './state.js';
 import { showStatus } from './renderer.js';
+import { isBatchRun } from './draft_mode.js';
+
 
 // ── Constants ─────────────────────────────────────────────────
-export const DAILY_LIMIT  = 10;
+/* Raised from 10 when the Full Draft generator landed: a single full
+   run costs 6, so the old ceiling meant a facilitator was out of
+   generations after one run and a couple of retries.
+
+   This counter lives in this browser's localStorage. It is a courtesy
+   brake on request volume, NOT a cost control — clearing site data
+   resets it, and real spend is metered by token on the API key held by
+   the Railway backend. Enforce budget there, not here. */
+export const DAILY_LIMIT  = 30;
 export const STORAGE_KEY  = 'dacum_ai_usage';
 
 // ── Usage Limiting ────────────────────────────────────────────
@@ -72,11 +82,20 @@ export function updateUsageBadge() {
 // ── Loading Modal ─────────────────────────────────────────────
 
 export function showLoadingModal() {
+  /* Suppressed during a Full Draft run. Each stage would otherwise
+     throw this full-screen overlay up and tear it down again — five
+     or six times in a row, on top of the progress dialog that is
+     already telling the user exactly which stage is running. The
+     flicker reads as the app crashing and reloading. */
+  if (isBatchRun()) return;
   const modal = document.getElementById('loadingModal');
   if (modal) modal.style.display = 'block';
 }
 
 export function hideLoadingModal() {
+  /* Not guarded by isBatchRun(): hiding must always work, so that a
+     modal left open by a stage that started before the flag was set
+     can still be cleared. */
   const modal = document.getElementById('loadingModal');
   if (modal) modal.style.display = 'none';
 }

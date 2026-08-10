@@ -36,6 +36,8 @@ import { showStatus } from './renderer.js';
 import { renderPCSourceList, renderLearningOutcomes } from './modules.js';
 import { checkUsageLimit, incrementUsage,
          showLoadingModal, hideLoadingModal } from './storage.js';
+import { isBatchRun } from './draft_mode.js';
+
 
 /* i18n access — resolved lazily; see duties.js for why. */
 const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
@@ -230,7 +232,11 @@ export async function generateLearningOutcomesAI(pattern = 'C') {
   }
 
   const existing = appState.learningOutcomesData?.outcomes || [];
-  if (existing.length && !confirm(
+  /* The Full Draft run asks about overwriting ONCE, up front, naming
+     every tab at stake. Re-asking here would mean four or five
+     dialogs during a run the user has already authorised — and each
+     one silently stalls the pipeline until someone notices. */
+  if (!isBatchRun() && existing.length && !confirm(
     _tf('confirmAddLOs', { pattern: _patternLabel(pattern), n: existing.length })
   )) {
     showStatus(_t('msgCancelOutcomes'), 'error');

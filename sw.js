@@ -4,7 +4,7 @@
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v54';
+const CACHE_VERSION = 'v58';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -32,6 +32,7 @@ const PRECACHE_URLS = [
   BASE + 'dacum-typography.css',
   BASE + 'dacum-components.css',
   // RTL mirroring + language switcher (loads last, see index.html).
+  BASE + 'dacum-draft.css',
   BASE + 'dacum-rtl.css',
 
   // ── Non-module scripts ───────────────────────────────────
@@ -64,6 +65,11 @@ const PRECACHE_URLS = [
   BASE + 'additional_info_ai.js',
   BASE + 'module_mapping_ai.js',
   BASE + 'clustering_ai.js',
+  // Full Draft orchestrator — imports every AI module above.
+  BASE + 'draft_mode.js',
+  BASE + 'draft_agent.js',
+  BASE + 'draft_ui.js',
+  BASE + 'draft_regen.js',
   BASE + 'learning_outcomes_ai.js',
   BASE + 'image_store.js',
   BASE + 'autosave.js',

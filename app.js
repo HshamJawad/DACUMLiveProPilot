@@ -21,6 +21,8 @@ import { initImageStore }     from './image_store.js';
 import { clearAiGeneratedFlag } from './refine.js';
 import { initDragDrop }        from './drag_drop.js';
 import { initVerificationCharts } from './verification_charts.js';
+import { renderDraftCard }        from './draft_ui.js';
+import { renderRegenButtons }     from './draft_regen.js';
 
 // Expose switchTab globally (called from HTML onclick and live workshop guards)
 window.switchTab = switchTab;
@@ -94,6 +96,15 @@ document.addEventListener('DOMContentLoaded', async function () {
   // delegated onto the permanent container, so it survives every
   // later re-render when the collection or workflow mode changes.
   initVerificationCharts();
+
+  /* Full Draft card. Rendered rather than written into index.html
+     because its labels come from the dictionary and it has to be
+     rebuilt on a language change like every other generated block. */
+  renderDraftCard();
+
+  /* Regenerate-from-here controls. Rendered after the tabs exist;
+     each one hides itself when its stage has no content yet. */
+  renderRegenButtons();
 
   // Check Live Workshop section visibility
   const urlParams = new URLSearchParams(window.location.search);

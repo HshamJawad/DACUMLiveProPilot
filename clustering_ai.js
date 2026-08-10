@@ -38,6 +38,8 @@ import { showStatus } from './renderer.js';
 import { renderAvailableTasks, renderClusters } from './modules.js';
 import { checkUsageLimit, incrementUsage,
          showLoadingModal, hideLoadingModal } from './storage.js';
+import { isBatchRun } from './draft_mode.js';
+
 
 /* i18n access — resolved lazily; see duties.js for why. */
 const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
@@ -204,7 +206,11 @@ export async function suggestClustersAI() {
     return false;
   }
 
-  if (existing.length && !confirm(
+  /* The Full Draft run asks about overwriting ONCE, up front, naming
+     every tab at stake. Re-asking here would mean four or five
+     dialogs during a run the user has already authorised — and each
+     one silently stalls the pipeline until someone notices. */
+  if (!isBatchRun() && existing.length && !confirm(
     _tf('confirmReplaceClusters', { n: existing.length })
   )) {
     showStatus(_t('msgCancelClusters'), 'error');
@@ -397,7 +403,11 @@ export async function generateRangeAndCriteriaAI(onlyClusterId = null) {
   const filled = targets.filter(
     c => (c.range || '').trim() || (c.performanceCriteria || []).length
   );
-  if (filled.length && !confirm(
+  /* The Full Draft run asks about overwriting ONCE, up front, naming
+     every tab at stake. Re-asking here would mean four or five
+     dialogs during a run the user has already authorised — and each
+     one silently stalls the pipeline until someone notices. */
+  if (!isBatchRun() && filled.length && !confirm(
     `⚠️ This will replace the Range and Performance Criteria of ` +
     `${filled.length} cluster${filled.length > 1 ? 's' : ''}.\n\n` +
     `Cluster names and their task groupings are NOT affected.\n\n` +
