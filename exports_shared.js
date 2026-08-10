@@ -16,6 +16,8 @@
 // ============================================================
 
 import { appState } from './state.js';
+import { mayExportVerification } from './draft_unverified.js';
+
 
 // ── Verification dataset adapter ──────────────────────────────
 //
@@ -36,6 +38,16 @@ import { appState } from './state.js';
 // workshop mode, honouring appState.priorityFormula, so a given task
 // never shows one ranking on screen and a different one in the report.
 export function buildVerificationDataset() {
+  /* Single choke point. Every exporter — PDF, Word, CSV, the
+     standalone verification report and the appendices — reaches the
+     ratings through this function, so refusing here is the one place
+     that cannot be bypassed by adding a new export path later.
+
+     Returns empty rather than throwing: an exporter that finds no
+     verification data simply omits the section, which is exactly the
+     desired outcome. */
+  if (!mayExportVerification()) return {};
+
   if (appState.collectionMode === 'workshop') {
     return appState.workshopResults || {};
   }

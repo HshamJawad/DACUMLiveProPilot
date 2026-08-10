@@ -93,6 +93,17 @@ export const STAGES = [
     run:      () => generateLearningOutcomesAI('C'),
     verify:   () => (appState.learningOutcomesData?.outcomes?.length || 0) > 0,
   },
+  /* OFF the chain and off by default. Nothing downstream consumes
+     verification, so skipping it costs nothing — and the output is
+     quarantined the moment it lands (see draft_unverified.js). */
+  {
+    id:       'draftTV',
+    labelKey: 'dgStageDraftTV',
+    tab:      'verification-tab',
+    optional: true,
+    run:      async () => { await generateDraftRatings(); markUnverified(); },
+    verify:   () => isUnverified(),
+  },
   {
     id:       'modules',
     labelKey: 'dgStageModules',

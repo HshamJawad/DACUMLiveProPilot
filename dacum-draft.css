@@ -420,3 +420,80 @@ html[dir="rtl"] .rg-btn { transform: none; }
   .rg-host { display: block; width: 100%; margin-bottom: 8px; }
   .rg-btn  { width: 100%; justify-content: center; margin-inline-end: 0; }
 }
+
+
+/* ── Unverified draft ratings banner ─────────────────────────
+   Loud on purpose. This is the one place in the app where a
+   quiet, tasteful notice would be a design failure: the numbers
+   below it are indistinguishable from panel data, and the banner
+   is the only thing on screen saying so. */
+
+.uv-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  background: #fffbeb;
+}
+
+.uv-banner-icon { font-size: 1.5em; line-height: 1.2; flex-shrink: 0; }
+
+.uv-banner-text { flex: 1; min-width: 0; }
+
+.uv-banner-text strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.95em;
+  color: #92400e;
+}
+
+.uv-banner-text p {
+  margin: 0;
+  font-size: 0.86em;
+  line-height: 1.65;
+  color: #78350f;
+}
+
+.uv-banner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.uv-btn {
+  padding: 9px 15px;
+  border: none;
+  border-radius: 7px;
+  font: 600 0.85em/1.2 inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Accept is NOT the primary-styled button. Accepting is the
+   irreversible step — after it these scores are indistinguishable
+   from collected data everywhere — so it does not get the visual
+   pull that invites an absent-minded click. */
+.uv-btn-accept  { background: #fff; color: #92400e; border: 1px solid #f59e0b; }
+.uv-btn-accept:hover { background: #fef3c7; }
+
+.uv-btn-discard { background: transparent; color: #92400e; text-decoration: underline; }
+
+@media (max-width: 620px) {
+  .uv-banner { flex-wrap: wrap; }
+  .uv-banner-actions { flex-direction: row; width: 100%; }
+  .uv-btn { flex: 1; }
+}
+
+/* The draft-ratings option. Amber rather than neutral: it is the one
+   choice here that produces something a reader could mistake for panel
+   findings, and the dialog should say so before the tab does. */
+.dg-extra.is-caution {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+.dg-extra.is-caution strong { color: #92400e; }
+.dg-extra.is-caution small  { color: #b45309; }

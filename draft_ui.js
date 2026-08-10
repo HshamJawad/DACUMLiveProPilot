@@ -22,6 +22,15 @@ const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
 const CHAIN   = STAGES.filter(s => !s.optional);
 const OPTIONAL = STAGES.filter(s => s.optional);
 
+/* Copy for the off-chain options. The draft-ratings entry is marked
+   `caution` because it is the only checkbox in this dialog whose output
+   could be mistaken for evidence — its styling says so before the
+   banner in the tab has a chance to. */
+const OPTIONAL_COPY = {
+  additional: { title: 'dgOptAdditional', hint: 'dgOptAdditionalHint' },
+  draftTV:    { title: 'dgOptDraftTV',    hint: 'dgOptDraftTVHint', caution: true },
+};
+
 let _depth   = CHAIN.length;          // default: generate everything
 let _extras  = new Set();             // ids of chosen optional stages
 let _phase   = 'setup';               // setup | running | done | error
@@ -145,15 +154,18 @@ function _setupBody() {
     </ol>
 
     <p class="dg-label">${_esc(_t('dgExtrasLabel'))}</p>
-    ${OPTIONAL.map(s => `
-      <label class="dg-extra">
+    ${OPTIONAL.map(s => {
+      const copy = OPTIONAL_COPY[s.id] || { title: s.labelKey, hint: null };
+      return `
+      <label class="dg-extra ${copy.caution ? 'is-caution' : ''}">
         <input type="checkbox" data-extra="${s.id}"
                ${_extras.has(s.id) ? 'checked' : ''}>
         <span>
-          <strong>${_esc(_t('dgOptAdditional'))}</strong>
-          <small>${_esc(_t('dgOptAdditionalHint'))}</small>
+          <strong>${_esc(_t(copy.title))}</strong>
+          ${copy.hint ? `<small>${_esc(_t(copy.hint))}</small>` : ''}
         </span>
-      </label>`).join('')}
+      </label>`;
+    }).join('')}
 
     <div class="dg-note dg-note-info">
       <strong>\u{1F465} ${_esc(_t('dgVerifExcludedTitle'))}</strong>

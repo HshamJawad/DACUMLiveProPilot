@@ -12,6 +12,8 @@ import { appState } from './state.js';
 import { showStatus } from './renderer.js';
 import { getTaskCode } from './codes.js';
 import { buildVerificationDataset, getVerificationCoverage } from './exports_shared.js';
+import { noteExportExclusion } from './draft_unverified.js';
+
 
 /* ── Arabic guard ────────────────────────────────────────────────────
    jsPDF is used here with the built-in Helvetica family and absolute
@@ -41,6 +43,10 @@ function _blockArabicPDF() {
 
 
 export function exportTaskVerificationPDF() {
+    // Tell the user WHY the appendix is missing rather than
+    // shipping a report that is quietly short a section.
+    noteExportExclusion();
+
     if (_blockArabicPDF()) return;
 
     try {
@@ -373,6 +379,10 @@ function _imageFormat(dataUrl) {
 }
 
 export function exportToPDF() {
+    // Tell the user WHY the appendix is missing rather than
+    // shipping a report that is quietly short a section.
+    noteExportExclusion();
+
     if (_blockArabicPDF()) return;
 
     // ============ CHECK FOR VERIFIED LIVE WORKSHOP RESULTS ============

@@ -23,6 +23,7 @@ import { initDragDrop }        from './drag_drop.js';
 import { initVerificationCharts } from './verification_charts.js';
 import { renderDraftCard }        from './draft_ui.js';
 import { renderRegenButtons }     from './draft_regen.js';
+import { renderUnverifiedBanner } from './draft_unverified.js';
 
 // Expose switchTab globally (called from HTML onclick and live workshop guards)
 window.switchTab = switchTab;
@@ -105,6 +106,10 @@ document.addEventListener('DOMContentLoaded', async function () {
   /* Regenerate-from-here controls. Rendered after the tabs exist;
      each one hides itself when its stage has no content yet. */
   renderRegenButtons();
+
+  /* Unverified-draft banner. Renders nothing unless a generated
+     draft is present, so it is safe to call unconditionally. */
+  renderUnverifiedBanner();
 
   // Check Live Workshop section visibility
   const urlParams = new URLSearchParams(window.location.search);

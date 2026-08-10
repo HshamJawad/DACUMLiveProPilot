@@ -12,6 +12,8 @@ import { appState } from './state.js';
 import { showStatus } from './renderer.js';
 import { getTaskCode } from './codes.js';
 import { buildVerificationDataset, getVerificationCoverage } from './exports_shared.js';
+import { noteExportExclusion } from './draft_unverified.js';
+
 
 /* ── i18n + direction helpers ────────────────────────────────────────
    Every paragraph in this file used to carry `bidirectional: false`
@@ -67,6 +69,10 @@ function _safeFilename(title, suffix) {
 
 
 export async function exportTaskVerificationWord() {
+    // Tell the user WHY the appendix is missing rather than
+    // shipping a report that is quietly short a section.
+    noteExportExclusion();
+
             try {
                 // Works in BOTH collection modes. The old guard rejected
                 // anything that was not workshop mode before inspecting
@@ -505,6 +511,10 @@ export async function exportTaskVerificationWord() {
         }
 
 export async function exportToWord() {
+    // Tell the user WHY the appendix is missing rather than
+    // shipping a report that is quietly short a section.
+    noteExportExclusion();
+
     // ── TABLE SHADING ──────────────────────────────────────────
     // Every shaded cell in this document uses DCDCDC = RGB(220,220,220),
     // the same grey the PDF exporter fills duty bars with. This export

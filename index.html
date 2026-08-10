@@ -819,6 +819,13 @@
                 </button>
             </div>
             
+            <!-- Unverified generated ratings. Rendered by
+                 draft_unverified.js; stays empty and invisible unless a
+                 generated draft is present. Placed FIRST in the tab body
+                 on purpose: the warning has to be read before the scores
+                 it applies to, not after scrolling past them. -->
+            <div id="tvUnverifiedBanner"></div>
+
             <!-- Data Collection Mode Selector -->
             <div class="verification-mode-selector">
                 <h3>📊 <span data-i18n="lblCollectionMode">Data Collection Mode</span></h3>
@@ -827,6 +834,7 @@
                         <input type="radio" id="mode-workshop" name="collectionMode" value="workshop" checked>
                         <label for="mode-workshop">👥 <span data-i18n="modeWorkshop">Workshop (Facilitated)</span></label>
                     </div>
+
                     <div class="mode-option">
                         <input type="radio" id="mode-survey" name="collectionMode" value="survey">
                         <label for="mode-survey">📝 <span data-i18n="modeSurvey">Individual / Survey</span></label>
