@@ -11,8 +11,10 @@
 import { STAGES, runDraft, cancelDraft, resumeDraft,
          onDraftProgress, isDraftRunning,
          missingPrerequisites, stagesWithExistingContent,
-         estimatedCalls, quotaCheck }        from './draft_agent.js';
+         estimatedCalls, quotaCheck,
+         scopeIsMissing }                    from './draft_agent.js';
 import { switchTab }                         from './projects.js';
+import { showStatus }                        from './renderer.js';
 
 const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
 const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
@@ -167,6 +169,15 @@ function _setupBody() {
       </label>`;
     }).join('')}
 
+    ${scopeIsMissing() ? `
+      <div class="dg-note dg-note-warn">
+        <strong>\u26A0\uFE0F ${_esc(_t('dgScopeSoftTitle'))}</strong>
+        <p>${_esc(_t('dgScopeSoftBody'))}</p>
+        <button type="button" class="dg-inline-btn" id="dgAddScope">
+          ${_esc(_t('dgScopeAddNow'))}
+        </button>
+      </div>` : ''}
+
     <div class="dg-note dg-note-info">
       <strong>\u{1F465} ${_esc(_t('dgVerifExcludedTitle'))}</strong>
       <p>${_esc(_t('dgVerifExcludedBody'))}</p>
@@ -217,8 +228,8 @@ function _prereqBody(missing) {
 
   return `
     <div class="dg-note dg-note-warn">
-      <strong>\u26A0\uFE0F ${_esc(_t('dgPrereqTitle'))}</strong>
-      <p>${_esc(_t('dgPrereqBody'))}</p>
+      <strong>\u26A0\uFE0F ${_esc(_t('dgPrereqTitleV2'))}</strong>
+      <p>${_esc(_t('dgPrereqBodyV2'))}</p>
     </div>
     ${missing.includes('occupationTitle')
       ? field('occupationTitle', 'dgNeedOccupation', 'input') : ''}
@@ -314,18 +325,46 @@ function _wire() {
   });
 
   q('#dgSaveFix')?.addEventListener('click', () => {
-    // Write straight into the real Chart Info fields so the values are
-    // saved with the project, not held only by this dialog.
+    /* Write straight into the real Chart Info fields so the values are
+       saved with the project, not held only by this dialog.
+
+       Each field is wrapped separately: those inputs carry autosave and
+       history listeners, and an exception thrown by ANY of them would
+       otherwise abort this handler before renderModal() — the button
+       would appear to do nothing at all, which is exactly the symptom
+       this replaced. */
+    let wrote = 0;
     ['occupationTitle', 'scopeOfWork'].forEach(id => {
-      const src = document.getElementById('dgFix_' + id);
-      const dst = document.getElementById(id);
-      if (src && dst && src.value.trim()) {
+      try {
+        const src = document.getElementById('dgFix_' + id);
+        const dst = document.getElementById(id);
+        if (!src || !dst || !src.value.trim()) return;
         dst.value = src.value.trim();
-        dst.dispatchEvent(new Event('input',  { bubbles: true }));
-        dst.dispatchEvent(new Event('change', { bubbles: true }));
+        try { dst.dispatchEvent(new Event('input',  { bubbles: true })); } catch (_) {}
+        try { dst.dispatchEvent(new Event('change', { bubbles: true })); } catch (_) {}
+        wrote++;
+      } catch (err) {
+        console.error('[draft] could not write ' + id, err);
       }
     });
+
+    if (!wrote && missingPrerequisites().length) {
+      // Still blocked, and nothing was written: say so rather than
+      // re-rendering the same panel and looking inert.
+      showStatus(_t('dgSaveFailed'), 'error');
+      return;
+    }
     renderModal();
+  });
+
+  q('#dgAddScope')?.addEventListener('click', () => {
+    // Jump to the field rather than duplicating it here: Scope is a
+    // paragraph, and a cramped textarea in a dialog is a worse place to
+    // write one than the tab it belongs to.
+    closeDraftModal();
+    switchTab('info-tab');
+    const el = document.getElementById('scopeOfWork');
+    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus(); }
   });
 
   q('#dgStart')?.addEventListener('click', async () => {

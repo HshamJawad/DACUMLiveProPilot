@@ -150,19 +150,36 @@ function _anySectionFilled() {
     .some(id => (document.getElementById(id + 'Input')?.value || '').trim());
 }
 
-/** Chart Info fields the pipeline cannot run without. */
+/**
+ * HARD prerequisites — the pipeline genuinely cannot start without these.
+ *
+ * Only the occupation title qualifies. Scope of Work was on this list
+ * and should not have been: the single-generation path treats it as a
+ * strong recommendation with a "Generate Anyway" escape, and making it
+ * mandatory here contradicted that for no reason the user could see.
+ * A tool that accepts a value in one place and refuses it two clicks
+ * later reads as broken, not as careful.
+ *
+ * Scope is now surfaced as a soft notice instead — see scopeIsMissing().
+ */
 export function missingPrerequisites() {
   const missing = [];
   if (!(document.getElementById('occupationTitle')?.value || '').trim()) {
     missing.push('occupationTitle');
   }
-  // Scope is not optional here even though it is optional for a single
-  // generation: every later stage inherits the boundary it sets, so a
-  // missing scope compounds through six stages instead of one.
-  if (!(document.getElementById('scopeOfWork')?.value || '').trim()) {
-    missing.push('scopeOfWork');
-  }
   return missing;
+}
+
+/**
+ * SOFT recommendation. Never blocks a run.
+ *
+ * Scope still matters more here than in a single generation — every
+ * stage inherits the boundary it sets, so its absence compounds through
+ * the chain rather than affecting one result. That argues for saying so
+ * clearly, not for refusing to proceed.
+ */
+export function scopeIsMissing() {
+  return !(document.getElementById('scopeOfWork')?.value || '').trim();
 }
 
 /** Stages that would overwrite existing content, for the up-front warning. */

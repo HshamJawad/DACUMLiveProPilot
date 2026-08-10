@@ -891,6 +891,12 @@
       uvDiscarded: 'Draft ratings discarded.',
       uvExportBlocked: 'Verification data is an unverified draft and was left out of this export. Accept it in the Task Verification tab to include it.',
       uvChartWatermark: 'UNVERIFIED DRAFT',
+      dgScopeSoftTitle: 'No Scope of Work yet',
+      dgScopeSoftBody: 'Generation works without it. But every stage below inherits the boundary a scope sets, so adding a short paragraph in Chart Info makes the whole chain more accurate and keeps it inside the right limits.',
+      dgScopeAddNow: 'Add it now',
+      dgPrereqTitleV2: 'Occupation Title is needed first',
+      dgPrereqBodyV2: 'Every stage starts from the occupation. Without it there is nothing for the chain to build on.',
+      dgSaveFailed: 'Could not save those fields. Enter them directly in Chart Info instead.',
     },
 
     fr: {
@@ -1779,6 +1785,12 @@
       uvDiscarded: 'Brouillon supprimé.',
       uvExportBlocked: 'Les données de vérification sont un brouillon non validé et ont été exclues de cet export.',
       uvChartWatermark: 'BROUILLON NON VALIDÉ',
+      dgScopeSoftTitle: 'Aucun champ d’activité',
+      dgScopeSoftBody: 'La génération fonctionne sans lui. Mais chaque étape hérite du cadre qu’il définit : un court paragraphe rend toute la chaîne plus précise et mieux délimitée.',
+      dgScopeAddNow: 'L’ajouter maintenant',
+      dgPrereqTitleV2: 'L’intitulé du métier est requis',
+      dgPrereqBodyV2: 'Chaque étape part du métier. Sans lui, la chaîne n’a rien sur quoi se construire.',
+      dgSaveFailed: 'Impossible d’enregistrer ces champs. Saisissez-les directement dans la fiche DACUM.',
     },
 
     ar: {
@@ -2644,6 +2656,12 @@
       uvDiscarded: 'حُذفت تقييمات المسودة.',
       uvExportBlocked: 'بيانات التحقق مسودة غير مُتحقَّق منها، وقد استُبعدت من هذا التصدير. اعتمدها في تبويب التحقق لإدراجها.',
       uvChartWatermark: 'مسودة غير مُتحقَّق منها',
+      dgScopeSoftTitle: 'لم يُحدَّد نطاق العمل بعد',
+      dgScopeSoftBody: 'التوليد يعمل بدونه. لكن كل مرحلة أدناه ترث الحدود التي يرسمها نطاق العمل، فإضافة فقرة موجزة في بيانات المخطط تجعل السلسلة كلها أدق وتُبقيها ضمن حدودها الصحيحة.',
+      dgScopeAddNow: 'أضِفه الآن',
+      dgPrereqTitleV2: 'اسم المهنة مطلوب أولاً',
+      dgPrereqBodyV2: 'كل مرحلة تنطلق من المهنة. وبدونها لا شيء تبني عليه السلسلة.',
+      dgSaveFailed: 'تعذّر حفظ هذين الحقلين. أدخِلهما مباشرةً في تبويب بيانات المخطط.',
     },
   };
 

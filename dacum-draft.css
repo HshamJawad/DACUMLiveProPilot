@@ -497,3 +497,18 @@ html[dir="rtl"] .rg-btn { transform: none; }
 }
 .dg-extra.is-caution strong { color: #92400e; }
 .dg-extra.is-caution small  { color: #b45309; }
+
+/* Inline action inside a note — "Add it now" on the soft scope
+   warning. Deliberately a link-weight control, not a button: it is a
+   suggestion, and a solid button here would compete with Start. */
+.dg-inline-btn {
+  margin-top: 9px;
+  padding: 6px 12px;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  background: #fff;
+  color: #92400e;
+  font: 600 0.82em/1.2 inherit;
+  cursor: pointer;
+}
+.dg-inline-btn:hover { background: #fef3c7; }
