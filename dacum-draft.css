@@ -527,3 +527,38 @@ html[dir="rtl"] .rg-btn { transform: none; }
   text-align: left;
   unicode-bidi: isolate;
 }
+
+/* Inline Scope editor, expanded inside the warning note. */
+.dg-scope-input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.87em;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.dg-scope-input:focus {
+  outline: 2px solid #f59e0b;
+  outline-offset: -1px;
+}
+
+.dg-scope-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+/* "Not now" reads as a dismissal, not an equal choice — a scope is
+   worth encouraging, so only Save carries a border. */
+.dg-inline-ghost {
+  border-color: transparent;
+  background: transparent;
+  text-decoration: underline;
+}
+.dg-inline-ghost:hover { background: transparent; color: #78350f; }

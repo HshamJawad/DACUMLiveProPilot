@@ -35,6 +35,7 @@ const OPTIONAL_COPY = {
 
 let _depth   = CHAIN.length;          // default: generate everything
 let _extras  = new Set();             // ids of chosen optional stages
+let _scopeOpen = false;               // inline Scope editor expanded?
 let _phase   = 'setup';               // setup | running | done | error
 let _current = -1;                    // index of the stage in flight
 let _doneIds = new Set();
@@ -102,6 +103,7 @@ export function openDraftModal() {
   });
 
   _phase = 'setup';
+  _scopeOpen = false;
   renderModal();
 
   _unsub = onDraftProgress(_onProgress);
@@ -210,9 +212,20 @@ function _setupBody() {
       <div class="dg-note dg-note-warn">
         <strong>\u26A0\uFE0F ${_esc(_t('dgScopeSoftTitle'))}</strong>
         <p>${_esc(_t('dgScopeSoftBody'))}</p>
-        <button type="button" class="dg-inline-btn" id="dgAddScope">
-          ${_esc(_t('dgScopeAddNow'))}
-        </button>
+        ${_scopeOpen ? `
+          <textarea id="dgScopeText" class="dg-scope-input" rows="4"
+                    placeholder="${_esc(_t('dgScopePlaceholder'))}"></textarea>
+          <div class="dg-scope-actions">
+            <button type="button" class="dg-inline-btn dg-inline-ghost" id="dgScopeCancel">
+              ${_esc(_t('dgScopeCancel'))}
+            </button>
+            <button type="button" class="dg-inline-btn" id="dgScopeSave">
+              ${_esc(_t('dgScopeSave'))}
+            </button>
+          </div>` : `
+          <button type="button" class="dg-inline-btn" id="dgAddScope">
+            ${_esc(_t('dgScopeAddNow'))}
+          </button>`}
       </div>` : ''}
 
     <div class="dg-note dg-note-info">
@@ -397,14 +410,46 @@ function _wire() {
     renderModal();
   });
 
+  /* Expand in place. The first version closed the dialog and jumped to
+     Chart Info — which left the user somewhere they had not asked to be,
+     having to find their way back and re-open a dialog whose settings
+     they had already chosen. A field is a field; it can live here. */
   q('#dgAddScope')?.addEventListener('click', () => {
-    // Jump to the field rather than duplicating it here: Scope is a
-    // paragraph, and a cramped textarea in a dialog is a worse place to
-    // write one than the tab it belongs to.
-    closeDraftModal();
-    switchTab('info-tab');
-    const el = document.getElementById('scopeOfWork');
-    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus(); }
+    _scopeOpen = true;
+    renderModal();
+    const ta = document.getElementById('dgScopeText');
+    if (ta) ta.focus();
+  });
+
+  q('#dgScopeCancel')?.addEventListener('click', () => {
+    _scopeOpen = false;
+    renderModal();
+  });
+
+  q('#dgScopeSave')?.addEventListener('click', () => {
+    const ta  = document.getElementById('dgScopeText');
+    const dst = document.getElementById('scopeOfWork');
+    const val = (ta && ta.value || '').trim();
+    if (!val) { _scopeOpen = false; renderModal(); return; }
+
+    /* Written into the real Chart Info field so it is saved with the
+       project — not held only by this dialog, where closing the modal
+       would lose a paragraph the user just wrote. Each dispatch is
+       isolated: those inputs carry autosave and history listeners, and
+       one throwing must not swallow the save. */
+    try {
+      if (dst) {
+        dst.value = val;
+        try { dst.dispatchEvent(new Event('input',  { bubbles: true })); } catch (_) {}
+        try { dst.dispatchEvent(new Event('change', { bubbles: true })); } catch (_) {}
+      }
+      showStatus(_t('dgScopeSaved'), 'success');
+    } catch (err) {
+      console.error('[draft] could not save scope', err);
+      showStatus(_t('dgSaveFailed'), 'error');
+    }
+    _scopeOpen = false;
+    renderModal();
   });
 
   q('#dgStart')?.addEventListener('click', async () => {

@@ -900,6 +900,10 @@
       dgRenderFailed: 'Could not open the generator',
       dgRenderFailedBody: 'Something failed while building this dialog. Your project is untouched. If this repeats, do a hard refresh (Ctrl+Shift+R) — an outdated cached file is the usual cause.',
       dgWireFailed: 'Some controls in this dialog could not be activated. Close and reopen it.',
+      dgScopeSave: 'Save scope',
+      dgScopeCancel: 'Not now',
+      dgScopePlaceholder: 'One concise paragraph: what this occupation covers, its main responsibilities, typical tools and work settings, and which related roles it does NOT include.',
+      dgScopeSaved: 'Scope of Work saved to Chart Info.',
     },
 
     fr: {
@@ -1797,6 +1801,10 @@
       dgRenderFailed: 'Impossible d’ouvrir le générateur',
       dgRenderFailedBody: 'Une erreur est survenue en construisant cette boîte de dialogue. Votre projet est intact. Si cela se reproduit, forcez le rechargement (Ctrl+Maj+R) — un fichier en cache obsolète en est la cause habituelle.',
       dgWireFailed: 'Certains contrôles n’ont pas pu être activés. Fermez et rouvrez la boîte de dialogue.',
+      dgScopeSave: 'Enregistrer le champ',
+      dgScopeCancel: 'Pas maintenant',
+      dgScopePlaceholder: 'Un paragraphe concis : ce que couvre ce métier, ses responsabilités principales, ses outils et environnements typiques, et les rôles connexes qu’il n’inclut PAS.',
+      dgScopeSaved: 'Champ d’activité enregistré dans la fiche DACUM.',
     },
 
     ar: {
@@ -2671,6 +2679,10 @@
       dgRenderFailed: 'تعذّر فتح المولّد',
       dgRenderFailedBody: 'حدث خطأ أثناء بناء هذه النافذة. ومشروعك لم يُمَس. وإن تكرر ذلك، أعد التحميل القسري (Ctrl+Shift+R) — فالسبب المعتاد ملف قديم في الكاش.',
       dgWireFailed: 'تعذّر تفعيل بعض عناصر هذه النافذة. أغلقها وأعد فتحها.',
+      dgScopeSave: 'حفظ نطاق العمل',
+      dgScopeCancel: 'ليس الآن',
+      dgScopePlaceholder: 'فقرة موجزة واحدة: ما تغطيه هذه المهنة، ومسؤولياتها الرئيسة، والأدوات وبيئات العمل المعتادة، والأدوار القريبة التي لا تشملها.',
+      dgScopeSaved: 'حُفظ نطاق العمل في تبويب بيانات المخطط.',
     },
   };
 
