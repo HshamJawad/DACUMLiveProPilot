@@ -376,6 +376,11 @@ function _showAIErrorModal(errorMessage) {
   modal.id = 'loAiErrorModal';
   modal.setAttribute('role', 'alertdialog');
   modal.setAttribute('aria-modal', 'true');
+  /* Appended to <body> with inline styles only, so the RTL sheet
+     cannot reach it — direction is set here or Arabic renders
+     left-aligned with its punctuation on the wrong side. */
+  modal.setAttribute('dir', (window.i18n && window.i18n.isRTL()) ? 'rtl' : 'ltr');
+
   modal.style.cssText =
     'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;' +
     'justify-content:center;padding:20px;background:rgba(0,0,0,0.55);' +
@@ -383,32 +388,35 @@ function _showAIErrorModal(errorMessage) {
     'animation:aiErrFadeIn 0.2s ease';
 
   const icon   = isOffline ? '\uD83D\uDD0C' : '\u26A0\uFE0F';
-  const title  = isOffline ? 'AI Service Unavailable' : 'Learning Outcome Generation Failed';
-  const sub    = isOffline ? 'Backend server unreachable' : 'Check connection and try again';
+  const title  = _t(isOffline ? 'aiErrOfflineTitle' : 'aiErrLOTitle');
+  const sub    = _t(isOffline ? 'aiErrOfflineSub'   : 'aiErrFailedSub');
   const hdrBg  = isOffline ? 'linear-gradient(135deg,#fff7ed,#ffedd5)'
                            : 'linear-gradient(135deg,#fef2f2,#fee2e2)';
   const hdrBdr = isOffline ? '#fed7aa' : '#fecaca';
   const hdrClr = isOffline ? '#9a3412' : '#991b1b';
   const subClr = isOffline ? '#c2410c' : '#b91c1c';
 
+  /* Two branches, both translated. The raw error string stays as
+     it came from the browser: it is a diagnostic for whoever is
+     debugging, and translating an exception message would make it
+     unsearchable. It is isolated LTR by the stylesheet. */
   const bodyText = isOffline
-    ? 'The AI backend server is currently offline or unreachable.<br><br>' +
-      'Your criteria and existing Learning Outcomes have not been changed.'
-    : 'An error occurred while generating Learning Outcomes:<br><br>' +
+    ? _t('aiErrOfflineBody') + '<br><br>' + _t('aiErrSafeLO')
+    : _t('aiErrOccurred') + '<br><br>' +
       '<code style="font-size:0.82em;background:#f1f5f9;padding:4px 8px;' +
-      'border-radius:4px;word-break:break-all;">' +
+      'border-radius:4px;word-break:break-all;direction:ltr;' +
+      'unicode-bidi:isolate;display:inline-block;">' +
       (errorMessage || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code>' +
-      '<br><br>Your existing work has not been changed.';
+      '<br><br>' + _t('aiErrSafeLO');
 
   const tips =
     '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;' +
     'padding:12px 14px;margin-bottom:16px;">' +
     '<p style="margin:0;font-size:0.82em;color:#15803d;font-weight:600;">' +
-    '\u2705 What you can do instead:</p>' +
+    '\u2705 ' + _t('aiErrWhatInstead') + '</p>' +
     '<ul style="margin:6px 0 0;padding-left:18px;font-size:0.82em;color:#166534;line-height:1.8;">' +
-    '<li>Tick criteria below and use <strong>Create Learning Outcome</strong></li>' +
-    '<li>Write the outcome statement directly in each LO card</li>' +
-    '<li>Use the <strong>?</strong> button for the three design patterns</li>' +
+    '<li>' + _t('aiTipLO1') + '</li>' +
+    '<li>' + _t('aiTipLO2') + '</li>' +
     '</ul></div>';
 
   modal.innerHTML =
@@ -429,7 +437,7 @@ function _showAIErrorModal(errorMessage) {
         '<div style="display:flex;justify-content:flex-end;">' +
           '<button id="loAiErrorClose" style="padding:9px 22px;background:#667eea;' +
           'color:#fff;border:none;border-radius:8px;font-size:0.9em;font-weight:700;' +
-          'cursor:pointer;font-family:inherit;">Got it</button>' +
+          'cursor:pointer;font-family:inherit;">' + _t('btnGotIt') + '</button>' +
         '</div>' +
       '</div>' +
     '</div>';

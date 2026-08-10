@@ -393,6 +393,11 @@ function _showAIErrorModal(errorMessage) {
   modal.id = 'aiInfoErrorModal';
   modal.setAttribute('role', 'alertdialog');
   modal.setAttribute('aria-modal', 'true');
+  /* Appended to <body> with inline styles only, so the RTL sheet
+     cannot reach it — direction is set here or Arabic renders
+     left-aligned with its punctuation on the wrong side. */
+  modal.setAttribute('dir', (window.i18n && window.i18n.isRTL()) ? 'rtl' : 'ltr');
+
   modal.style.cssText =
     'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;' +
     'justify-content:center;padding:20px;background:rgba(0,0,0,0.55);' +
@@ -400,8 +405,8 @@ function _showAIErrorModal(errorMessage) {
     'animation:aiErrFadeIn 0.2s ease';
 
   const icon   = isOffline ? '\uD83D\uDD0C' : '\u26A0\uFE0F';
-  const title  = isOffline ? 'AI Service Unavailable' : 'AI Generation Failed';
-  const sub    = isOffline ? 'Backend server unreachable' : 'Check connection and try again';
+  const title  = _t(isOffline ? 'aiErrOfflineTitle' : 'aiErrInfoTitle');
+  const sub    = _t(isOffline ? 'aiErrOfflineSub'   : 'aiErrFailedSub');
   const hdrBg  = isOffline
     ? 'linear-gradient(135deg,#fff7ed,#ffedd5)'
     : 'linear-gradient(135deg,#fef2f2,#fee2e2)';
@@ -409,26 +414,28 @@ function _showAIErrorModal(errorMessage) {
   const hdrClr = isOffline ? '#9a3412' : '#991b1b';
   const subClr = isOffline ? '#c2410c' : '#b91c1c';
 
+  /* Two branches, both translated. The raw error string stays as
+     it came from the browser: it is a diagnostic for whoever is
+     debugging, and translating an exception message would make it
+     unsearchable. It is isolated LTR by the stylesheet. */
   const bodyText = isOffline
-    ? 'The AI backend server is currently offline or unreachable.<br><br>' +
-      'The AI generation service requires an active Railway backend. ' +
-      'You can still fill in the supporting information manually \u2014 ' +
-      'your existing content has not been changed.'
-    : 'An error occurred while generating the supporting information:<br><br>' +
+    ? _t('aiErrOfflineBody') + '<br><br>' + _t('aiErrSafeInfo')
+    : _t('aiErrOccurred') + '<br><br>' +
       '<code style="font-size:0.82em;background:#f1f5f9;padding:4px 8px;' +
-      'border-radius:4px;word-break:break-all;">' +
+      'border-radius:4px;word-break:break-all;direction:ltr;' +
+      'unicode-bidi:isolate;display:inline-block;">' +
       (errorMessage || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</code>' +
-      '<br><br>Your existing content has not been changed.';
+      '<br><br>' + _t('aiErrSafeInfo');
 
   const offlineTips = isOffline
     ? '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;' +
       'padding:12px 14px;margin-bottom:16px;">' +
       '<p style="margin:0;font-size:0.82em;color:#15803d;font-weight:600;">' +
-      '\u2705 What you can do instead:</p>' +
+      '\u2705 ' + _t('aiErrWhatInstead') + '</p>' +
       '<ul style="margin:6px 0 0;padding-left:18px;font-size:0.82em;color:#166534;line-height:1.8;">' +
-      '<li>Type each section manually, one item per line</li>' +
-      '<li>Use the \uD83D\uDD22 Number / \u2022 Bullet buttons to format lists</li>' +
-      '<li>Import a saved JSON project file</li></ul></div>'
+      '<li>' + _t('aiTipInfo1') + '</li>' +
+      '<li>' + _t('aiTipInfo2') + '</li>' +
+      '<li>' + _t('aiTipInfo3') + '</li></ul></div>'
     : '';
 
   modal.innerHTML =
@@ -451,7 +458,7 @@ function _showAIErrorModal(errorMessage) {
           'color:#fff;border:none;border-radius:8px;font-size:0.9em;font-weight:700;' +
           'cursor:pointer;transition:background 0.15s;"' +
           ' onmouseover="this.style.background=\'#5a67d8\'"' +
-          ' onmouseout="this.style.background=\'#667eea\'">Got it</button>' +
+          ' onmouseout="this.style.background=\'#667eea\'">' + _t('btnGotIt') + '</button>' +
         '</div>' +
       '</div>' +
     '</div>';
