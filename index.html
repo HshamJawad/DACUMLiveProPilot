@@ -312,8 +312,16 @@
     <link rel="stylesheet" href="dacum-draft.css">
     <!-- RTL mirroring + language switcher. MUST be last stylesheet. -->
     <link rel="stylesheet" href="dacum-rtl.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap">
+    <!-- Cairo is self-hosted. It was loaded from fonts.googleapis.com,
+         which meant the Arabic interface silently fell back to a system
+         font whenever Google returned an error (a 503 did exactly that)
+         — and never rendered correctly offline at all, which is a real
+         problem for a PWA meant to run in a training room. The variable
+         font file covers 400/600/700 in ~136 KB, less than the three
+         static weights it replaces. @font-face lives in dacum-rtl.css,
+         next to the rules that use it. -->
+    <link rel="preload" href="fonts/Cairo.woff2" as="font"
+          type="font/woff2" crossorigin>
     
 </head>
 <body>

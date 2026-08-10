@@ -21,6 +21,36 @@
 
 
 /* ══════════════════════════════════════════════════════════════
+   CAIRO — self-hosted variable font
+   --------------------------------------------------------------
+   One file covers every weight the app uses. Declaring the range
+   as 200-1000 (the font's own fvar range) lets the browser
+   interpolate 600 from the same file instead of synthesising a
+   fake bold, which is what a static 400-only file would force and
+   what makes Arabic headings look smeared.
+
+   font-display: swap — text appears immediately in the fallback
+   and re-renders when Cairo arrives. For a facilitator projecting
+   a chart to a room, invisible text for 300ms is worse than a
+   brief font change.
+
+   unicode-range is deliberately ABSENT. It would stop the browser
+   downloading Cairo for a Latin-only page — but the interface
+   mixes scripts constantly (DACUM, CNC, ISO 9001 inside Arabic
+   sentences), and a per-glyph split makes those fragments render
+   in a different face mid-word.
+   ══════════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'Cairo';
+  src: url('fonts/Cairo.woff2') format('woff2-variations'),
+       url('fonts/Cairo.woff2') format('woff2');
+  font-weight: 200 1000;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ══════════════════════════════════════════════════════════════
    WHY THERE IS NO `flex-direction: row-reverse` IN THIS FILE
    --------------------------------------------------------------
    There used to be twelve of them, and every one was a bug.

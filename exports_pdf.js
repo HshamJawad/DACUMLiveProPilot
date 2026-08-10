@@ -13,6 +13,11 @@ import { showStatus } from './renderer.js';
 import { getTaskCode } from './codes.js';
 import { buildVerificationDataset, getVerificationCoverage } from './exports_shared.js';
 import { noteExportExclusion } from './draft_unverified.js';
+/* lwExportVerifiedPDF() was called on the standalone path without ever
+   being imported — a ReferenceError that only fires when a facilitator
+   exports verified live-workshop results as a standalone PDF, which is
+   why it survived this long. Found by check_imports.js. */
+import { lwExportVerifiedPDF } from './workshop.js';
 
 
 /* ── Arabic guard ────────────────────────────────────────────────────

@@ -312,6 +312,23 @@
         /* RTL: mirror the layout, never the 0-3 scale. The rating
            columns read as an ordinal axis and a participant calling out
            numbers in a live room must not meet a reversed one. */
+        /* This page is standalone — it loads no stylesheet from the
+           app, so the @font-face in dacum-rtl.css never reaches it.
+           Without this block the Arabic voting screen asked for Cairo
+           and silently got a system fallback on every device.
+
+           font-display: swap matters more here than anywhere else:
+           participants open this on their own phones, on conference
+           wifi, in the minute a facilitator is waiting to start. */
+        @font-face {
+            font-family: 'Cairo';
+            src: url('fonts/Cairo.woff2') format('woff2-variations'),
+                 url('fonts/Cairo.woff2') format('woff2');
+            font-weight: 200 1000;
+            font-style: normal;
+            font-display: swap;
+        }
+
         body.pt-rtl { direction: rtl; font-family: 'Cairo','Tajawal','Segoe UI',Tahoma,sans-serif; }
         body.pt-rtl .task-table { direction: rtl; }
         body.pt-rtl .task-cell { text-align: right; }

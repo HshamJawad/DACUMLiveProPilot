@@ -31,6 +31,10 @@ import { suggestClustersAI,
          generateRangeAndCriteriaAI }   from './clustering_ai.js';
 import { generateLearningOutcomesAI }   from './learning_outcomes_ai.js';
 import { generateModulesAI }            from './module_mapping_ai.js';
+import { setBatchRun }                  from './draft_mode.js';
+import { checkUsageLimit, DAILY_LIMIT } from './storage.js';
+import { markUnverified, isUnverified } from './draft_unverified.js';
+import { generateDraftRatings }         from './draft_ratings.js';
 
 /* i18n access — resolved lazily; see duties.js for why. */
 const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);

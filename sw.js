@@ -4,7 +4,7 @@
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v62';
+const CACHE_VERSION = 'v64';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -25,6 +25,12 @@ const PRECACHE_URLS = [
   // conference wifi. Precaching it means the facilitator's own
   // device can serve it instantly and it survives a flaky network.
   BASE + 'DACUM_LiveWorkshop_Participant.html',
+
+  // ── Fonts ────────────────────────────────────────────────
+  // Precached, not lazily cached: the Arabic interface is unusable
+  // in a fallback face, and this app is expected to run in training
+  // rooms with no reliable network. 136 KB once, then never again.
+  BASE + 'fonts/Cairo.woff2',
 
   // ── Stylesheets ──────────────────────────────────────────
   BASE + 'dacum-styles.css',
@@ -152,6 +158,9 @@ self.addEventListener('activate', function (event) {
           // the HTML or an updated page paints unstyled for one cycle.
           BASE + 'dacum-typography.css',
           BASE + 'dacum-rtl.css',
+          // Without this the Arabic UI repaints in a fallback face for
+          // one cycle after every update.
+          BASE + 'fonts/Cairo.woff2',
           // Without this the page repaints in English for one cycle
           // after an update, which is jarring for an Arabic user.
           BASE + 'translations.js',
