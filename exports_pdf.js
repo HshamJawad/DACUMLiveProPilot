@@ -10,7 +10,7 @@
 
 import { appState } from './state.js';
 import { showStatus } from './renderer.js';
-import { getTaskCode } from './codes.js';
+import { getTaskCode, getDutyLetter } from './codes.js';
 import { buildVerificationDataset, getVerificationCoverage } from './exports_shared.js';
 import { noteExportExclusion } from './draft_unverified.js';
 /* lwExportVerifiedPDF() was called on the standalone path without ever
@@ -770,7 +770,7 @@ export function exportToPDF() {
         };
 
         duties.forEach((duty, dutyIdx) => {
-            const letter = String.fromCharCode(65 + dutyIdx);
+            const letter = getDutyLetter(dutyIdx);
 
             // ── Duty title bar (full width) ───────────────────────
             pdf.setFontSize(14);

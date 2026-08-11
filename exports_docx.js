@@ -10,7 +10,7 @@
 
 import { appState } from './state.js';
 import { showStatus } from './renderer.js';
-import { getTaskCode } from './codes.js';
+import { getTaskCode, getDutyLetter } from './codes.js';
 import { buildVerificationDataset, getVerificationCoverage } from './exports_shared.js';
 import { noteExportExclusion } from './draft_unverified.js';
 
@@ -340,6 +340,7 @@ export async function exportTaskVerificationWord() {
                 });
                 
                 children.push(new Table({
+                    visuallyRightToLeft: _rtl(),
                     width: { size: 100, type: WidthType.PERCENTAGE },
                     rows: tableRows,
                 }));
@@ -421,6 +422,7 @@ export async function exportTaskVerificationWord() {
                 });
                 
                 children.push(new Table({
+                    visuallyRightToLeft: _rtl(),
                     width: { size: 100, type: WidthType.PERCENTAGE },
                     rows: dutyTableRows,
                 }));
@@ -786,6 +788,7 @@ export async function exportToWord() {
                         );
                         
                         children.push(new Table({
+                            visuallyRightToLeft: _rtl(),
                             width: { size: 100, type: WidthType.PERCENTAGE },
                             rows: facilitatorRows,
                         }));
@@ -828,6 +831,7 @@ export async function exportToWord() {
                         );
                         
                         children.push(new Table({
+                            visuallyRightToLeft: _rtl(),
                             width: { size: 100, type: WidthType.PERCENTAGE },
                             rows: observerRows,
                         }));
@@ -870,6 +874,7 @@ export async function exportToWord() {
                         );
                         
                         children.push(new Table({
+                            visuallyRightToLeft: _rtl(),
                             width: { size: 100, type: WidthType.PERCENTAGE },
                             rows: panelMemberRows,
                         }));
@@ -918,8 +923,8 @@ export async function exportToWord() {
 
                 // Create a table for each duty
                 duties.forEach((dutyData, dutyIndex) => {
-                    const dutyLetter = String.fromCharCode(65 + dutyIndex); // A, B, C...
-                    const dutyLabel = `DUTY ${dutyLetter}: ${dutyData.duty}`;
+                    const dutyLetter = getDutyLetter(dutyIndex);
+                    const dutyLabel = `${_tf('lblDuty', { code: dutyLetter })}: ${dutyData.duty}`;
                     
                     // Calculate number of rows needed (header + task rows)
                     const tasksPerRow = 4;
@@ -1011,6 +1016,7 @@ export async function exportToWord() {
                     // Create the table with 16cm width
                     children.push(
                         new Table({
+                            visuallyRightToLeft: _rtl(),
                             width: {
                                 size: 9071, // 16cm in twips (16 * 567.05 ≈ 9071)
                                 type: WidthType.DXA,
@@ -1118,6 +1124,7 @@ export async function exportToWord() {
                         
                         children.push(
                             new Table({
+                                visuallyRightToLeft: _rtl(),
                                 width: {
                                     size: 9071, // 16cm in twips
                                     type: WidthType.DXA,
@@ -1198,6 +1205,7 @@ export async function exportToWord() {
                         
                         children.push(
                             new Table({
+                                visuallyRightToLeft: _rtl(),
                                 width: {
                                     size: 9071, // 16cm in twips
                                     type: WidthType.DXA,
@@ -1257,6 +1265,7 @@ export async function exportToWord() {
                         
                         children.push(
                             new Table({
+                                visuallyRightToLeft: _rtl(),
                                 width: {
                                     size: 9071, // 16cm in twips
                                     type: WidthType.DXA,
@@ -1519,6 +1528,7 @@ export async function exportToWord() {
                         // Add table for this category
                         children.push(
                             new Table({
+                                visuallyRightToLeft: _rtl(),
                                 width: {
                                     size: 9071, // 16cm in twips
                                     type: WidthType.DXA,
@@ -1718,6 +1728,7 @@ export async function exportToWord() {
                         });
                         
                         children.push(new Table({
+                            visuallyRightToLeft: _rtl(),
                             width: { size: 100, type: WidthType.PERCENTAGE },
                             rows: tableRows,
                         }));
@@ -1799,6 +1810,7 @@ export async function exportToWord() {
                         });
                         
                         children.push(new Table({
+                            visuallyRightToLeft: _rtl(),
                             width: { size: 100, type: WidthType.PERCENTAGE },
                             rows: dutyTableRows,
                         }));
@@ -1940,6 +1952,7 @@ export async function exportToWord() {
                     });
                     
                     children.push(new Table({
+                        visuallyRightToLeft: _rtl(),
                         rows: verifiedTableRows,
                         width: { size: 100, type: WidthType.PERCENTAGE }
                     }));
