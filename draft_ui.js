@@ -70,7 +70,7 @@ export function renderDraftCard() {
       <button type="button" class="dg-card-btn" id="btnOpenDraftModal">
         \u2728 ${_esc(_t('dgCardBtn'))}
       </button>
-      <p class="dg-card-hint">\U0001f4a1 ${_esc(_t('dgCardHint'))}</p>
+      <p class="dg-card-hint">💡 ${_esc(_t('dgCardHint'))}</p>
     </div>`;
 
   host.querySelector('#btnOpenDraftModal')
