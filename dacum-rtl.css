@@ -931,3 +931,69 @@ html[dir="rtl"] #dacumVersionText {
   direction: ltr;
   unicode-bidi: isolate;
 }
+
+
+/* ═════════════════════════════════════════════════════════════
+   12. CARD VIEW — the sticky duty card
+   -------------------------------------------------------------
+   Two physical properties in dacum-components.css do not follow
+   dir="rtl", and both were visible:
+
+     position: sticky; left: 0;
+       The duty card pins to the LEFT edge while the task strip
+       scrolls beneath it. In Arabic the strip scrolls from the
+       right, so the card pinned to the edge the tasks were
+       leaving — it scrolled away with them instead of holding
+       still and "swallowing" them.
+
+     border-radius: 14px 0 0 14px;
+       Square on the right, rounded on the left — shaped so the
+       flat side meets the task strip. Mirrored, the flat side
+       ended up facing away from the tasks, so the Arabic card
+       looked rounded on all four corners.
+
+   Both are corrections to declarations that genuinely exist, and
+   both restore the ENGLISH behaviour rather than inventing an
+   Arabic variant of it. The design is meant to be identical in
+   every language; only the axis changes.
+   ═════════════════════════════════════════════════════════════ */
+
+html[dir="rtl"] .card-view-mode .dcv-duty-card {
+  left: auto;
+  right: 0;
+  /* Flat edge faces the task strip, which is now on the left. */
+  border-radius: 0 14px 14px 0;
+  border-right-width: 1px;
+  border-left-width: 2px;
+}
+
+/* Phones drop the sticky behaviour entirely and round every corner;
+   that override is direction-neutral, but it sets border-radius as a
+   shorthand AFTER the rule above in source order only when the media
+   query matches — restate it so the mirrored corners do not leak in. */
+@media (max-width: 768px) {
+  html[dir="rtl"] .card-view-mode .dcv-duty-card {
+    position: static;
+    border-radius: 14px;
+    border-left-width: 1px;
+  }
+}
+
+/* The horizontal strip itself. dir=rtl already reverses the flex
+   order and starts the scroll at the right edge — no rule needed for
+   that. This only cancels the physical margin reset. */
+html[dir="rtl"] .card-view-mode .dcv-tasks-area {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Wall View shares the .dcv-duty-card class but is neither sticky nor
+   asymmetric — it sets its own uniform 10px radius. Restated here so
+   the mirrored corners above cannot leak into it through the shared
+   selector; `inherit` would have been wrong, since the parent radius
+   is not 10px. */
+html[dir="rtl"] .wall-view-mode .dcv-duty-card {
+  border-radius: 10px;
+  left: auto;
+  right: auto;
+}
