@@ -935,6 +935,14 @@
       aiTipLO2: 'Use the ? button for the design patterns',
       aiTipModules1: 'Group outcomes into modules manually below',
       aiTipModules2: 'Use One Module per Outcome — it works offline',
+      /* ── Service worker update banner ── */
+      swNewVersion: 'A new version is available.',
+      swUpdateNow: 'Update now',
+      swLater: 'Later',
+      swUpdating: 'Updating…',
+      swBadgeUpdate: 'Update',
+      swBadgeUpdateTip: 'A newer version is ready — click to update now. (currently running v{v})',
+      swBadgeTip: 'DACUM Live Pro v{v} · released {d} · cache {c}',
     },
 
     fr: {
@@ -1867,6 +1875,14 @@
       aiTipLO2: 'Utiliser le bouton ? pour les modèles de conception',
       aiTipModules1: 'Regrouper les résultats en modules manuellement',
       aiTipModules2: 'Utiliser Un module par résultat — fonctionne hors ligne',
+      /* ── Service worker update banner ── */
+      swNewVersion: 'Une nouvelle version est disponible.',
+      swUpdateNow: 'Mettre à jour',
+      swLater: 'Plus tard',
+      swUpdating: 'Mise à jour…',
+      swBadgeUpdate: 'Mise à jour',
+      swBadgeUpdateTip: 'Une version plus récente est prête — cliquez pour mettre à jour. (version actuelle v{v})',
+      swBadgeTip: 'DACUM Live Pro v{v} · publié le {d} · cache {c}',
     },
 
     ar: {
@@ -2776,6 +2792,14 @@
       aiTipLO2: 'استخدم زر ؟ للاطلاع على أنماط التصميم',
       aiTipModules1: 'جمّع المحصلات في وحدات يدوياً أدناه',
       aiTipModules2: 'استخدم «وحدة لكل محصلة» — فهي تعمل دون اتصال',
+      /* ── Service worker update banner ── */
+      swNewVersion: 'يتوفر إصدار جديد.',
+      swUpdateNow: 'حدّث الآن',
+      swLater: 'لاحقاً',
+      swUpdating: 'جارٍ التحديث…',
+      swBadgeUpdate: 'تحديث',
+      swBadgeUpdateTip: 'يتوفر إصدار أحدث — انقر للتحديث الآن. (الإصدار الحالي v{v})',
+      swBadgeTip: 'DACUM Live Pro v{v} · صدر في {d} · الكاش {c}',
     },
   };
 

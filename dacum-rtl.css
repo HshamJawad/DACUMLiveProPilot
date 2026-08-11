@@ -903,3 +903,26 @@ html[dir="rtl"] .dps-new-btn {
 #dacumLangWrap.is-locked .dacum-lang-btn.is-active {
   color: #4f46e5;
 }
+
+
+/* ── Service-worker update banner ────────────────────────────
+   Built inline in <head> and appended to <body>; dir is set on
+   the element itself by that block. These rules only handle what
+   inline styles leave open. */
+
+[dir="rtl"] #_dacumSwToast {
+  text-align: right;
+}
+
+/* The ↻ glyph is rotational, not directional — it means the same
+   thing in both scripts and must not be mirrored. */
+[dir="rtl"] #_dacumSwToast svg {
+  transform: none;
+}
+
+/* The version string (v3.17.1) is a Latin token inside an
+   otherwise Arabic chip. */
+html[dir="rtl"] #dacumVersionText {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
