@@ -315,6 +315,29 @@ html[dir="rtl"] .dps-search-box.is-focused .dps-search {
   padding-right: 10px;
 }
 
+/* ── Accent borders ──────────────────────────────────────────
+   ONLY the elements that actually carry a border-left in
+   dacum-styles.css are listed here. An earlier version of this file
+   mirrored a "card accent" onto .dcv-duty-card, .dcv-task-card,
+   .duty-card, .cluster-card and .section-container — none of which
+   have such a border in the base design. The result was a purple
+   stripe on duty and task cards in Arabic and nowhere else: not a
+   mirrored border, an invented one.
+
+   The rule is narrower than it first looks. Mirroring is only ever a
+   CORRECTION to a declaration that already exists. Anything that adds
+   decoration in one language and not another is a bug, however
+   tasteful it looks in isolation. Before adding a selector here, grep
+   the base sheet and confirm the property is genuinely there. */
+
+html[dir="rtl"] .info-box                   { border-left: none; border-right: 6px solid #f59e0b; }
+html[dir="rtl"] .verification-instructions  { border-left: none; border-right: 4px solid #3b82f6; }
+html[dir="rtl"] .validation-warning         { border-left: none; border-right: 4px solid #ef4444; }
+html[dir="rtl"] .validation-warning.error   { border-left: none; border-right: 4px solid #dc2626; }
+html[dir="rtl"] .validation-warning.warning { border-left: none; border-right: 4px solid #eab308; }
+html[dir="rtl"] .summary-card               { border-left: none; border-right: 4px solid #667eea; }
+html[dir="rtl"] .skills-level-info-box      { border-left: none; border-right: 4px solid #3b82f6; }
+
 /* ── Lists, bullets and indentation ────────────────────────────
    padding-left on a list is the single most common thing that
    strands bullets on the wrong side. */
@@ -357,16 +380,6 @@ body.dacum-rtl .input-with-icon {
 }
 
 
-/* ── Scroll shadows and borders ────────────────────────────────
-   border-left as a visual "spine" on cards reads as a left margin
-   cue; in RTL it belongs on the other edge. */
-body.dacum-rtl .section-container,
-body.dacum-rtl .duty-card,
-body.dacum-rtl .cluster-card {
-  border-left: none;
-  border-right: 4px solid var(--accent, #6366f1);
-}
-
 
 /* ── Print / export preview ────────────────────────────────────
    The on-screen preview should match what Word will produce. PDF
@@ -389,14 +402,6 @@ body.dacum-rtl .cluster-card {
    run; this only stops a long code from wrapping mid-token. */
 html[dir="rtl"] bdi {
   white-space: nowrap;
-}
-
-/* Card and wall cards carry their accent as a left border. */
-html[dir="rtl"] .dcv-duty-card,
-html[dir="rtl"] .dcv-task-card,
-html[dir="rtl"] .wv-duty-column {
-  border-left: none;
-  border-right: 4px solid var(--accent, #6366f1);
 }
 
 /* Drag handles sit at the inline-start edge of a row. dir=rtl moves
