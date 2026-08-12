@@ -45,6 +45,115 @@ const _start = (A) => (_rtl() ? A.RIGHT : A.LEFT);
    pretty one. */
 const _font = () => (_rtl() ? 'Arial' : 'Calibri');
 
+
+/* ── Proofing language (w:lang) ──────────────────────────────────────
+   docx@7.8.2 has NO `language` option on a run: RunProperties never
+   emits <w:lang>, so every exported run inherited Word's UI language
+   and Arabic came out underlined in red as misspelled English. This is
+   a separate concern from direction — `bidi` / `bidirectional` set the
+   READING ORDER, `w:lang` sets the DICTIONARY. Both are required.
+
+   OOXML splits the proofing language in two:
+     w:val  → language of the Latin ("low ANSI") text in the run
+     w:bidi → language of the complex-script (Arabic) text in the run
+   So Arabic runs get ar-IQ on both, while the document default keeps
+   en-US for w:val — otherwise Word would check the English fragments
+   (tool names, ISO codes, "N/A") against an Arabic dictionary and just
+   move the red underlines somewhere else. Set _LANG_LATIN to 'ar-IQ'
+   if a literal w:val="ar-IQ" default is ever required. */
+const _LANG_AR    = 'ar-IQ';
+const _LANG_LATIN = 'en-US';
+
+/* Arabic + Arabic Supplement/Extended + Presentation Forms A/B. */
+const _ARABIC_RE = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+const _hasArabic = (s) => _ARABIC_RE.test(String(s ?? ''));
+
+/* The library exposes no class for <w:lang>, but its serializer passes
+   any non-XmlComponent child straight through to the XML writer, so a
+   plain node in the writer's own shape is a supported escape hatch and
+   needs no fork of the library. */
+const _langNode = (val, bidi) => ({
+  'w:lang': { _attr: { 'w:val': val, 'w:bidi': bidi } },
+});
+
+/* Text carried by a run, whether given as `text` or as string children. */
+function _runText(o) {
+  const kids = Array.isArray(o.children) ? o.children.filter((c) => typeof c === 'string') : [];
+  return [o.text || '', ...kids].join(' ');
+}
+
+/* Wraps TextRun so every run holding Arabic is tagged at the source.
+   Doing it here rather than at ~150 call sites means a run added later
+   is covered automatically and cannot be forgotten. */
+function _withArabicLang(BaseRun) {
+  return class extends BaseRun {
+    constructor(options) {
+      const o = (typeof options === 'string') ? { text: options } : (options || {});
+      const isAr = _rtl() && _hasArabic(_runText(o));
+      /* w:rtl marks the run as complex script, which is what makes Word
+         read w:bidi (not w:val) as the proofing language and apply the
+         w:cs font. Without it the tag is easy for Word to ignore. */
+      super(isAr ? { ...o, rightToLeft: true } : o);
+      if (isAr) {
+        try {
+          /* Appended last, which is also where <w:lang> belongs in the
+             EG_RPrBase sequence — after w:rtl and w:cs. */
+          this.properties.addChildElement(_langNode(_LANG_AR, _LANG_AR));
+        } catch (e) {
+          console.warn('w:lang not applied to run:', e);
+        }
+      }
+    }
+  };
+}
+
+/* `new Paragraph({ text: '...' })` builds its run internally with the
+   library's own TextRun, bypassing the wrapper above. Rewriting the
+   shorthand into an explicit child keeps those 20-odd paragraphs from
+   being the one gap. */
+function _withArabicLangParagraph(BaseParagraph, WrappedRun) {
+  return class extends BaseParagraph {
+    constructor(options) {
+      const o = (typeof options === 'string') ? { text: options } : (options || {});
+      if (_rtl() && o.text && _hasArabic(o.text)) {
+        const { text, ...rest } = o;
+        super({ ...rest, children: [new WrappedRun({ text }), ...(o.children || [])] });
+      } else {
+        super(options);
+      }
+    }
+  };
+}
+
+/* Document-level fallback: <w:lang> inside docDefaults/rPrDefault, so
+   anything not produced through the wrappers — and any text the user
+   types into the exported file afterwards — still gets the right
+   dictionary. docx@7.8.2 builds docDefaults from
+   `styles.default.document.run`, which also has no language option, so
+   the node is added to the tree the library already built. The walk is
+   by rootKey and tolerates the structure moving in a future version. */
+function _applyDocDefaultsLang(doc) {
+  if (!_rtl()) return;
+  try {
+    const find = (node, key) => {
+      if (!node || typeof node !== 'object') return null;
+      if (node.rootKey === key) return node;
+      if (!Array.isArray(node.root)) return null;
+      for (const child of node.root) {
+        const hit = find(child, key);
+        if (hit) return hit;
+      }
+      return null;
+    };
+    const defaults = find(doc.Styles, 'w:docDefaults');
+    const rPr = defaults && find(defaults, 'w:rPr');
+    if (rPr) rPr.addChildElement(_langNode(_LANG_LATIN, _LANG_AR));
+  } catch (e) {
+    /* Per-run tags already carry the fix; a missed default is cosmetic. */
+    console.warn('w:lang not applied to docDefaults:', e);
+  }
+}
+
 /* Dates in the exported document follow the EXPORT language, not the
    browser's locale — those are frequently different, and a report is a
    deliverable that must be internally consistent. */
@@ -101,7 +210,11 @@ export async function exportTaskVerificationWord() {
                     return;
                 }
 
-                const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, ShadingType, Packer } = window.docx;
+                const { Document, Paragraph: _Paragraph, TextRun: _TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, ShadingType, Packer } = window.docx;
+                /* Runs and shorthand paragraphs are created through the
+                   wrappers so Arabic carries <w:lang>. */
+                const TextRun   = _withArabicLang(_TextRun);
+                const Paragraph = _withArabicLangParagraph(_Paragraph, TextRun);
 
                 showStatus(_t('msgGeneratingTVWord'), 'success');
 
@@ -493,6 +606,11 @@ export async function exportTaskVerificationWord() {
                     }],
                 });
 
+                /* <w:lang> in docDefaults — the safety net under the
+                   per-run tags, and what makes text typed into the
+                   exported file later behave as well. */
+                _applyDocDefaultsLang(doc);
+
                 // Generate and download
                 const blob = await Packer.toBlob(doc);
                 const url = URL.createObjectURL(blob);
@@ -555,7 +673,11 @@ export async function exportToWord() {
                     return;
                 }
 
-                const { Document, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, Packer, PageBreak, convertInchesToTwip, ShadingType, TextDirection, ImageRun } = window.docx;
+                const { Document, Paragraph: _Paragraph, TextRun: _TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, Packer, PageBreak, convertInchesToTwip, ShadingType, TextDirection, ImageRun } = window.docx;
+                /* Runs and shorthand paragraphs are created through the
+                   wrappers so Arabic carries <w:lang>. */
+                const TextRun   = _withArabicLang(_TextRun);
+                const Paragraph = _withArabicLangParagraph(_Paragraph, TextRun);
 
                 // Get all input values
                 const dacumDateValue = document.getElementById('dacumDate').value;
@@ -2320,6 +2442,11 @@ export async function exportToWord() {
                         children: children,
                     }],
                 });
+
+                /* <w:lang> in docDefaults — the safety net under the
+                   per-run tags, and what makes text typed into the
+                   exported file later behave as well. */
+                _applyDocDefaultsLang(doc);
 
                 // Generate and download
                 const blob = await Packer.toBlob(doc);
