@@ -587,11 +587,23 @@ export async function exportTaskVerificationWord() {
                     },
                     sections: [{
                         properties: {
-                            /* bidi on the SECTION makes Word treat the whole
-                               section as right-to-left: table columns run
-                               right-to-left, and list markers and numbering
-                               sit on the correct edge. Paragraph-level
-                               bidirectional alone does not do either. */
+                            /* NO-OP — kept only so the intent is not lost.
+                               docx has no `bidi` option on section
+                               properties in v7.8.2 (nor in v9): it appears
+                               in the library source as an XSD comment only,
+                               and the generated <w:sectPr> contains no
+                               <w:bidi/>. Verified against the packed output.
+
+                               Nothing depends on it. RTL is already carried
+                               where it counts: `visuallyRightToLeft` on each
+                               Table emits <w:bidiVisual/> for column order,
+                               and `bidirectional` on each Paragraph emits
+                               <w:bidi/> for reading order. The only thing
+                               still missing is the section-level default for
+                               automatic list numbering — if numbered lists
+                               are ever added, inject <w:bidi/> into sectPr
+                               the way _applyDocDefaultsLang injects w:lang,
+                               or upgrade the library. */
                             bidi: _rtl(),
                             page: {
                                 margin: {
@@ -2424,11 +2436,23 @@ export async function exportToWord() {
                     },
                     sections: [{
                         properties: {
-                            /* bidi on the SECTION makes Word treat the whole
-                               section as right-to-left: table columns run
-                               right-to-left, and list markers and numbering
-                               sit on the correct edge. Paragraph-level
-                               bidirectional alone does not do either. */
+                            /* NO-OP — kept only so the intent is not lost.
+                               docx has no `bidi` option on section
+                               properties in v7.8.2 (nor in v9): it appears
+                               in the library source as an XSD comment only,
+                               and the generated <w:sectPr> contains no
+                               <w:bidi/>. Verified against the packed output.
+
+                               Nothing depends on it. RTL is already carried
+                               where it counts: `visuallyRightToLeft` on each
+                               Table emits <w:bidiVisual/> for column order,
+                               and `bidirectional` on each Paragraph emits
+                               <w:bidi/> for reading order. The only thing
+                               still missing is the section-level default for
+                               automatic list numbering — if numbered lists
+                               are ever added, inject <w:bidi/> into sectPr
+                               the way _applyDocDefaultsLang injects w:lang,
+                               or upgrade the library. */
                             bidi: _rtl(),
                             page: {
                                 margin: {
