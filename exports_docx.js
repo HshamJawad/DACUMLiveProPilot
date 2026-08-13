@@ -197,9 +197,7 @@ export async function exportTaskVerificationWord() {
                 // normal thing to want mid-analysis; the coverage line
                 // below states plainly how partial it is.
                 if (validResults.length === 0) {
-                    alert('No task has been fully rated yet.\n\n' +
-                          'Rate Importance, Frequency and Learning Difficulty for at least ' +
-                          'one task in the Task Verification tab, then export again.');
+                    alert(_t('msgNoTaskRated'));
                     return;
                 }
 
@@ -707,7 +705,7 @@ export async function exportToWord() {
                 const jobTitle = document.getElementById('jobTitle').value;
 
                 if (!occupationTitle) {
-                    alert('Please enter an Occupation Title before exporting.');
+                    alert(_t('msgOccupationRequiredExport'));
                     showStatus(_t('msgOccupationRequiredExport'), 'error');
                     return;
                 }

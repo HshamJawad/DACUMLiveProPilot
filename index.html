@@ -108,16 +108,98 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v79';
+      var EXPECTED_SW = 'v81';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bumped together with EXPECTED_SW above.
-      var APP_VERSION = '3.22.1';
+      var APP_VERSION = '3.23.1';
       var APP_RELEASED = '2026-08-14';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.23.1 — 2026-08-14 — native dialogs, part 2 ─────────
+         PATCH. Completes 3.23.0 across the remaining modules.
+
+         Fixed (23 more strings)
+           additional_info_ai.js  the reported message — "enter an
+                                  Occupation Title in Chart Info to
+                                  generate the supporting information"
+                                  — plus the replace-sections confirm
+           tasks.js               orphaned-ratings confirm
+           clustering_ai.js       replace Range/Criteria confirm
+           module_mapping_ai.js   replace-modules confirm
+           workshop.js            QR-not-found alert
+           storage.js             invalid image type, unreadable image,
+                                  upload success, remove-logo confirm,
+                                  logo removed, "No image" placeholder,
+                                  daily-limit button tooltip
+           projects.js            eight "<tab> cleared" messages and
+                                  "tab already empty"
+           renderer.js            nothing-to-format, formatted-with-
+                                  numbering/bullets, section removed
+           exports_pdf.js         "add at least one duty with tasks"
+
+         Plural forms
+           Counted dialogs were assembled as 'rating' + (n===1?'':'s')
+           and `${n} cluster${n>1?'s':''}`. That is English grammar
+           written into the code: it cannot express Arabic's dual and
+           cannot reorder a French sentence. Each is now two keys
+           (...One / ...Many) with the count passed through {n}.
+
+         Reuse over duplication
+           The eight "<tab> cleared" messages became one msgTabCleared
+           with {v} filled from the tab-name keys that already existed,
+           rather than eight near-identical sentences per language.
+
+         Added
+           23 i18n keys x 3 languages. storage.js gained the _t/_tf
+           helpers it had never had.
+
+         Verified
+           All 300 keys referenced by _t()/_tf() across the twelve
+           reviewed modules resolve in English, French and Arabic. The
+           only remaining literals beside a dialog call are emoji
+           prefixes on already-translated keys.
+
+         ── 3.23.0 — 2026-08-14 — native dialogs follow the UI ────
+         MINOR. Reported from the PWA: an Arabic interface showing an
+         English alert.
+
+         Why this class of string was missed
+           applyTranslations() walks [data-i18n] in the DOM. alert(),
+           confirm() and showStatus() are called from JS at the moment
+           of the action and never enter the DOM, so they are invisible
+           to it. Each one has to resolve its own key at CALL TIME. A
+           hard-coded English literal there survives every language
+           switch — which is exactly what happened.
+
+         Fixed in this pass (18 strings)
+           renderer.js     min-category, min-competency, remove-category,
+                           remove-section
+           projects.js     verification-gate alert, clear-tab confirm,
+                           clear-tab-with-downstream confirm, AI
+                           overwrite confirm, AI cancelled / success /
+                           failed, daily limit (x2), all-data-cleared,
+                           occupation-required alert
+           exports_docx.js / exports_pdf.js
+                           no-task-rated, occupation-required-for-export
+                           and its status line
+
+         Added
+           16 i18n keys x 3 languages. Multi-line dialogs keep their
+           line breaks; the downstream-clear confirm takes the affected
+           stage list through a {list} placeholder rather than being
+           assembled from English fragments.
+
+         Still outstanding
+           The message in the report — "Please enter an Occupation
+           Title in Chart Info to generate the supporting information"
+           — lives in additional_info_ai.js, which has not been
+           reviewed. The same audit is owed to the other AI modules,
+           duties.js, tasks.js, modules.js, storage.js, snapshots.js
+           and workshop.js.
 
          ── 3.22.1 — 2026-08-14 — section buttons on phones ──────
          PATCH. Follow-up to 3.21.0, reported from the installed PWA.

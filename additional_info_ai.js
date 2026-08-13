@@ -248,7 +248,7 @@ export async function generateAdditionalInfoAI() {
   const inputs = _readAIInputs();
 
   if (!inputs.occupationTitle) {
-    alert('Please enter an Occupation Title in Chart Info to generate the supporting information.');
+    alert(_t('msgOccupationRequiredAddInfo'));
     showStatus(_t('msgOccupationRequired'), 'error');
     return false;
   }
@@ -261,12 +261,7 @@ export async function generateAdditionalInfoAI() {
      one silently stalls the pipeline until someone notices. */
   if (!isBatchRun() && filled.length) {
     const names = filled.map(f => `  • ${f.label}`).join('\n');
-    if (!confirm(
-      '⚠️ AI GENERATION WILL REPLACE THE CONTENT OF THESE SECTIONS:\n\n' +
-      names +
-      '\n\nCustom sections you added yourself are NOT affected.\n\n' +
-      'Click OK to continue, or Cancel to keep your current work.'
-    )) {
+    if (!confirm('\u26A0\uFE0F ' + _tf('confirmReplaceSections', { list: names }))) {
       showStatus(_t('msgCancelAddInfo'), 'error');
       return false;
     }

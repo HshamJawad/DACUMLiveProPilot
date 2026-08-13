@@ -120,9 +120,7 @@ export function exportTaskVerificationPDF() {
         );
 
         if (validResults.length === 0) {
-            alert('No task has been fully rated yet.\n\n' +
-                  'Rate Importance, Frequency and Learning Difficulty for at least ' +
-                  'one task in the Task Verification tab, then export again.');
+            alert(_t('msgNoTaskRated'));
             return;
         }
 
@@ -516,8 +514,8 @@ export function exportToPDF() {
         
         // Validation — Occupation Title required; Job Title optional
         if (!occupationTitleInput.value) {
-            alert('Please enter an Occupation Title before exporting.');
-            showStatus('Occupation Title is required for export.', 'error');
+            alert(_t('msgOccupationRequiredExport'));
+            showStatus(_t('msgOccupationRequiredExportStatus'), 'error');
             return;
         }
         
@@ -793,7 +791,7 @@ export function exportToPDF() {
         });
         
         if (duties.length === 0) {
-            showStatus('Please add at least one duty with tasks', 'error');
+            showStatus(_t('msgNeedOneDuty'), 'error');
             return;
         }
         

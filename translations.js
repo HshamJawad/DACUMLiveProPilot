@@ -309,6 +309,60 @@
       occBtnUseSuggestion: 'Use “{v}”',
       occBtnEdit: 'Edit the title',
       occBtnGenerateAnyway: 'Generate anyway',
+      /* ── Native dialog + status strings ───────────────────────
+         alert() and confirm() cannot be reached by applyTranslations()
+         — they are called from JS at the moment of the action, not
+         rendered into the DOM — so every one of them has to resolve
+         its own key at CALL TIME. A hard-coded English string here
+         survives every language switch, which is how an Arabic
+         interface ended up showing an English alert. */
+      msgMinOneCategory: 'At least one category is required.',
+      msgMinOneCompetency: 'At least one competency is required per category.',
+      confirmRemoveCategory: 'Remove this category and all its competencies?',
+      confirmRemoveSection: 'Remove this section? This cannot be undone.',
+      confirmClearTab: 'Clear this tab? This cannot be undone.',
+      confirmClearTabDownstream: 'Clear this tab? This cannot be undone.\n\nLater DACUM stages were built from this one and will NOT be cleared, so they will be left referring to data that no longer exists:\n\n{list}\n\nReview or clear those stages too, or cancel and rebuild from here downwards.\n\nContinue?',
+      confirmAIOverwrite: 'AI generation will replace all existing duties and tasks.\n\nOK to continue, or Cancel to keep your current work.',
+      msgAIGenCancelled: 'AI generation cancelled. Your existing duties are preserved.',
+      msgAIGenSuccess: 'AI draft generated — {n} duties with tasks created.',
+      msgAIGenFailed: 'AI generation failed. See the error dialog for details.',
+      msgDailyLimitReached: 'Daily limit reached ({n} generations). Try again tomorrow.',
+      msgAllDataCleared: 'All data cleared. Ready for a new DACUM session.',
+      msgChooseVerificationOption: 'Please choose an option in the Task Verification tab:\n\n1. Finalize & Create Live Voting Session\n   OR\n2. Proceed to Competency Clustering Without Verification\n\nYou must select one option before proceeding.',
+      msgNoTaskRated: 'No task has been fully rated yet.\n\nRate Importance, Frequency and Learning Difficulty for at least one task in the Task Verification tab, then export again.',
+      msgOccupationRequiredExport: 'Please enter an Occupation Title before exporting.',
+      msgOccupationRequiredExportStatus: 'Occupation Title is required for export.',
+      /* ── Native dialogs, part 2 ───────────────────────────────
+         Counted strings are split into ...One / ...Many keys rather
+         than assembled as 'rating' + (n === 1 ? '' : 's'). That
+         concatenation is English grammar written into the code: it
+         cannot express Arabic's dual, and it cannot reorder a French
+         sentence. The count still passes through {n}. */
+      msgQRNotFound: 'QR code not found.',
+      msgOccupationRequiredAddInfo: 'Please enter an Occupation Title in Chart Info to generate the supporting information.',
+      confirmReplaceSections: 'AI generation will replace the content of these sections:\n\n{list}\n\nCustom sections you added yourself are NOT affected.\n\nOK to continue, or Cancel to keep your current work.',
+      confirmReplaceCriteriaOne: 'This will replace the Range and Performance Criteria of 1 cluster.\n\nCluster names and their task groupings are NOT affected.\n\nOK to continue, or Cancel to keep your current text.',
+      confirmReplaceCriteriaMany: 'This will replace the Range and Performance Criteria of {n} clusters.\n\nCluster names and their task groupings are NOT affected.\n\nOK to continue, or Cancel to keep your current text.',
+      confirmReplaceModulesOne: 'This will replace the 1 module you already have.\n\nLearning Outcomes and Performance Criteria are NOT affected — only the module grouping is rebuilt.\n\nOK to continue, or Cancel to keep your current modules.',
+      confirmReplaceModulesMany: 'This will replace the {n} modules you already have.\n\nLearning Outcomes and Performance Criteria are NOT affected — only the module grouping is rebuilt.\n\nOK to continue, or Cancel to keep your current modules.',
+      confirmOrphanRatingsOne: '1 rating will lose its task after this refresh.\n\nThe task was renamed or removed in the Duties & Tasks tab, so the rating can no longer be shown, edited or exported.\n\nContinue with the refresh?\nCancel to go back to Duties & Tasks and restore the task first.',
+      confirmOrphanRatingsMany: '{n} ratings will lose their tasks after this refresh.\n\nThe tasks were renamed or removed in the Duties & Tasks tab, so the ratings can no longer be shown, edited or exported.\n\nContinue with the refresh?\nCancel to go back to Duties & Tasks and restore the tasks first.',
+      msgInvalidImageType: 'Please upload a valid image file (JPG, JPEG, PNG or BMP).',
+      msgImageUnreadable: 'Could not read that image file. Please try another.',
+      msgImageUploaded: 'Image uploaded — optimised to about {kb} KB.',
+      confirmRemoveLogo: 'Remove this logo?',
+      msgImageRemoved: 'Logo removed.',
+      msgNoImage: 'No image',
+      ttDailyLimitReached: 'Daily AI generation limit reached. Try again tomorrow.',
+      /* Cleared-tab confirmations reuse the tab names already defined
+         above via {v}, instead of eight near-identical sentences. */
+      msgTabAlreadyEmpty: 'This tab is already empty — nothing to clear.',
+      msgTabCleared: '{v} cleared.',
+      msgNothingToFormat: 'Nothing to format — add some content first.',
+      msgFormattedNumbering: 'Formatted with numbering.',
+      msgFormattedBullets: 'Formatted with bullets.',
+      msgSectionRemoved: 'Section removed.',
+      msgNeedOneDuty: 'Please add at least one duty with tasks.',
       btnRemove: 'Remove',
       phKnowledge: 'Enter each knowledge requirement on a new line\nExample:\n• Understanding of electrical systems\n• Knowledge of safety protocols',
       phSkills: 'Enter each skill requirement on a new line\nExample:\n• Ability to read technical diagrams\n• Proficiency in using hand tools',
@@ -1331,6 +1385,60 @@
       occBtnUseSuggestion: 'Utiliser « {v} »',
       occBtnEdit: 'Modifier l’intitulé',
       occBtnGenerateAnyway: 'Générer quand même',
+      /* ── Native dialog + status strings ───────────────────────
+         alert() and confirm() cannot be reached by applyTranslations()
+         — they are called from JS at the moment of the action, not
+         rendered into the DOM — so every one of them has to resolve
+         its own key at CALL TIME. A hard-coded English string here
+         survives every language switch, which is how an Arabic
+         interface ended up showing an English alert. */
+      msgMinOneCategory: 'Au moins une catégorie est requise.',
+      msgMinOneCompetency: 'Au moins une compétence est requise par catégorie.',
+      confirmRemoveCategory: 'Supprimer cette catégorie et toutes ses compétences ?',
+      confirmRemoveSection: 'Supprimer cette section ? Cette action est irréversible.',
+      confirmClearTab: 'Effacer cet onglet ? Cette action est irréversible.',
+      confirmClearTabDownstream: 'Effacer cet onglet ? Cette action est irréversible.\n\nDes étapes DACUM ultérieures ont été construites à partir de celle-ci et ne seront PAS effacées ; elles renverront donc à des données qui n’existent plus :\n\n{list}\n\nVérifiez ou effacez aussi ces étapes, ou annulez et reconstruisez à partir d’ici.\n\nContinuer ?',
+      confirmAIOverwrite: 'La génération IA remplacera toutes les activités et tâches existantes.\n\nOK pour continuer, ou Annuler pour conserver votre travail.',
+      msgAIGenCancelled: 'Génération IA annulée. Vos activités existantes sont conservées.',
+      msgAIGenSuccess: 'Brouillon IA généré — {n} activités avec leurs tâches.',
+      msgAIGenFailed: 'Échec de la génération IA. Voir la boîte de dialogue d’erreur.',
+      msgDailyLimitReached: 'Limite quotidienne atteinte ({n} générations). Réessayez demain.',
+      msgAllDataCleared: 'Toutes les données ont été effacées. Prêt pour une nouvelle session DACUM.',
+      msgChooseVerificationOption: 'Veuillez choisir une option dans l’onglet Vérification des tâches :\n\n1. Finaliser et créer une session de vote en direct\n   OU\n2. Passer au regroupement des compétences sans vérification\n\nVous devez sélectionner une option avant de continuer.',
+      msgNoTaskRated: 'Aucune tâche n’a encore été entièrement évaluée.\n\nÉvaluez l’importance, la fréquence et la difficulté d’apprentissage d’au moins une tâche dans l’onglet Vérification des tâches, puis exportez à nouveau.',
+      msgOccupationRequiredExport: 'Veuillez saisir un intitulé de métier avant d’exporter.',
+      msgOccupationRequiredExportStatus: 'L’intitulé du métier est requis pour l’export.',
+      /* ── Native dialogs, part 2 ───────────────────────────────
+         Counted strings are split into ...One / ...Many keys rather
+         than assembled as 'rating' + (n === 1 ? '' : 's'). That
+         concatenation is English grammar written into the code: it
+         cannot express Arabic's dual, and it cannot reorder a French
+         sentence. The count still passes through {n}. */
+      msgQRNotFound: 'Code QR introuvable.',
+      msgOccupationRequiredAddInfo: 'Veuillez saisir un intitulé de métier dans Informations du référentiel pour générer les informations complémentaires.',
+      confirmReplaceSections: 'La génération IA remplacera le contenu de ces sections :\n\n{list}\n\nLes sections personnalisées que vous avez ajoutées ne sont PAS concernées.\n\nOK pour continuer, ou Annuler pour conserver votre travail.',
+      confirmReplaceCriteriaOne: 'Ceci remplacera le champ d’application et les critères de performance d’un regroupement.\n\nLes noms des regroupements et leurs tâches ne sont PAS concernés.\n\nOK pour continuer, ou Annuler pour conserver votre texte.',
+      confirmReplaceCriteriaMany: 'Ceci remplacera le champ d’application et les critères de performance de {n} regroupements.\n\nLes noms des regroupements et leurs tâches ne sont PAS concernés.\n\nOK pour continuer, ou Annuler pour conserver votre texte.',
+      confirmReplaceModulesOne: 'Ceci remplacera le module que vous avez déjà.\n\nLes résultats d’apprentissage et les critères de performance ne sont PAS concernés : seul le regroupement en modules est reconstruit.\n\nOK pour continuer, ou Annuler pour conserver vos modules.',
+      confirmReplaceModulesMany: 'Ceci remplacera les {n} modules que vous avez déjà.\n\nLes résultats d’apprentissage et les critères de performance ne sont PAS concernés : seul le regroupement en modules est reconstruit.\n\nOK pour continuer, ou Annuler pour conserver vos modules.',
+      confirmOrphanRatingsOne: 'Une évaluation perdra sa tâche après cette actualisation.\n\nLa tâche a été renommée ou supprimée dans l’onglet Activités et tâches ; l’évaluation ne peut donc plus être affichée, modifiée ni exportée.\n\nContinuer l’actualisation ?\nAnnulez pour revenir aux Activités et tâches et restaurer la tâche d’abord.',
+      confirmOrphanRatingsMany: '{n} évaluations perdront leurs tâches après cette actualisation.\n\nLes tâches ont été renommées ou supprimées dans l’onglet Activités et tâches ; les évaluations ne peuvent donc plus être affichées, modifiées ni exportées.\n\nContinuer l’actualisation ?\nAnnulez pour revenir aux Activités et tâches et restaurer les tâches d’abord.',
+      msgInvalidImageType: 'Veuillez téléverser un fichier image valide (JPG, JPEG, PNG ou BMP).',
+      msgImageUnreadable: 'Impossible de lire ce fichier image. Veuillez en essayer un autre.',
+      msgImageUploaded: 'Image téléversée — optimisée à environ {kb} Ko.',
+      confirmRemoveLogo: 'Supprimer ce logo ?',
+      msgImageRemoved: 'Logo supprimé.',
+      msgNoImage: 'Aucune image',
+      ttDailyLimitReached: 'Limite quotidienne de génération IA atteinte. Réessayez demain.',
+      /* Cleared-tab confirmations reuse the tab names already defined
+         above via {v}, instead of eight near-identical sentences. */
+      msgTabAlreadyEmpty: 'Cet onglet est déjà vide — rien à effacer.',
+      msgTabCleared: '{v} : contenu effacé.',
+      msgNothingToFormat: 'Rien à mettre en forme — ajoutez d’abord du contenu.',
+      msgFormattedNumbering: 'Mise en forme avec numérotation.',
+      msgFormattedBullets: 'Mise en forme avec puces.',
+      msgSectionRemoved: 'Section supprimée.',
+      msgNeedOneDuty: 'Veuillez ajouter au moins une activité avec ses tâches.',
       btnRemove: 'Supprimer',
       phKnowledge: 'Saisissez chaque exigence de connaissance sur une ligne\nExemple :\n• Compréhension des systèmes électriques\n• Connaissance des protocoles de sécurité',
       phSkills: 'Saisissez chaque exigence de compétence sur une ligne\nExemple :\n• Capacité à lire des schémas techniques\n• Maîtrise des outils à main',
@@ -2271,6 +2379,60 @@
       occBtnUseSuggestion: 'استخدم «{v}»',
       occBtnEdit: 'تعديل الاسم',
       occBtnGenerateAnyway: 'توليد على أي حال',
+      /* ── Native dialog + status strings ───────────────────────
+         alert() and confirm() cannot be reached by applyTranslations()
+         — they are called from JS at the moment of the action, not
+         rendered into the DOM — so every one of them has to resolve
+         its own key at CALL TIME. A hard-coded English string here
+         survives every language switch, which is how an Arabic
+         interface ended up showing an English alert. */
+      msgMinOneCategory: 'يلزم وجود فئة واحدة على الأقل.',
+      msgMinOneCompetency: 'يلزم وجود كفاءة واحدة على الأقل في كل فئة.',
+      confirmRemoveCategory: 'إزالة هذه الفئة وكل كفاءاتها؟',
+      confirmRemoveSection: 'إزالة هذا القسم؟ لا يمكن التراجع عن هذا الإجراء.',
+      confirmClearTab: 'تفريغ هذا التبويب؟ لا يمكن التراجع عن هذا الإجراء.',
+      confirmClearTabDownstream: 'تفريغ هذا التبويب؟ لا يمكن التراجع عن هذا الإجراء.\n\nمراحل لاحقة من DACUM بُنيت على هذه المرحلة ولن تُفرّغ، فستبقى تُحيل إلى بيانات لم تعد موجودة:\n\n{list}\n\nراجع تلك المراحل أو فرّغها أيضاً، أو ألغِ وأعد البناء من هنا فنازلاً.\n\nمتابعة؟',
+      confirmAIOverwrite: 'سيستبدل التوليد بالذكاء الاصطناعي جميع الواجبات والمهام الحالية.\n\nاضغط موافق للمتابعة، أو إلغاء للإبقاء على عملك الحالي.',
+      msgAIGenCancelled: 'تم إلغاء التوليد. واجباتك الحالية محفوظة.',
+      msgAIGenSuccess: 'تم توليد المسودة — {n} واجباً مع مهامها.',
+      msgAIGenFailed: 'فشل التوليد بالذكاء الاصطناعي. راجع نافذة الخطأ للتفاصيل.',
+      msgDailyLimitReached: 'تم بلوغ الحد اليومي ({n} عمليات توليد). حاول غداً.',
+      msgAllDataCleared: 'تم تفريغ جميع البيانات. الأداة جاهزة لجلسة DACUM جديدة.',
+      msgChooseVerificationOption: 'يرجى اختيار أحد الخيارين في تبويب التحقّق من المهام:\n\n1. الإنهاء وإنشاء جلسة تصويت مباشرة\n   أو\n2. الانتقال إلى تجميع الكفاءات دون تحقّق\n\nعليك اختيار أحدهما قبل المتابعة.',
+      msgNoTaskRated: 'لم تُقيّم أي مهمة تقييماً كاملاً بعد.\n\nقيّم الأهمية والتكرار وصعوبة التعلّم لمهمة واحدة على الأقل في تبويب التحقّق من المهام، ثم أعد التصدير.',
+      msgOccupationRequiredExport: 'يرجى إدخال اسم المهنة قبل التصدير.',
+      msgOccupationRequiredExportStatus: 'اسم المهنة مطلوب للتصدير.',
+      /* ── Native dialogs, part 2 ───────────────────────────────
+         Counted strings are split into ...One / ...Many keys rather
+         than assembled as 'rating' + (n === 1 ? '' : 's'). That
+         concatenation is English grammar written into the code: it
+         cannot express Arabic's dual, and it cannot reorder a French
+         sentence. The count still passes through {n}. */
+      msgQRNotFound: 'تعذّر إيجاد رمز QR.',
+      msgOccupationRequiredAddInfo: 'يرجى إدخال اسم المهنة في تبويب معلومات المخطط لتوليد المعلومات الداعمة.',
+      confirmReplaceSections: 'سيستبدل التوليد بالذكاء الاصطناعي محتوى الأقسام التالية:\n\n{list}\n\nالأقسام المخصّصة التي أضفتها بنفسك لن تتأثر.\n\nاضغط موافق للمتابعة، أو إلغاء للإبقاء على عملك الحالي.',
+      confirmReplaceCriteriaOne: 'سيُستبدل المدى ومعايير الأداء لتجميعة واحدة.\n\nأسماء التجميعات ومهامها لن تتأثر.\n\nاضغط موافق للمتابعة، أو إلغاء للإبقاء على نصّك الحالي.',
+      confirmReplaceCriteriaMany: 'سيُستبدل المدى ومعايير الأداء لـ {n} تجميعات.\n\nأسماء التجميعات ومهامها لن تتأثر.\n\nاضغط موافق للمتابعة، أو إلغاء للإبقاء على نصّك الحالي.',
+      confirmReplaceModulesOne: 'سيُستبدل المقرّر الواحد الموجود لديك.\n\nمحصلات التعلّم ومعايير الأداء لن تتأثر — يُعاد بناء التجميع في المقررات فقط.\n\nاضغط موافق للمتابعة، أو إلغاء للإبقاء على مقرراتك.',
+      confirmReplaceModulesMany: 'سيُستبدل الـ {n} مقررات الموجودة لديك.\n\nمحصلات التعلّم ومعايير الأداء لن تتأثر — يُعاد بناء التجميع في المقررات فقط.\n\nاضغط موافق للمتابعة، أو إلغاء للإبقاء على مقرراتك.',
+      confirmOrphanRatingsOne: 'سيفقد تقييم واحد مهمته بعد هذا التحديث.\n\nأُعيدت تسمية المهمة أو حُذفت في تبويب الواجبات والمهام، فلم يعد ممكناً عرض التقييم أو تعديله أو تصديره.\n\nهل تريد المتابعة؟\nألغِ للعودة إلى تبويب الواجبات والمهام واستعادة المهمة أولاً.',
+      confirmOrphanRatingsMany: 'ستفقد {n} تقييمات مهامها بعد هذا التحديث.\n\nأُعيدت تسمية المهام أو حُذفت في تبويب الواجبات والمهام، فلم يعد ممكناً عرض التقييمات أو تعديلها أو تصديرها.\n\nهل تريد المتابعة؟\nألغِ للعودة إلى تبويب الواجبات والمهام واستعادة المهام أولاً.',
+      msgInvalidImageType: 'يرجى رفع ملف صورة صالح (JPG أو JPEG أو PNG أو BMP).',
+      msgImageUnreadable: 'تعذّرت قراءة ملف الصورة. جرّب ملفاً آخر.',
+      msgImageUploaded: 'تم رفع الصورة — جرى ضغطها إلى نحو {kb} كيلوبايت.',
+      confirmRemoveLogo: 'إزالة هذا الشعار؟',
+      msgImageRemoved: 'تمت إزالة الشعار.',
+      msgNoImage: 'لا توجد صورة',
+      ttDailyLimitReached: 'تم بلوغ الحد اليومي للتوليد بالذكاء الاصطناعي. حاول غداً.',
+      /* Cleared-tab confirmations reuse the tab names already defined
+         above via {v}, instead of eight near-identical sentences. */
+      msgTabAlreadyEmpty: 'هذا التبويب فارغ أصلاً — لا شيء لتفريغه.',
+      msgTabCleared: 'تم تفريغ {v}.',
+      msgNothingToFormat: 'لا يوجد محتوى لتنسيقه — أضف نصاً أولاً.',
+      msgFormattedNumbering: 'تم التنسيق بالترقيم.',
+      msgFormattedBullets: 'تم التنسيق بالتعداد النقطي.',
+      msgSectionRemoved: 'تمت إزالة القسم.',
+      msgNeedOneDuty: 'يرجى إضافة واجب واحد على الأقل مع مهامه.',
       btnRemove: 'حذف',
       phKnowledge: 'أدخل كل متطلب معرفي في سطر مستقل\nمثال:\n• فهم الأنظمة الكهربائية\n• معرفة بروتوكولات السلامة',
       phSkills: 'أدخل كل متطلب مهاري في سطر مستقل\nمثال:\n• القدرة على قراءة الرسوم الفنية\n• إتقان استخدام العُدد اليدوية',

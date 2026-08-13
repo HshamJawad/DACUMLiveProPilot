@@ -243,7 +243,7 @@ export function lwDownloadQRPNG() {
     sourceCanvas.width = qrImg.naturalWidth;
     sourceCanvas.height = qrImg.naturalHeight;
     sourceCanvas.getContext('2d').drawImage(qrImg, 0, 0);
-  } else { alert('QR code not found'); return; }
+  } else { alert(_t('msgQRNotFound')); return; }
 
   const border = 24;
   const exportSize = sourceCanvas.width + border * 2;

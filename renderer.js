@@ -115,10 +115,10 @@ export function addSkillsCategory() {
 
 export function removeSkillsCategory(categoryIndex) {
   if (appState.skillsLevelData.length <= 1) {
-    alert('At least one category is required.');
+    alert(_t('msgMinOneCategory'));
     return;
   }
-  if (confirm('Are you sure you want to remove this category?')) {
+  if (confirm(_t('confirmRemoveCategory'))) {
     appState.skillsLevelData.splice(categoryIndex, 1);
     renderSkillsLevel();
   }
@@ -142,7 +142,7 @@ export function addSkillsCompetency(categoryIndex) {
 export function removeSkillsCompetency(categoryIndex, competencyIndex) {
   const category = appState.skillsLevelData[categoryIndex];
   if (category.competencies.length <= 1) {
-    alert('At least one competency is required per category.');
+    alert(_t('msgMinOneCompetency'));
     return;
   }
   category.competencies.splice(competencyIndex, 1);
@@ -312,7 +312,7 @@ export function clearSection(inputId, headingId, defaultHeading, headingKey) {
 export function formatList(inputId, formatType) {
   const textarea = document.getElementById(inputId);
   const text = textarea.value.trim();
-  if (!text) { showStatus('Nothing to format! Add some content first.', 'error'); return; }
+  if (!text) { showStatus(_t('msgNothingToFormat'), 'error'); return; }
 
   let lines = text.split('\n').filter(l => l.trim());
   lines = lines.map(line => {
@@ -329,7 +329,7 @@ export function formatList(inputId, formatType) {
   }
 
   textarea.value = formatted.join('\n');
-  showStatus(`✓ Formatted with ${formatType === 'number' ? 'numbering' : 'bullets'}!`, 'success');
+  showStatus(_t(formatType === 'number' ? 'msgFormattedNumbering' : 'msgFormattedBullets'), 'success');
 }
 
 export function addCustomSection() {
@@ -365,9 +365,9 @@ export function addCustomSection() {
 }
 
 export function removeCustomSection(sectionId) {
-  if (confirm('Are you sure you want to remove this section? This cannot be undone!')) {
+  if (confirm(_t('confirmRemoveSection'))) {
     const section = document.getElementById(sectionId);
-    if (section) { section.remove(); showStatus('Section removed! ✓', 'success'); }
+    if (section) { section.remove(); showStatus(_t('msgSectionRemoved'), 'success'); }
   }
 }
 

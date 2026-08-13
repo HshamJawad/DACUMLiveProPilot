@@ -94,13 +94,10 @@ function _confirmOverwrite() {
      dialogs during a run the user has already authorised — and each
      one silently stalls the pipeline until someone notices. */
   if (isBatchRun()) return true;
-  return confirm(
-    `⚠️ This will replace the ${existing.length} module` +
-    `${existing.length > 1 ? 's' : ''} you already have.\n\n` +
-    `Learning Outcomes and Performance Criteria are NOT affected — ` +
-    `only the module grouping is rebuilt.\n\n` +
-    `Click OK to continue, or Cancel to keep your current modules.`
-  );
+  return confirm('\u26A0\uFE0F ' + _tf(
+    existing.length === 1 ? 'confirmReplaceModulesOne' : 'confirmReplaceModulesMany',
+    { n: existing.length }
+  ));
 }
 
 // ── Mode 1: one module per outcome (local, instant) ───────────

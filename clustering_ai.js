@@ -407,12 +407,10 @@ export async function generateRangeAndCriteriaAI(onlyClusterId = null) {
      every tab at stake. Re-asking here would mean four or five
      dialogs during a run the user has already authorised — and each
      one silently stalls the pipeline until someone notices. */
-  if (!isBatchRun() && filled.length && !confirm(
-    `⚠️ This will replace the Range and Performance Criteria of ` +
-    `${filled.length} cluster${filled.length > 1 ? 's' : ''}.\n\n` +
-    `Cluster names and their task groupings are NOT affected.\n\n` +
-    `Click OK to continue, or Cancel to keep your current text.`
-  )) {
+  if (!isBatchRun() && filled.length && !confirm('\u26A0\uFE0F ' + _tf(
+    filled.length === 1 ? 'confirmReplaceCriteriaOne' : 'confirmReplaceCriteriaMany',
+    { n: filled.length }
+  ))) {
     showStatus(_t('msgCancelCriteria'), 'error');
     return false;
   }

@@ -44,12 +44,7 @@ export function switchTab(tabId) {
       // Re-open the gate permanently for this session.
       appState.clusteringAllowed = true;
     } else {
-      alert(
-        'Please choose an option in Task Verification tab:\n\n' +
-        '1. Finalize & Create Live Voting Session\n   OR\n' +
-        '2. Proceed to Competency Clustering Without Verification\n\n' +
-        'You must select one option before proceeding.'
-      );
+      alert(_t('msgChooseVerificationOption'));
       return;
     }
   }
@@ -123,7 +118,7 @@ export function clearAll() {
   if (!confirm(message)) return false;
 
   _doClear();
-  showStatus('✅ All data cleared successfully. Ready for a new DACUM session.', 'success');
+  showStatus(_t('msgAllDataCleared'), 'success');
   return true;
 }
 
@@ -368,7 +363,7 @@ function _isTabEmpty(tabId) {
 
 function _confirmClear(tabId) {
   if (_isTabEmpty(tabId)) {
-    showStatus('This tab is already empty — nothing to clear', 'success');
+    showStatus(_t('msgTabAlreadyEmpty'), 'success');
     return false;
   }
 
@@ -377,17 +372,12 @@ function _confirmClear(tabId) {
     .filter(Boolean);
 
   if (!affected.length) {
-    return confirm('Are you sure you want to clear this tab? This cannot be undone!');
+    return confirm(_t('confirmClearTab'));
   }
 
-  return confirm(
-    'Clear this tab? This cannot be undone.\n\n' +
-    'Later DACUM stages were built from this one and will NOT be cleared, ' +
-    'so they will be left referring to data that no longer exists:\n\n' +
-    affected.map(a => '  • ' + a).join('\n') + '\n\n' +
-    'Review or clear those stages too, or cancel and rebuild from here downwards.\n\n' +
-    'Continue?'
-  );
+  return confirm(_tf('confirmClearTabDownstream', {
+    list: affected.map(a => '  \u2022 ' + a).join('\n')
+  }));
 }
 
 export function clearCurrentTab(tabId) {
@@ -403,14 +393,14 @@ export function clearCurrentTab(tabId) {
     appState.producedByImage  = null;
     _resetImagePreview('producedFor');
     _resetImagePreview('producedBy');
-    showStatus('Chart Info cleared!', 'success');
+    showStatus(_tf('msgTabCleared', { v: _t('tabChartInfo') }), 'success');
 
   } else if (tabId === 'duties-tab') {
     document.getElementById('dutiesContainer').innerHTML = '';
     appState.dutyCount  = 0;
     appState.taskCounts = {};
     addDuty();          // seeds its own first task — see duties.js
-    showStatus('Duties & Tasks cleared!', 'success');
+    showStatus(_tf('msgTabCleared', { v: _t('tabDuties') }), 'success');
 
   } else if (tabId === 'additional-info-tab') {
     ['knowledgeInput','skillsInput','behaviorsInput','toolsInput',
@@ -421,7 +411,7 @@ export function clearCurrentTab(tabId) {
     document.getElementById('customSectionsContainer').innerHTML = '';
     appState.customSectionCounter = 0;
     resetSkillsLevel(false); // false = no confirm
-    showStatus('Additional Info cleared!', 'success');
+    showStatus(_tf('msgTabCleared', { v: _t('tabAdditionalInfo') }), 'success');
 
   } else if (tabId === 'verification-tab') {
     appState.verificationRatings = {};
@@ -450,25 +440,25 @@ export function clearCurrentTab(tabId) {
     if (btnLW) btnLW.disabled = false;
     if (btnBP) btnBP.disabled = false;
     if (btnRD) btnRD.style.display = 'none';
-    showStatus('Task Verification cleared!', 'success');
+    showStatus(_tf('msgTabCleared', { v: _t('tabVerification') }), 'success');
 
   } else if (tabId === 'clustering-tab') {
     appState.clusteringData = { availableTasks: [], clusters: [], clusterCounter: 0 };
     renderAvailableTasks();
     renderClusters();
-    showStatus('Competency Clusters cleared!', 'success');
+    showStatus(_tf('msgTabCleared', { v: _t('tabClustering') }), 'success');
 
   } else if (tabId === 'learning-outcomes-tab') {
     appState.learningOutcomesData = { outcomes: [], outcomeCounter: 0 };
     renderLearningOutcomes();
     renderPCSourceList();
-    showStatus('Learning Outcomes cleared!', 'success');
+    showStatus(_tf('msgTabCleared', { v: _t('tabLearningOutcomes') }), 'success');
 
   } else if (tabId === 'module-mapping-tab') {
     appState.moduleMappingData = { modules: [], moduleCounter: 0 };
     renderModules();
     renderModuleLoList();
-    showStatus('Module Mapping cleared!', 'success');
+    showStatus(_tf('msgTabCleared', { v: _t('tabModuleMapping') }), 'success');
   }
 }
 
@@ -489,7 +479,7 @@ export async function generateAIDacum() {
 
   const usageStatus = checkUsageLimit();
   if (!usageStatus.allowed) {
-    showStatus(`❌ Daily limit reached (${usageStatus.count} generations). Try again tomorrow!`, 'error');
+    showStatus(_tf('msgDailyLimitReached', { n: usageStatus.count }), 'error');
     return;
   }
 
@@ -567,8 +557,8 @@ async function _runAIGeneration(inputs) {
     const hasWork = (appState.dutiesData || []).some(d =>
       (d.title || '').trim() || (d.tasks || []).length
     );
-    if (hasWork && !confirm('⚠️ AI GENERATION WILL REPLACE ALL EXISTING DUTIES AND TASKS\n\nClick OK to continue, or Cancel to keep your current work.')) {
-      showStatus('AI generation cancelled. Your existing duties are preserved.', 'error');
+    if (hasWork && !confirm('\u26A0\uFE0F ' + _t('confirmAIOverwrite'))) {
+      showStatus(_t('msgAIGenCancelled'), 'error');
       return;
     }
   }
@@ -714,13 +704,13 @@ Generate the DACUM draft now in valid JSON format only.`;
 
     hideLoadingModal();
     incrementUsage();
-    showStatus(`✓ AI draft generated successfully! ${dacumData.duties.length} duties with tasks created.`, 'success');
+    showStatus(_tf('msgAIGenSuccess', { n: dacumData.duties.length }), 'success');
     return true;
 
   } catch (error) {
     hideLoadingModal();
     console.error('Error generating AI DACUM:', error);
-    showStatus('AI generation failed. See the error dialog for details.', 'error');
+    showStatus(_t('msgAIGenFailed'), 'error');
     _showAIErrorModal(error.message || String(error));
     return false;
   }
@@ -1029,14 +1019,14 @@ function _showScopeMissingWarning() {
       // user somehow emptied the Occupation Title meanwhile.
       const inputs = _readAIInputs();
       if (!inputs.occupationTitle) {
-        alert('Please enter an Occupation Title to generate duties and tasks.');
+        alert(_t('msgOccupationRequiredAlert'));
         return;
       }
 
       // Daily-limit re-check (user may have burned quota elsewhere)
       const status = checkUsageLimit();
       if (!status.allowed) {
-        showStatus(`❌ Daily limit reached (${status.count} generations). Try again tomorrow!`, 'error');
+        showStatus(_tf('msgDailyLimitReached', { n: status.count }), 'error');
         return;
       }
 

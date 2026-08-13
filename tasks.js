@@ -189,15 +189,14 @@ function _confirmIfOrphansWouldBeLost() {
   if (!orphans.length) return true;
 
   const n = orphans.length;
-  return confirm(
-    '⚠️ ' + n + ' rating' + (n === 1 ? '' : 's') + ' will lose ' +
-    (n === 1 ? 'its task' : 'their tasks') + ' after this refresh.\n\n' +
-    'The task' + (n === 1 ? '' : 's') + ' ' + (n === 1 ? 'was' : 'were') +
-    ' renamed or removed in the Duties & Tasks tab, so the rating' +
-    (n === 1 ? '' : 's') + ' can no longer be shown, edited or exported.\n\n' +
-    'Continue with the refresh?\n' +
-    'Cancel to go back to Duties & Tasks and restore the task first.'
-  );
+  /* Split into two keys rather than built from 'rating' + (n===1?'':'s').
+     That concatenation is English grammar written into the code: it
+     cannot express Arabic's dual and it cannot reorder a French
+     sentence. */
+  return confirm('\u26A0\uFE0F ' + _tf(
+    n === 1 ? 'confirmOrphanRatingsOne' : 'confirmOrphanRatingsMany',
+    { n }
+  ));
 }
 
 // Manual "Refresh Duties & Tasks" button, and the entry-point sync.

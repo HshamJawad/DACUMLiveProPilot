@@ -7,6 +7,12 @@ import { appState } from './state.js';
 import { showStatus } from './renderer.js';
 import { isBatchRun } from './draft_mode.js';
 
+/* i18n access — resolved lazily; see duties.js for why. alert(),
+   confirm() and showStatus() never enter the DOM, so applyTranslations()
+   cannot reach them: each call has to look its own key up at call time. */
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+
 
 // ── Constants ─────────────────────────────────────────────────
 /* Raised from 10 when the Full Draft generator landed: a single full
@@ -70,7 +76,7 @@ export function updateUsageBadge() {
     btn.disabled     = true;
     btn.style.opacity  = '0.5';
     btn.style.cursor   = 'not-allowed';
-    btn.title          = 'Daily AI generation limit reached. Try again tomorrow.';
+    btn.title          = _t('ttDailyLimitReached');
   } else {
     btn.disabled     = false;
     btn.style.opacity  = '';
@@ -191,13 +197,13 @@ export async function handleImageUpload(event, imageType) {
 
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/bmp'];
   if (!validTypes.includes(file.type)) {
-    showStatus('Please upload a valid image file (JPG, JPEG, PNG, or BMP)', 'error');
+    showStatus(_t('msgInvalidImageType'), 'error');
     return;
   }
 
   const imageData = await _compressImage(file);
   if (!imageData) {
-    showStatus('Could not read that image file. Please try another.', 'error');
+    showStatus(_t('msgImageUnreadable'), 'error');
     return;
   }
 
@@ -215,21 +221,22 @@ export async function handleImageUpload(event, imageType) {
   if (removeBtn) removeBtn.style.display = 'inline-block';
 
   const kb = Math.round((imageData.length * 0.75) / 1024);
-  showStatus(`Image uploaded successfully! ✓ (optimised to ~${kb} KB)`, 'success');
+  showStatus(_tf('msgImageUploaded', { kb }), 'success');
 }
 
 export function removeImage(imageType) {
-  if (!confirm('Are you sure you want to remove this logo?')) return;
+  if (!confirm(_t('confirmRemoveLogo'))) return;
 
   if (imageType === 'producedFor') appState.producedForImage = null;
   else if (imageType === 'producedBy') appState.producedByImage = null;
 
   const previewDiv = document.getElementById(`${imageType}ImagePreview`);
-  previewDiv.innerHTML = '<span style="color:#999;font-size:0.9em;">No image</span>';
+  previewDiv.innerHTML =
+    `<span style="color:#999;font-size:0.9em;">${_t('msgNoImage')}</span>`;
   previewDiv.classList.remove('has-image');
 
   const cap = imageType.charAt(0).toUpperCase() + imageType.slice(1);
   document.getElementById(`remove${cap}Image`).style.display = 'none';
   document.getElementById(`${imageType}ImageInput`).value = '';
-  showStatus('Image removed! ✓', 'success');
+  showStatus(_t('msgImageRemoved'), 'success');
 }
