@@ -108,16 +108,50 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v73';
+      var EXPECTED_SW = 'v74';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bumped together with EXPECTED_SW above.
-      var APP_VERSION = '3.19.0';
+      var APP_VERSION = '3.19.1';
       var APP_RELEASED = '2026-08-13';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.19.1 — 2026-08-13 — Arabic PDF: font never embedded ──
+         PATCH. Fixes a regression shipped in 3.19.0 that made Arabic
+         PDFs render as Latin letters and symbols.
+
+         Root cause
+           jsPDF's VFS and font table are PER-INSTANCE, not global.
+           3.19.0 warmed the font cache on a THROWAWAY probe document
+           (ensureArabicFont) and never called addFileToVFS/addFont on
+           the document it actually drew into. isArabicFontLoaded()
+           answered true — the bytes WERE cached — so nothing looked
+           wrong. setFont('Cairo') then failed its lookup, jsPDF logged
+           a console warning and silently fell back to the standard-14
+           Times-Roman, whose WinAnsi single-byte encoding maps every
+           Arabic presentation form onto an arbitrary Latin character.
+           Verified in the output PDF: no /FontFile2, no /Type0, only
+           /WinAnsiEncoding.
+
+         Fixed
+           • installArabicRTL() now registers the font on the document
+             it is installing onto, and THROWS if the family is absent
+             from pdf.getFontList() afterwards. The 3.19.0 failure was
+             silent; that is what let it reach a user at all.
+
+         Not the cause (checked, ruled out)
+           • The TTF is valid TrueType (sfnt 0x00010000), not WOFF2 and
+             not an HTML 404 body.
+           • base64 conversion is chunked and intact.
+           • No double processing: exports_pdf.js contains ZERO calls to
+             shapeArabic/bidiVisual/arabicVisual. The single pipeline
+             lives in pdf_arabic.js's pdf.text() wrapper (Model B).
+           • Not a Service Worker cache artefact.
+           • Cairo itself is fine — Latin, base code points, shaping and
+             bidi all verified stage by stage in arabic-pdf-diagnostic.pdf.
 
          ── 3.19.0 — 2026-08-13 — Arabic PDF export ──────────────
          MINOR, not PATCH: PDF export in Arabic goes from refused to

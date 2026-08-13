@@ -154,7 +154,46 @@ export function installArabicRTL(pdf) {
        layout code actually does, so the two stay in agreement. */
     const W = pdf.internal.pageSize.getWidth();
 
+    /* ── Register the font ON THIS DOCUMENT ───────────────────
+       jsPDF's VFS and font table are PER-INSTANCE, not global.
+       ensureArabicFont() warms the module-level cache in
+       arabic-font.js using a throwaway probe document, and
+       isArabicFontLoaded() then answers true — but that says only
+       that the BYTES are cached, not that this particular document
+       has ever seen addFileToVFS/addFont.
+
+       Skipping this call is the bug that shipped: setFont('Cairo')
+       fell through to the standard-14 Times-Roman, whose WinAnsi
+       single-byte encoding maps every Arabic presentation form onto
+       an arbitrary Latin character — the "Arabic comes out as Latin
+       symbols" report. jsPDF only warns to the console and carries on.
+
+       loadArabicFont() is declared async, but its cached branch
+       contains no `await`: the body therefore runs to completion
+       SYNCHRONOUSLY during this call, and _registerFont() has already
+       executed by the time control returns. That is subtle enough to
+       be worth verifying rather than trusting, which is what the
+       assertion below does. */
     const family = getArabicFontName();
+    if (!family) {
+        throw new Error(
+            '[PDF] installArabicRTL() called before the Arabic font was loaded. ' +
+            'Call ensureArabicFont() first.'
+        );
+    }
+
+    loadArabicFont(pdf).catch(() => {});
+
+    if (!Object.keys(pdf.getFontList()).includes(family)) {
+        /* Fail loudly. The alternative is a document that LOOKS
+           finished and is unreadable — the exact failure this whole
+           module exists to prevent, and one that gets emailed to a
+           ministry before anyone opens it. */
+        throw new Error(
+            `[PDF] Font "${family}" is not registered on this document. ` +
+            'Arabic would render in a Latin fallback face.'
+        );
+    }
 
     const orig = {
         text:            pdf.text.bind(pdf),
@@ -184,13 +223,11 @@ export function installArabicRTL(pdf) {
        which is not registered at all — is folded onto normal here
        rather than being allowed to fall back to Helvetica and drop
        every Arabic glyph on the line. */
-    if (family) {
-        pdf.setFont = (name, style) => {
-            const s = (style === 'bold' || style === 'bolditalic') ? 'bold' : 'normal';
-            return orig.setFont(family, s);
-        };
-        pdf.setFont(family, 'normal');
-    }
+    pdf.setFont = (name, style) => {
+        const s = (style === 'bold' || style === 'bolditalic') ? 'bold' : 'normal';
+        return orig.setFont(family, s);
+    };
+    pdf.setFont(family, 'normal');
 
     // ── Measurement ───────────────────────────────────────────
     /* Presentation forms are narrower than the base letters they
@@ -250,6 +287,11 @@ export function installArabicRTL(pdf) {
 //
 //  Warms the module-level font cache in arabic-font.js using a
 //  throwaway document.
+//
+//  This warms the CACHE ONLY. The probe document is discarded, and
+//  because jsPDF's font table is per-instance, the real export
+//  document still has to register the font for itself —
+//  installArabicRTL() does that.
 //
 //  This exists so exportToPDF() can stay SYNCHRONOUS. Font loading is
 //  a fetch, and making the two exported entry points async would
