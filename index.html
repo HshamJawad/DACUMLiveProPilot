@@ -108,16 +108,42 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v78';
+      var EXPECTED_SW = 'v79';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bumped together with EXPECTED_SW above.
-      var APP_VERSION = '3.22.0';
+      var APP_VERSION = '3.22.1';
       var APP_RELEASED = '2026-08-14';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.22.1 — 2026-08-14 — section buttons on phones ──────
+         PATCH. Follow-up to 3.21.0, reported from the installed PWA.
+
+         The cause was not the new button styles — those fit on one
+         line at 380px. It was three rules in dacum-responsive.css,
+         all correct for the FOUR TEXT BUTTONS they were written for
+         and all wrong for three icons plus one short label:
+           • 900px  — flex-wrap: wrap on the header and the group.
+           • 768px  — width:100% on the group and flex:1 on each
+                      button, stretching four buttons across the row.
+                      Those were the wide gaps in the screenshot.
+           • 480px  — display:grid, 1fr 1fr. That was the 2x2 block.
+
+         Now
+           • Above 480px: one row, buttons at their natural size, the
+             heading takes the slack.
+           • At/below 480px: the heading gets its own full-width line
+             and all four buttons sit on ONE row beneath it. Sharing a
+             line does not survive a 380px screen — the buttons need
+             ~180px of it, which squeezed the heading hard enough to
+             break "comportements" mid-word.
+           • Clear is tightened (8px 12px, 0.78em) but keeps its label.
+
+         Verified by rendering the real markup at 360 and 380px in
+         Arabic, English and French: one button row in every case.
 
          ── 3.22.0 — 2026-08-14 — occupation-title sanity gate ────
          MINOR.

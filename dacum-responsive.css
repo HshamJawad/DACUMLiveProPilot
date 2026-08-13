@@ -124,9 +124,23 @@
   .duty-header, .ks-header, .behavior-header {
     flex-direction: column; align-items: flex-start; gap: 8px;
   }
-  .section-header-editable { flex-wrap: wrap; gap: 8px; }
-  .section-header-editable h3 { min-width: 0; flex: 1; }
-  .section-header-editable > div { flex-wrap: wrap; gap: 6px; }
+  /* The action group is now three 34px icons plus one short labelled
+     button — about 175px in total. It fits on one line at every width
+     this app supports, so it must never wrap. The h3 is the flexible
+     element: it shrinks, and truncates if it has to. */
+  .section-header-editable { flex-wrap: nowrap; gap: 8px; }
+  /* The heading WRAPS rather than truncating. Truncating held the row
+     to one line but cost the user the section name — "Knowledge
+     Requirements" became "Knowledge Req...", and the Arabic headings
+     are longer still. The row height is set by the buttons anyway, so
+     a two-line heading costs almost nothing and keeps the label. */
+  .section-header-editable h3 {
+    min-width: 0; flex: 1 1 auto;
+    overflow-wrap: break-word; line-height: 1.35;
+  }
+  .section-header-editable > div {
+    flex-wrap: nowrap; gap: 6px; flex: 0 0 auto;
+  }
   .cluster-header, .module-header, .lo-block-header { flex-wrap: wrap; gap: 8px; }
   .cluster-actions, .module-actions, .lo-actions { flex-wrap: wrap; }
   .skills-level-checkboxes { margin-left: 0 !important; gap: 12px !important; }
@@ -186,10 +200,19 @@
     margin-left: 0 !important; gap: 10px !important; flex-wrap: wrap !important;
   }
 
-  .section-header-editable > div { width: 100%; }
+  /* Was: width:100% on the group and flex:1 on each button, which
+     stretched four buttons across the full row and produced the wide
+     gaps in the PWA. Written when all four carried text labels; with
+     three of them now fixed-size icons it only distorted them. */
+  .section-header-editable > div { width: auto; }
   .section-header-editable > div button {
-    flex: 1; min-width: 0; justify-content: center;
-    padding: 8px 10px !important; font-size: 0.82em !important;
+    flex: 0 0 auto; justify-content: center;
+  }
+  /* Only Clear still has a label, so it is the only one worth
+     tightening. It keeps its text — a control that wipes a section
+     should stay the clearest thing in the row. */
+  .section-header-editable > div .btn-clear-section {
+    padding: 8px 12px !important; font-size: 0.8em !important;
   }
   .duty-header > div { flex-wrap: wrap; gap: 6px; }
   .duty-header button { font-size: 0.82em !important; padding: 8px 10px !important; }
@@ -268,11 +291,41 @@
   #snapModalBox { top: 60px !important; right: 4px !important; left: 4px !important; }
   .dashboard-summary { grid-template-columns: 1fr !important; }
 
-  .section-header-editable > div {
-    display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 4px !important;
+  /* This 2x2 grid is what the phone screenshot showed. It was the
+     right answer for four text buttons on a 380px screen; it is the
+     wrong one for three icons and a short label, which together need
+     about 165px here. Back to a single row. */
+  /* Phone layout: heading on its own full-width line, action buttons
+     on a single full-width line beneath it.
+
+     Sharing one line was the desktop arrangement and it does not
+     survive here: the buttons need ~180px of a 380px screen, leaving
+     the heading so narrow that "Attitudes et comportements
+     professionnels" broke mid-word. Stacking gives the heading the
+     full width and still puts all four buttons on ONE row, which is
+     what the 2x2 grid this replaces failed to do. */
+  .section-header-editable {
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
   }
-  .section-header-editable > div button {
-    font-size: 0.76em !important; padding: 7px 6px !important;
+  .section-header-editable h3 {
+    flex: 1 1 100% !important;
+    padding: 4px 2px !important;
+    overflow-wrap: normal;
+  }
+  .section-header-editable > div {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+  }
+  .section-header-editable > div .btn-icon {
+    width: 34px !important; height: 34px !important; padding: 0 !important;
+  }
+  .section-header-editable > div .btn-clear-section {
+    padding: 8px 12px !important; font-size: 0.78em !important;
   }
   .duty-header > div {
     display: grid !important; grid-template-columns: 1fr 1fr !important;
