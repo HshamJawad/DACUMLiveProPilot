@@ -108,14 +108,69 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v71';
+      var EXPECTED_SW = 'v73';
 
       // ── Human-readable build identity (shown in the toolbar) ──
-      // Bumped together with EXPECTED_SW above. MINOR, not PATCH:
-      // this build adds the Full Draft generator and completes the
-      // Arabic and French interface.
-      var APP_VERSION = '3.18.3';
-      var APP_RELEASED = '2026-08-11';
+      // Bumped together with EXPECTED_SW above.
+      var APP_VERSION = '3.19.0';
+      var APP_RELEASED = '2026-08-13';
+
+      /* ── CHANGELOG ────────────────────────────────────────────
+         Newest first. There is no version.js in this tool, so the
+         release record lives here, next to the constants it explains.
+
+         ── 3.19.0 — 2026-08-13 — Arabic PDF export ──────────────
+         MINOR, not PATCH: PDF export in Arabic goes from refused to
+         supported. Nothing changes for English or French.
+
+         Added
+           • pdf_arabic.js — the Arabic layer for jsPDF. Suspends the
+             library's own shaper, neutralises its BiDi engine through
+             the engine's documented options, and mirrors one document
+             instance (text/rect/line/addImage/splitTextToSize/
+             getTextWidth/setFont).
+           • arabic-font.js — TTF loader, cmap coverage reader,
+             contextual shaper, BiDi reorderer. Shared with DACUM Lite.
+           • 14 i18n keys x 3 languages for the PDF's own labels.
+
+         Changed
+           • exports_pdf.js no longer refuses in Arabic. _blockArabicPDF()
+             is gone; the file now warms the font cache, installs the
+             mirror, and restores the suspended parser in a finally.
+           • PDF labels now use the SAME i18n keys as the Word exporter,
+             so the two exports of one chart stop disagreeing on wording.
+           • PDF filenames use the Unicode-safe sanitiser from
+             exports_docx.js. The old /[^a-z0-9]/gi turned every Arabic
+             occupation title into a row of underscores.
+
+         Fixed
+           • Skills-level matrix ticks were the character U+2713, which
+             is in NEITHER Helvetica NOR Cairo. jsPDF drops unmapped
+             characters silently, so those cells have been printing
+             blank in English too. Now drawn as two strokes.
+           • EXPECTED_SW had drifted to v71 while sw.js reached v72, so
+             every VERSION_REPLY compared unequal and the app re-checked
+             for updates on every message. Both are v73.
+
+         Removed
+           • msgPdfArabicUnsupported (en/fr/ar). Its only caller is gone,
+             and a string asserting that Arabic PDF is impossible would
+             mislead the next reader of this codebase.
+
+         Why the mirror instead of RTL coordinates
+           exports_pdf.js positions ~145 pdf.text() calls absolutely from
+           the LEFT edge. Rewriting each from the right margin would have
+           meant maintaining two parallel coordinate systems forever. The
+           mirror is exact, so borders and the text inside them move
+           together — and the four task columns reverse (A1 on the right)
+           as a consequence of the geometry rather than as a special case.
+
+         Deployment note
+           fonts/Cairo-Regular.ttf MUST be present. The woff2 already in
+           the repo is for the screen; jsPDF can only embed a TTF. Both
+           the loader and the font file are precached in sw.js — caching
+           one without the other only moves the offline failure one step
+           later.                                                       */
 
       /* ── Strings ──────────────────────────────────────────────
          Seven strings, duplicated from translations.js on purpose.

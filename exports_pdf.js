@@ -18,32 +18,88 @@ import { noteExportExclusion } from './draft_unverified.js';
    exports verified live-workshop results as a standalone PDF, which is
    why it survived this long. Found by check_imports.js. */
 import { lwExportVerifiedPDF } from './workshop.js';
+import {
+    ensureArabicFont,
+    isArabicFontLoaded,
+    installArabicRTL,
+    suspendJsPdfArabicParser,
+    drawTick
+} from './pdf_arabic.js';
 
 
-/* ── Arabic guard ────────────────────────────────────────────────────
-   jsPDF is used here with the built-in Helvetica family and absolute
-   x-coordinates from pdf.text(). Neither survives Arabic:
+/* ── i18n + direction helpers ────────────────────────────────────────
+   This file used to REFUSE outright in Arabic and point the user at
+   the Word export. The reasoning was sound at the time — jsPDF's
+   standard-14 fonts carry no Arabic glyphs, the library does no
+   shaping, and a plausible-looking but unreadable PDF is worse than no
+   PDF because it gets emailed to a ministry before anyone opens it.
 
-     1. The standard-14 fonts carry no Arabic glyphs, so every letter
-        renders as a blank or a box.
-     2. Even with a TTF embedded, jsPDF performs no Arabic SHAPING —
-        it draws isolated letterforms, so «مهمة» comes out as four
-        disconnected shapes — and no bidi reordering, so the text runs
-        backwards.
+   All three obstacles are now handled, none of them here:
 
-   Fixing this properly means embedding a font, running a reshaper, and
-   recomputing every x-position from the right margin: a rewrite of both
-   entry points, not a patch. Until then the honest behaviour is to
-   refuse and point at the Word export, which handles Arabic fully.
+     • Glyphs  — an embedded TTF (arabic-font.js).
+     • Shaping — a contextual shaper that consults the font's own cmap,
+                 so Cairo's deliberately absent isolated forms fall back
+                 to the base code point instead of vanishing.
+     • Layout  — pdf_arabic.js mirrors the document, so the ~145
+                 absolute left-anchored coordinates in this file did
+                 NOT have to be rewritten from the right margin.
 
-   A broken PDF is worse than no PDF: it looks like a finished
-   deliverable and gets emailed to a ministry before anyone opens it. */
-const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+   Labels below are the same i18n keys the Word exporter uses, so the
+   two exports of one chart no longer disagree on wording. */
+const _t   = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf  = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
+const _rtl = ()     => (window.i18n ? window.i18n.isRTL()  : false);
 
-function _blockArabicPDF() {
-  if (!window.i18n || !window.i18n.isRTL()) return false;
-  showStatus(window.i18n.t('msgPdfArabicUnsupported'), 'error');
+/* A filename built with /[^a-z0-9]/gi turns an Arabic occupation title
+   into a row of underscores — every Arabic export would arrive as
+   "________.pdf". Keep Unicode letters and digits; strip only what a
+   filesystem actually objects to. Same sanitiser as exports_docx.js. */
+function _safeFilename(title, suffix) {
+  const base = String(title || '')
+    .replace(/[\\/:*?"<>|\u0000-\u001F]/g, '')   // illegal on Windows
+    .replace(/\s+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 80);
+  return (base || _t('fileUntitled')) + suffix;
+}
+
+/* Arabic needs the font cache warm before a single glyph is drawn, and
+   warming it is a fetch. Rather than make both entry points async —
+   changing their contract for every caller in the app over one network
+   round trip per session — the export bails out, warms the cache, and
+   re-enters itself. `retry` guards against a loop if the font is
+   missing from the deployment.
+
+   Returns true when the caller should return immediately. */
+function _arabicNotReady(retry) {
+  if (!_rtl() || isArabicFontLoaded()) return false;
+  const { jsPDF } = window.jspdf;
+  ensureArabicFont(jsPDF)
+    .then(family => {
+      if (!family) {
+        showStatus(_t('msgPdfFontMissing'), 'error');
+        return;
+      }
+      retry();
+    })
+    .catch(err => {
+      console.error('[PDF] Arabic font load failed:', err);
+      showStatus(_t('msgPdfFontMissing'), 'error');
+    });
+  showStatus(_t('msgPdfPreparingArabic'), 'info');
   return true;
+}
+
+/* Installs the Arabic layer on one document and returns the teardown.
+   In English and French this is a no-op that returns a no-op, so those
+   paths never touch the shaper, the mirror, or the BiDi options. */
+function _beginArabic(pdf) {
+  if (!_rtl()) return () => {};
+  const { jsPDF } = window.jspdf;
+  const restoreParser = suspendJsPdfArabicParser(pdf, jsPDF);
+  installArabicRTL(pdf);
+  return restoreParser;
 }
 
 
@@ -52,8 +108,9 @@ export function exportTaskVerificationPDF() {
     // shipping a report that is quietly short a section.
     noteExportExclusion();
 
-    if (_blockArabicPDF()) return;
+    if (_arabicNotReady(exportTaskVerificationPDF)) return;
 
+    let _endArabic = () => {};
     try {
         // See exportTaskVerificationWord: same adapter, same reasoning.
         const tvResults = buildVerificationDataset();
@@ -77,7 +134,11 @@ export function exportTaskVerificationPDF() {
             unit: 'mm',
             format: 'a4'
         });
-        
+
+        // Arabic: suspend jsPDF's own shaper and mirror the document.
+        // Everything below keeps writing left-to-right coordinates.
+        _endArabic = _beginArabic(pdf);
+
         const margin = 10;
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
@@ -90,43 +151,43 @@ export function exportTaskVerificationPDF() {
         // Title Page
         pdf.setFontSize(18);
         pdf.setFont(undefined, 'bold');
-        pdf.text('Task Verification & Training Priority Analysis', pageWidth / 2, yPos, { align: 'center' });
+        pdf.text(_t('expTaskVerification'), pageWidth / 2, yPos, { align: 'center' });
         yPos += 12;
         
         pdf.setFontSize(14);
         pdf.setFont(undefined, 'bold');
-        pdf.text(`Occupation: ${occupationTitle}`, pageWidth / 2, yPos, { align: 'center' });
+        pdf.text(_tf('expOccupation', { v: occupationTitle }), pageWidth / 2, yPos, { align: 'center' });
         yPos += 10;
         
         pdf.setFontSize(12);
         pdf.setFont(undefined, 'normal');
-        const today = new Date().toLocaleDateString();
-        pdf.text(`Date of Analysis: ${today}`, pageWidth / 2, yPos, { align: 'center' });
+        const today = _today();
+        pdf.text(_tf('expDateOfAnalysis', { v: today }), pageWidth / 2, yPos, { align: 'center' });
         yPos += 8;
         
         pdf.setFontSize(10);
         pdf.setFont(undefined, 'italic');
-        pdf.text(`This Task Verification is based on the DACUM Chart for ${occupationTitle}.`, pageWidth / 2, yPos, { align: 'center' });
+        pdf.text(_tf('expBasedOn', { v: occupationTitle }), pageWidth / 2, yPos, { align: 'center' });
         yPos += 15;
         
         // Methodology Summary
         pdf.setFontSize(14);
         pdf.setFont(undefined, 'bold');
-        pdf.text('Methodology Summary', margin, yPos);
+        pdf.text(_t('expMethodologySummary'), margin, yPos);
         yPos += 8;
         
         pdf.setFontSize(11);
         pdf.setFont(undefined, 'normal');
-        pdf.text(`Data Collection Mode: ${appState.collectionMode === 'workshop' ? 'Workshop (Facilitated)' : 'Individual/Survey'}`, margin, yPos);
+        pdf.text(_tf('expCollectionMode', { v: _t(appState.collectionMode === 'workshop' ? 'modeWorkshop' : 'expIndividualSurvey') }), margin, yPos);
         yPos += 6;
         // Only meaningful when a panel produced the numbers.
         if (appState.collectionMode === 'workshop') {
-            pdf.text(`Number of Participants: ${appState.workshopParticipants}`, margin, yPos);
+            pdf.text(_tf('expParticipants', { v: appState.workshopParticipants }), margin, yPos);
             yPos += 6;
         }
-        pdf.text(`Workflow Mode: ${appState.workflowMode === 'standard' ? 'Standard (DACUM)' : 'Extended (DACUM)'}`, margin, yPos);
+        pdf.text(_tf('expWorkflowMode', { v: _t(appState.workflowMode === 'standard' ? 'modeStandard' : 'modeExtended') }), margin, yPos);
         yPos += 6;
-        pdf.text(`Priority Formula: ${appState.priorityFormula === 'if' ? 'Importance × Frequency' : 'Importance × Frequency × Difficulty'}`, margin, yPos);
+        pdf.text(_tf('expPriorityFormula', { v: _t(appState.priorityFormula === 'if' ? 'formulaIF' : 'formulaIFD') }), margin, yPos);
         yPos += 6;
 
         // Coverage, in red when partial — see the Word report for why.
@@ -140,7 +201,7 @@ export function exportTaskVerificationPDF() {
         // Priority Rankings Table
         pdf.setFontSize(14);
         pdf.setFont(undefined, 'bold');
-        pdf.text('Priority Rankings', margin, yPos);
+        pdf.text(_t('expPriorityRankings'), margin, yPos);
         yPos += 8;
         
         // Get and sort results
@@ -182,7 +243,8 @@ export function exportTaskVerificationPDF() {
         
         // Table headers
         const colWidths = [15, 50, 75, 25, 25, 25, 25];
-        const headers = ['Rank', 'Duty', 'Task', 'Mean I', 'Mean F', 'Mean D', 'Priority'];
+        const headers = [_t('expRank'), _t('expDutyLabel'), _t('expTaskLabel'),
+                         _t('expMeanI'), _t('expMeanF'), _t('expMeanD'), _t('expPriority')];
         
         pdf.setFontSize(10);
         pdf.setFont(undefined, 'bold');
@@ -234,12 +296,12 @@ export function exportTaskVerificationPDF() {
         
         pdf.setFontSize(14);
         pdf.setFont(undefined, 'bold');
-        pdf.text('Duty-Level Summary', margin, yPos);
+        pdf.text(_t('expDutyLevelSummary'), margin, yPos);
         yPos += 5;
         
         pdf.setFontSize(9);
         pdf.setFont(undefined, 'italic');
-        pdf.text(`Training Load Method: ${appState.trainingLoadMethod === 'advanced' ? 'Advanced (Σ Priority × Difficulty)' : 'Simple (Avg Priority × Tasks)'}`, margin, yPos);
+        pdf.text(_tf('expTrainingLoadMethod', { v: _t(appState.trainingLoadMethod === 'advanced' ? 'expAdvancedMethod' : 'expSimpleMethod') }), margin, yPos);
         yPos += 8;
         
         // Aggregate duty-level data
@@ -299,7 +361,8 @@ export function exportTaskVerificationPDF() {
         
         // Duty table headers
         const dutyColWidths = [80, 30, 40, 45];
-        const dutyHeaders = ['Duty Title', 'Tasks', 'Avg Priority', 'Training Load'];
+        const dutyHeaders = [_t('expDutyTitle'), _t('expTasks'),
+                             _t('expAvgPriority'), _t('expTrainingLoad')];
         
         pdf.setFontSize(9);
         pdf.setFont(undefined, 'bold');
@@ -339,7 +402,7 @@ export function exportTaskVerificationPDF() {
         // Notes section
         pdf.setFontSize(12);
         pdf.setFont(undefined, 'bold');
-        pdf.text('Notes & Methodology', margin, yPos);
+        pdf.text(_t('expNotesMethodology'), margin, yPos);
         yPos += 7;
         
         pdf.setFontSize(10);
@@ -364,12 +427,18 @@ export function exportTaskVerificationPDF() {
         });
         
         // Save PDF
-        pdf.save(`${occupationTitle.replace(/[^a-z0-9]/gi, '_')}_Task_Verification.pdf`);
-        showStatus('Task Verification PDF exported successfully! ✓', 'success');
+        pdf.save(_safeFilename(occupationTitle, '_Task_Verification.pdf'));
+        showStatus(_t('msgTVPdfExported'), 'success');
         
     } catch (error) {
         console.error('Error generating Task Verification PDF:', error);
-        showStatus('Error generating Task Verification PDF: ' + error.message, 'error');
+        showStatus(_tf('msgTVPdfError', { msg: error.message }), 'error');
+    } finally {
+        /* processArabic is suspended on the jsPDF CLASS, not on this
+           document. Leaving it detached would break Arabic for any
+           other code that uses the library afterwards, so the restore
+           runs even when generation throws. */
+        _endArabic();
     }
 }
 
@@ -379,6 +448,14 @@ export function exportTaskVerificationPDF() {
  * PNG — and since transparent logos are now deliberately kept as PNG
  * by storage.js's compressor, that assumption would start failing.
  */
+/* Dates in the exported document follow the EXPORT language, not the
+   browser's locale — those are frequently different, and a report is a
+   deliverable that must be internally consistent. Same rule as
+   exports_docx.js. */
+const _today = () => new Date().toLocaleDateString(
+  window.i18n ? window.i18n.getLang() : undefined
+);
+
 function _imageFormat(dataUrl) {
   return /^data:image\/png/i.test(dataUrl || '') ? 'PNG' : 'JPEG';
 }
@@ -388,7 +465,7 @@ export function exportToPDF() {
     // shipping a report that is quietly short a section.
     noteExportExclusion();
 
-    if (_blockArabicPDF()) return;
+    if (_arabicNotReady(exportToPDF)) return;
 
     // ============ CHECK FOR VERIFIED LIVE WORKSHOP RESULTS ============
     const hasVerifiedResults = typeof appState.lwFinalizedData !== 'undefined' && appState.lwFinalizedData && 
@@ -407,6 +484,7 @@ export function exportToPDF() {
     }
     
     // ============ NORMAL DACUM EXPORT (with optional appendix) ============
+    let _endArabic = () => {};
     try {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
@@ -414,7 +492,10 @@ export function exportToPDF() {
             unit: 'mm',
             format: 'a4'
         });
-        
+
+        // Arabic: suspend jsPDF's own shaper and mirror the document.
+        _endArabic = _beginArabic(pdf);
+
         // Get input values
         const dacumDateInput = document.getElementById('dacumDate');
         let dacumDateFormatted = '';
@@ -448,7 +529,7 @@ export function exportToPDF() {
         // ============ TITLE PAGE ============
         pdf.setFontSize(18); // 18pt for main title
         pdf.setFont(undefined, 'bold');
-        pdf.text(`DACUM Research Chart for ${occupationTitleInput.value}`, pageWidth / 2, yPos, { align: 'center' });
+        pdf.text(`${_t('expDacumChart')} — ${occupationTitleInput.value}`, pageWidth / 2, yPos, { align: 'center' });
         yPos += 15;
         
         // Two column layout for title page
@@ -461,7 +542,7 @@ export function exportToPDF() {
         if (producedForInput.value) {
             pdf.setFontSize(16); // 16pt for labels
             pdf.setFont(undefined, 'bold');
-            pdf.text('Produced for', leftColX, leftY);
+            pdf.text(_t('expProducedForLabel'), leftColX, leftY);
             leftY += 7;
             
             // Add logo if exists
@@ -485,7 +566,7 @@ export function exportToPDF() {
         if (producedByInput.value) {
             pdf.setFontSize(16); // 16pt for labels
             pdf.setFont(undefined, 'bold');
-            pdf.text('Produced by', leftColX, leftY);
+            pdf.text(_t('expProducedByLabel'), leftColX, leftY);
             leftY += 7;
             
             // Add logo if exists
@@ -518,7 +599,7 @@ export function exportToPDF() {
         if (venueInput && venueInput.value) {
             pdf.setFontSize(14);
             pdf.setFont(undefined, 'bold');
-            const venueLabel = 'Venue: ';
+            const venueLabel = _t('expVenueLabel') + ' ';
             pdf.text(venueLabel, leftColX, leftY);
             const venueLabelW = pdf.getTextWidth(venueLabel) + 1;
             pdf.setFont(undefined, 'normal');
@@ -555,11 +636,11 @@ export function exportToPDF() {
         // NOTE: these two were previously crossed over — the
         // "Occupation:" line printed jobTitleInput.value and the "Job:"
         // line printed occupationTitleInput.value. Corrected here.
-        drawLabelledValue('Occupation:', occupationTitleInput.value);
+        drawLabelledValue(_t('expOccupationLabel'), occupationTitleInput.value);
 
         // Job line — only if filled (skips orphan "Job:" label with empty value)
         if (jobTitleInput.value && jobTitleInput.value.trim()) {
-            drawLabelledValue('Job:', jobTitleInput.value.trim());
+            drawLabelledValue(_t('expJobLabel'), jobTitleInput.value.trim());
         }
         
         // Workshop Roles Section
@@ -585,7 +666,7 @@ export function exportToPDF() {
             }
             pdf.setFontSize(14);
             pdf.setFont(undefined, 'bold');
-            pdf.text('Scope of Work / Occupational Definition', tableX, workshopY);
+            pdf.text(_t('expScopeOfWork'), tableX, workshopY);
             workshopY += 6;
 
             pdf.setFontSize(11);
@@ -611,7 +692,7 @@ export function exportToPDF() {
                 }
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
-                pdf.text('Facilitators', tableX, workshopY);
+                pdf.text(_t('expFacilitators'), tableX, workshopY);
                 workshopY += 5;
                 pdf.setFont(undefined, 'normal');
                 pdf.setFontSize(12);
@@ -638,7 +719,7 @@ export function exportToPDF() {
                 }
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
-                pdf.text('Observers', tableX, workshopY);
+                pdf.text(_t('expObservers'), tableX, workshopY);
                 workshopY += 5;
                 pdf.setFont(undefined, 'normal');
                 pdf.setFontSize(12);
@@ -665,7 +746,7 @@ export function exportToPDF() {
                 }
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
-                pdf.text('Panel Members', tableX, workshopY);
+                pdf.text(_t('expPanelMembers'), tableX, workshopY);
                 workshopY += 5;
                 pdf.setFont(undefined, 'normal');
                 pdf.setFontSize(12);
@@ -721,7 +802,7 @@ export function exportToPDF() {
         pdf.rect(margin, yPos, pageWidth - (margin * 2), 8, 'FD');
         pdf.setFontSize(14); // 14pt for heading
         pdf.setFont(undefined, 'bold');
-        pdf.text('DUTIES AND TASKS', pageWidth / 2, yPos + 5.5, { align: 'center' });
+        pdf.text(_t('expDutiesAndTasks'), pageWidth / 2, yPos + 5.5, { align: 'center' });
         yPos += 8;
         
         // ── DUTIES AND TASKS grid — horizontal (Word-style) layout ──
@@ -766,7 +847,7 @@ export function exportToPDF() {
         const newChartPage = () => {
             pdf.addPage('a4', 'landscape');
             yPos = margin + 5;
-            drawSectionBanner('DUTIES AND TASKS (continued)');
+            drawSectionBanner(_tf('expContinued', { v: _t('expDutiesAndTasks') }));
         };
 
         duties.forEach((duty, dutyIdx) => {
@@ -775,7 +856,7 @@ export function exportToPDF() {
             // ── Duty title bar (full width) ───────────────────────
             pdf.setFontSize(14);
             pdf.setFont(undefined, 'bold');
-            const headerText  = `DUTY ${letter}: ${duty.duty}`;
+            const headerText  = `${_tf('lblDuty', { code: letter })}: ${duty.duty}`;
             const headerLines = pdf.splitTextToSize(headerText, chartWidth - (CELL_PAD_X * 2));
             const headerH     = Math.max(
                 10,
@@ -819,7 +900,7 @@ export function exportToPDF() {
                     pdf.rect(margin, yPos, chartWidth, 8, 'FD');
                     pdf.setFontSize(12);
                     pdf.setFont(undefined, 'bold');
-                    pdf.text(`DUTY ${letter} (continued)`, margin + CELL_PAD_X, yPos + 5.5);
+                    pdf.text(_tf('expContinued', { v: _tf('lblDuty', { code: letter }) }), margin + CELL_PAD_X, yPos + 5.5);
                     yPos += 8;
                 }
 
@@ -853,7 +934,7 @@ export function exportToPDF() {
             
             pdf.setFontSize(14); // 14pt for main heading
             pdf.setFont(undefined, 'bold');
-            pdf.text('General Knowledge and Skills', pageWidth / 2, yPos, { align: 'center' });
+            pdf.text(_t('expGeneralKnowledgeSkills'), pageWidth / 2, yPos, { align: 'center' });
             yPos += 8;
             
             // ── Three-column layout ────────────────────────────────
@@ -1054,7 +1135,7 @@ export function exportToPDF() {
             // Main heading
             pdf.setFontSize(14);
             pdf.setFont(undefined, 'bold');
-            pdf.text('Employability Competencies by Occupational Level', pageWidth / 2, yPos, { align: 'center' });
+            pdf.text(_t('expEmployability'), pageWidth / 2, yPos, { align: 'center' });
             yPos += 10;
 
             // Process each category
@@ -1075,7 +1156,7 @@ export function exportToPDF() {
                 pdf.setFont(undefined, 'bold');
                 pdf.setFillColor(232, 232, 232);
                 pdf.rect(margin, yPos - 4, pageWidth - (margin * 2), 6, 'F');
-                pdf.text(category.category || `Category ${category.id}`, margin + 2, yPos);
+                pdf.text(category.category || _tf('expCategoryN', { n: category.id }), margin + 2, yPos);
                 yPos += 8;
 
                 // Column headers
@@ -1083,11 +1164,11 @@ export function exportToPDF() {
                 const colWidth = (pageWidth - (margin * 2)) / 5;
                 pdf.setFillColor(245, 245, 245);
                 pdf.rect(margin, yPos - 4, pageWidth - (margin * 2), 6, 'F');
-                pdf.text('Competency', margin + 2, yPos);
-                pdf.text('Craftsman', margin + colWidth * 1 + 2, yPos);
-                pdf.text('Skilled', margin + colWidth * 2 + 2, yPos);
-                pdf.text('Semi-skilled', margin + colWidth * 3 + 2, yPos);
-                pdf.text('Foundation', margin + colWidth * 4 + 2, yPos);
+                pdf.text(_t('expCompetency'), margin + 2, yPos);
+                pdf.text(_t('expCraftsman'), margin + colWidth * 1 + 2, yPos);
+                pdf.text(_t('expSkilled'), margin + colWidth * 2 + 2, yPos);
+                pdf.text(_t('expSemiSkilled'), margin + colWidth * 3 + 2, yPos);
+                pdf.text(_t('expFoundation'), margin + colWidth * 4 + 2, yPos);
                 yPos += 8;
 
                 // Competency rows
@@ -1105,11 +1186,11 @@ export function exportToPDF() {
                             pdf.setFont(undefined, 'bold');
                             pdf.setFillColor(245, 245, 245);
                             pdf.rect(margin, yPos - 4, pageWidth - (margin * 2), 6, 'F');
-                            pdf.text('Competency', margin + 2, yPos);
-                            pdf.text('Craftsman', margin + colWidth * 1 + 2, yPos);
-                            pdf.text('Skilled', margin + colWidth * 2 + 2, yPos);
-                            pdf.text('Semi-skilled', margin + colWidth * 3 + 2, yPos);
-                            pdf.text('Foundation', margin + colWidth * 4 + 2, yPos);
+                            pdf.text(_t('expCompetency'), margin + 2, yPos);
+                            pdf.text(_t('expCraftsman'), margin + colWidth * 1 + 2, yPos);
+                            pdf.text(_t('expSkilled'), margin + colWidth * 2 + 2, yPos);
+                            pdf.text(_t('expSemiSkilled'), margin + colWidth * 3 + 2, yPos);
+                            pdf.text(_t('expFoundation'), margin + colWidth * 4 + 2, yPos);
                             yPos += 8;
                             pdf.setFont(undefined, 'normal');
                         }
@@ -1134,17 +1215,21 @@ export function exportToPDF() {
 
                         // Checkmarks (centered in cells)
                         const checkY = yPos + (cellHeight / 2) - 2;
+                        // Drawn as strokes, not as the character U+2713:
+                        // that glyph is in neither Helvetica nor Cairo, and
+                        // jsPDF drops unmapped characters silently, so the
+                        // matrix was printing blank cells in every language.
                         if (competency.levels.craftsman) {
-                            pdf.text('✓', margin + colWidth * 1 + (colWidth / 2), checkY, { align: 'center' });
+                            drawTick(pdf, margin + colWidth * 1 + (colWidth / 2), checkY);
                         }
                         if (competency.levels.skilled) {
-                            pdf.text('✓', margin + colWidth * 2 + (colWidth / 2), checkY, { align: 'center' });
+                            drawTick(pdf, margin + colWidth * 2 + (colWidth / 2), checkY);
                         }
                         if (competency.levels.semiSkilled) {
-                            pdf.text('✓', margin + colWidth * 3 + (colWidth / 2), checkY, { align: 'center' });
+                            drawTick(pdf, margin + colWidth * 3 + (colWidth / 2), checkY);
                         }
                         if (competency.levels.foundation) {
-                            pdf.text('✓', margin + colWidth * 4 + (colWidth / 2), checkY, { align: 'center' });
+                            drawTick(pdf, margin + colWidth * 4 + (colWidth / 2), checkY);
                         }
 
                         yPos += cellHeight + 2;
@@ -1169,30 +1254,30 @@ export function exportToPDF() {
                 // Appendix title
                 pdf.setFontSize(16);
                 pdf.setFont(undefined, 'bold');
-                pdf.text('Task Verification & Training Priority Analysis (Appendix)', pageWidth / 2, yPos, { align: 'center' });
+                pdf.text(_t('expTaskVerifAppendix'), pageWidth / 2, yPos, { align: 'center' });
                 yPos += 12;
                 
                 // Methodology Summary
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
-                pdf.text('Methodology Summary', margin, yPos);
+                pdf.text(_t('expMethodologySummary'), margin, yPos);
                 yPos += 8;
                 
                 pdf.setFontSize(11);
                 pdf.setFont(undefined, 'normal');
-                pdf.text(`Data Collection Mode: ${appState.collectionMode === 'workshop' ? 'Workshop (Facilitated)' : 'Individual/Survey'}`, margin, yPos);
+                pdf.text(_tf('expCollectionMode', { v: _t(appState.collectionMode === 'workshop' ? 'modeWorkshop' : 'expIndividualSurvey') }), margin, yPos);
                 yPos += 6;
-                pdf.text(`Number of Participants: ${appState.workshopParticipants}`, margin, yPos);
+                pdf.text(_tf('expParticipants', { v: appState.workshopParticipants }), margin, yPos);
                 yPos += 6;
-                pdf.text(`Workflow Mode: ${appState.workflowMode === 'standard' ? 'Standard (DACUM)' : 'Extended (DACUM)'}`, margin, yPos);
+                pdf.text(_tf('expWorkflowMode', { v: _t(appState.workflowMode === 'standard' ? 'modeStandard' : 'modeExtended') }), margin, yPos);
                 yPos += 6;
-                pdf.text(`Priority Formula: ${appState.priorityFormula === 'if' ? 'Importance × Frequency' : 'Importance × Frequency × Difficulty'}`, margin, yPos);
+                pdf.text(_tf('expPriorityFormula', { v: _t(appState.priorityFormula === 'if' ? 'formulaIF' : 'formulaIFD') }), margin, yPos);
                 yPos += 12;
                 
                 // Priority Rankings Table
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
-                pdf.text('Priority Rankings', margin, yPos);
+                pdf.text(_t('expPriorityRankings'), margin, yPos);
                 yPos += 8;
                 
                 // Get sorted results
@@ -1235,7 +1320,8 @@ export function exportToPDF() {
                 
                 // Table headers
                 const colWidths = [15, 50, 75, 25, 25, 25, 25];
-                const headers = ['Rank', 'Duty', 'Task', 'Mean I', 'Mean F', 'Mean D', 'Priority'];
+                const headers = [_t('expRank'), _t('expDutyLabel'), _t('expTaskLabel'),
+                                 _t('expMeanI'), _t('expMeanF'), _t('expMeanD'), _t('expPriority')];
                 
                 pdf.setFontSize(10);
                 pdf.setFont(undefined, 'bold');
@@ -1288,12 +1374,12 @@ export function exportToPDF() {
                 
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
-                pdf.text('Duty-Level Summary', margin, yPos);
+                pdf.text(_t('expDutyLevelSummary'), margin, yPos);
                 yPos += 5;
                 
                 pdf.setFontSize(9);
                 pdf.setFont(undefined, 'italic');
-                pdf.text(`Training Load Method: ${appState.trainingLoadMethod === 'advanced' ? 'Advanced (Σ Priority × Difficulty)' : 'Simple (Avg Priority × Tasks)'}`, margin, yPos);
+                pdf.text(_tf('expTrainingLoadMethod', { v: _t(appState.trainingLoadMethod === 'advanced' ? 'expAdvancedMethod' : 'expSimpleMethod') }), margin, yPos);
                 yPos += 8;
                 
                 // Aggregate duty-level data
@@ -1353,7 +1439,8 @@ export function exportToPDF() {
                 
                 // Duty table headers
                 const dutyColWidths = [80, 30, 40, 45];
-                const dutyHeaders = ['Duty Title', 'Tasks', 'Avg Priority', 'Training Load'];
+                const dutyHeaders = [_t('expDutyTitle'), _t('expTasks'),
+                                     _t('expAvgPriority'), _t('expTrainingLoad')];
                 
                 pdf.setFontSize(9);
                 pdf.setFont(undefined, 'bold');
@@ -1393,7 +1480,7 @@ export function exportToPDF() {
                 // Notes
                 pdf.setFontSize(12);
                 pdf.setFont(undefined, 'bold');
-                pdf.text('Notes', margin, yPos);
+                pdf.text(_t('expNotes'), margin, yPos);
                 yPos += 6;
                 
                 pdf.setFontSize(10);
@@ -1424,23 +1511,23 @@ export function exportToPDF() {
             // Appendix title
             pdf.setFontSize(16);
             pdf.setFont(undefined, 'bold');
-            pdf.text('DACUM Live Pro - Verified (Post-Vote) Results (Appendix)', pageWidth / 2, yPos, { align: 'center' });
+            pdf.text(_t('expPostVoteResults'), pageWidth / 2, yPos, { align: 'center' });
             yPos += 12;
             
             // Metadata
             pdf.setFontSize(11);
             pdf.setFont(undefined, 'normal');
-            pdf.text(`Occupation: ${appState.lwFinalizedData.occupation}`, margin, yPos);
+            pdf.text(_tf('expOccupation', { v: appState.lwFinalizedData.occupation }), margin, yPos);
             yPos += 6;
-            pdf.text(`Job Title: ${appState.lwFinalizedData.jobTitle}`, margin, yPos);
+            pdf.text(_tf('expJobTitle', { v: appState.lwFinalizedData.jobTitle }), margin, yPos);
             yPos += 6;
-            pdf.text(`Date: ${new Date().toLocaleDateString()}`, margin, yPos);
+            pdf.text(_tf('expDate', { v: _today() }), margin, yPos);
             yPos += 6;
             const vFormula = appState.lwFinalizedData.appState.priorityFormula || 'if';
-            const vFormulaText = vFormula === 'ifd' ? 'Importance × Frequency × Difficulty' : 'Importance × Frequency';
+            const vFormulaText = _t(vFormula === 'ifd' ? 'formulaIFD' : 'formulaIF');
             pdf.text(`Priority Formula: ${vFormulaText}`, margin, yPos);
             yPos += 6;
-            pdf.text(`Total Participants: ${appState.lwAggregatedResults.totalVotes}`, margin, yPos);
+            pdf.text(_tf('expTotalParticipants', { v: appState.lwAggregatedResults.totalVotes }), margin, yPos);
             yPos += 12;
             
             // Collect all verified tasks with metrics
@@ -1467,13 +1554,13 @@ export function exportToPDF() {
             // Table header
             pdf.setFontSize(10);
             pdf.setFont(undefined, 'bold');
-            pdf.text('Rank', margin, yPos);
-            pdf.text('Duty', margin + 15, yPos);
-            pdf.text('Task', margin + 60, yPos);
-            pdf.text('I', margin + 140, yPos);
-            pdf.text('F', margin + 150, yPos);
-            pdf.text('D', margin + 160, yPos);
-            pdf.text('PI', margin + 170, yPos);
+            pdf.text(_t('expRank'),      margin,       yPos);
+            pdf.text(_t('expDutyLabel'), margin + 15,  yPos);
+            pdf.text(_t('expTaskLabel'), margin + 60,  yPos);
+            pdf.text(_t('expInitialI'),  margin + 140, yPos);
+            pdf.text(_t('expInitialF'),  margin + 150, yPos);
+            pdf.text(_t('expInitialD'),  margin + 160, yPos);
+            pdf.text(_t('expPI'),        margin + 170, yPos);
             yPos += 5;
             pdf.line(margin, yPos, pageWidth - margin, yPos);
             yPos += 3;
@@ -1509,7 +1596,7 @@ export function exportToPDF() {
             
             pdf.setFontSize(16);
             pdf.setFont(undefined, 'bold');
-            pdf.text('Competency Clusters', pageWidth / 2, yPos, { align: 'center' });
+            pdf.text(_t('expClusters'), pageWidth / 2, yPos, { align: 'center' });
             yPos += 10;
             
             appState.clusteringData.clusters.forEach((cluster, clusterIndex) => {
@@ -1524,14 +1611,14 @@ export function exportToPDF() {
                 // Cluster header
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
-                pdf.text(`Competency ${clusterNumber}: ${cluster.name}`, margin, yPos);
+                pdf.text(_tf('expCompetencyN', { n: clusterNumber, name: cluster.name }), margin, yPos);
                 yPos += 7;
                 
                 // Range section
                 if (cluster.range && cluster.range.trim()) {
                     pdf.setFontSize(12);
                     pdf.setFont(undefined, 'bold');
-                    pdf.text('Range:', margin, yPos);
+                    pdf.text(_t('expRangeLabel'), margin, yPos);
                     yPos += 5;
                     
                     pdf.setFontSize(10);
@@ -1557,7 +1644,7 @@ export function exportToPDF() {
                     
                     pdf.setFontSize(12);
                     pdf.setFont(undefined, 'bold');
-                    pdf.text('Related Tasks:', margin, yPos);
+                    pdf.text(_t('expRelatedTasks'), margin, yPos);
                     yPos += 5;
                     
                     pdf.setFontSize(10);
@@ -1594,7 +1681,7 @@ export function exportToPDF() {
                     
                     pdf.setFontSize(12);
                     pdf.setFont(undefined, 'bold');
-                    pdf.text('Performance Criteria:', margin, yPos);
+                    pdf.text(_t('expPCLabel'), margin, yPos);
                     yPos += 5;
                     
                     pdf.setFontSize(10);
@@ -1631,7 +1718,7 @@ export function exportToPDF() {
             
             pdf.setFontSize(16);
             pdf.setFont(undefined, 'bold');
-            pdf.text('Learning Outcomes', pageWidth / 2, yPos, { align: 'center' });
+            pdf.text(_t('expLearningOutcomes'), pageWidth / 2, yPos, { align: 'center' });
             yPos += 10;
             
             // Group LOs by cluster
@@ -1697,7 +1784,7 @@ export function exportToPDF() {
                     // Mapped Performance Criteria
                     pdf.setFontSize(10);
                     pdf.setFont(undefined, 'italic');
-                    pdf.text('Mapped Performance Criteria:', margin + 10, yPos);
+                    pdf.text(_t('expMappedPC'), margin + 10, yPos);
                     yPos += 5;
                     
                     pdf.setFont(undefined, 'normal');
@@ -1733,7 +1820,7 @@ export function exportToPDF() {
             
             pdf.setFontSize(16);
             pdf.setFont(undefined, 'bold');
-            pdf.text('Module Mapping', pageWidth / 2, yPos, { align: 'center' });
+            pdf.text(_t('expModuleMapping'), pageWidth / 2, yPos, { align: 'center' });
             yPos += 10;
             
             appState.moduleMappingData.modules.forEach(module => {
@@ -1751,7 +1838,7 @@ export function exportToPDF() {
                 // Learning Outcomes in this module
                 pdf.setFontSize(12);
                 pdf.setFont(undefined, 'bold');
-                pdf.text('Learning Outcomes:', margin + 5, yPos);
+                pdf.text(_t('expLOsLabel'), margin + 5, yPos);
                 yPos += 5;
                 
                 module.learningOutcomes.forEach(lo => {
@@ -1784,7 +1871,7 @@ export function exportToPDF() {
                     // Referenced Performance Criteria
                     pdf.setFontSize(9);
                     pdf.setFont(undefined, 'italic');
-                    pdf.text('Referenced PC:', margin + 15, yPos);
+                    pdf.text(_t('expReferencedPC'), margin + 15, yPos);
                     yPos += 4;
                     
                     pdf.setFont(undefined, 'normal');
@@ -1813,14 +1900,19 @@ export function exportToPDF() {
             });
         }
         
-        const _pdfOccSlug = occupationTitleInput.value.replace(/[^a-z0-9]/gi, '_');
-        const _pdfJobVal  = (jobTitleInput.value || '').trim();
-        const _pdfJobSlug = _pdfJobVal ? `_${_pdfJobVal.replace(/[^a-z0-9]/gi, '_')}` : '';
-        pdf.save(`${_pdfOccSlug}${_pdfJobSlug}_DACUM_Chart.pdf`);
-        showStatus('PDF exported successfully! ✓', 'success');
+        const _pdfJobVal = (jobTitleInput.value || '').trim();
+        pdf.save(_safeFilename(
+            occupationTitleInput.value + (_pdfJobVal ? ' ' + _pdfJobVal : ''),
+            '_DACUM_Chart.pdf'
+        ));
+        showStatus(_t('msgPdfExported'), 'success');
         
     } catch (error) {
         console.error('Error generating PDF:', error);
-        showStatus('Error generating PDF: ' + error.message, 'error');
+        showStatus(_tf('msgPdfError', { msg: error.message }), 'error');
+    } finally {
+        // See exportTaskVerificationPDF: the parser is suspended on the
+        // class, so it must be restored even on failure.
+        _endArabic();
     }
 }

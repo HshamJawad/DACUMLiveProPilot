@@ -4,7 +4,7 @@
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v72';
+const CACHE_VERSION = 'v73';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -31,6 +31,13 @@ const PRECACHE_URLS = [
   // in a fallback face, and this app is expected to run in training
   // rooms with no reliable network. 136 KB once, then never again.
   BASE + 'fonts/Cairo.woff2',
+  // The TTF is a SEPARATE asset from the woff2 above: woff2 is for the
+  // screen, and jsPDF can only embed a TTF. Caching the loader module
+  // (pdf_arabic.js / arabic-font.js) without this file would only move
+  // the offline failure one step later — the module would load, then
+  // its fetch would fail and the Arabic PDF would refuse. Both have to
+  // be precached together or neither is.
+  BASE + 'fonts/Cairo-Regular.ttf',
 
   // ── Stylesheets ──────────────────────────────────────────
   BASE + 'dacum-styles.css',
@@ -62,6 +69,10 @@ const PRECACHE_URLS = [
   BASE + 'exports_shared.js',
   BASE + 'exports_docx.js',
   BASE + 'exports_pdf.js',
+  // Arabic PDF support: the shaper/BiDi module and the jsPDF mirror
+  // layer built on top of it. Reachable only from exports_pdf.js.
+  BASE + 'arabic-font.js',
+  BASE + 'pdf_arabic.js',
   BASE + 'snapshots.js',
   BASE + 'workshop.js',
   BASE + 'workshop_snapshots.js',
