@@ -4,7 +4,7 @@
 // Also: addCustomSection, toggleEditHeading, clearSection, formatList.
 // ============================================================
 
-import { appState } from './state.js';
+import { appState, defaultSkillsLevelData, skillsLevelIsEmpty } from './state.js';
 
 /* i18n access — resolved lazily, see duties.js for the reasoning. */
 const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
@@ -34,19 +34,31 @@ export function escapeHtml(text) {
     .replace(/'/g, '&#039;');
 }
 
-export function toggleInfoBox() {
-  const infoBoxContent = document.getElementById('infoBoxContent');
-  const toggleButton   = document.querySelector('.btn-toggle-info');
-  if (infoBoxContent.style.display === 'none') {
-    infoBoxContent.style.display = 'block';
-    toggleButton.textContent = 'Hide';
-  } else {
-    infoBoxContent.style.display = 'none';
-    toggleButton.textContent = 'Show';
-  }
-}
+/* toggleInfoBox() was removed in 3.20.1.
+
+   It drove an info box that no longer exists: #infoBoxContent,
+   .btn-toggle-info and #btnToggleInfoBox are all absent from
+   index.html. The only reason it never threw is that _on() in
+   events.js skips a missing element, so the click handler was never
+   attached and the function was never reached.
+
+   Had it ever been reached it would have thrown immediately on
+   `infoBoxContent.style` — null. Translating its hard-coded 'Hide' /
+   'Show' would have meant adding two i18n keys to keep unreachable
+   code tidy; deleting it is the actual fix. */
 
 // ── Skills Level Matrix ───────────────────────────────────────
+
+/* Checkbox labels reuse the SAME keys as the explanatory list in the
+   info box above the matrix. Duplicating the wording would let the
+   legend and the checkboxes drift apart in translation. */
+const LEVEL_KEYS = {
+  craftsman:   'lvlCraftsman',
+  skilled:     'lvlSkilled',
+  semiSkilled: 'lvlSemiSkilled',
+  foundation:  'lvlFoundation'
+};
+
 
 export function toggleSkillsLevelSection() {
   const header  = document.querySelector('.skills-level-header');
@@ -121,84 +133,54 @@ export function resetSkillsLevel(withConfirm = true) {
       (cat.competencies || []).some(c => Object.values(c.levels || {}).some(Boolean))
     );
     if (untouched) {
-      showStatus('Skills Level is already at its defaults — nothing to reset', 'success');
+      showStatus(_t('msgSkillsAtDefaults'), 'success');
       return;
     }
-    if (!confirm('Are you sure you want to reset all Skills Level data?')) return;
+    if (!confirm(_t('confirmResetSkills'))) return;
   }
 
+  /* The 33 default strings used to be repeated here as English
+     literals, duplicating state.js. They now come from one generator,
+     which also means Reset regenerates the matrix in whatever language
+     the interface is in RIGHT NOW — the one moment where re-resolving
+     the wording is what the user actually asked for. */
   appState.skillsLevelData.length = 0;
-  const defaults = [
-    { id: 1, category: 'Communication', competencies: [
-      { id: '1.1', text: 'Verbally communicate with others',  levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '1.2', text: 'Communicate with others in writing', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-    ]},
-    { id: 2, category: 'Teamwork', competencies: [
-      { id: '2.1', text: 'Work within a team',                          levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '2.2', text: 'Solve disputes and negotiate with others',    levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '2.3', text: 'Defend rights at work',                       levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '2.4', text: 'Time and resource management',                levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '2.5', text: 'Make decisions',                              levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-    ]},
-    { id: 3, category: 'Self-marketing', competencies: [
-      { id: '3.1', text: 'CV writing',           levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '3.2', text: 'Job interviews',        levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '3.3', text: 'Presentation skills',  levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-    ]},
-    { id: 4, category: 'Problem Solving', competencies: [
-      { id: '4.1', text: 'Identify and analyse work problems',  levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '4.2', text: 'Solve problems at a work site',       levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '4.3', text: 'Evaluate results and make decisions', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-    ]},
-    { id: 5, category: 'Entrepreneurship', competencies: [
-      { id: '5.1', text: 'Critical thinking',                                                     levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '5.2', text: 'Find/create small business idea project',                                levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '5.3', text: 'Prepare simple feasibility studies for their projects',                  levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '5.4', text: 'Prepare business plan of project to present to loans institutions',      levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '5.5', text: 'Managing, improving and developing their project',                       levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-    ]},
-    { id: 6, category: 'Computer/ICT skills', competencies: [
-      { id: '6.1', text: 'Use a computer', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '6.2', text: 'Use internet',   levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-    ]},
-    { id: 7, category: 'Foreign Languages', competencies: [
-      { id: '7.1', text: 'Basic communication skills',                           levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '7.2', text: 'Use English technical terms related to construction',  levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-    ]},
-    { id: 8, category: 'Mathematical Skills', competencies: [
-      { id: '8.1', text: 'Perform basic measurement operations', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '8.2', text: 'Perform mathematical operations',      levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-    ]},
-    { id: 9, category: '', competencies: [
-      { id: '9.1', text: '', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-      { id: '9.2', text: '', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-    ]}
-  ];
-  defaults.forEach(d => appState.skillsLevelData.push(d));
+  defaultSkillsLevelData().forEach(cat => appState.skillsLevelData.push(cat));
   renderSkillsLevel();
 }
 
 export function renderSkillsLevel() {
   const container = document.getElementById('skillsLevelContainer');
   if (!container) return;
+
+  /* Seed on first render rather than at module load. state.js is
+     evaluated as part of app.js's module graph, and although
+     translations.js is a classic script that runs before it, seeding
+     here keeps the matrix independent of that ordering AND lets
+     storage.js load a saved project first without being overwritten.
+     An empty array means a genuinely new matrix. */
+  if (skillsLevelIsEmpty()) {
+    defaultSkillsLevelData().forEach(cat => appState.skillsLevelData.push(cat));
+  }
+
   let html = '';
 
   appState.skillsLevelData.forEach((category, categoryIndex) => {
     html += `
       <div class="skills-level-category">
         <div class="skills-level-category-header">
-          <h4>Category ${category.id}</h4>
+          <h4>${escapeHtml(_tf('expCategoryN', { n: category.id }))}</h4>
           <button class="btn-remove-category"
-            data-action="remove-skills-category" data-cat-index="${categoryIndex}">Remove Category</button>
+            data-action="remove-skills-category" data-cat-index="${categoryIndex}">${escapeHtml(_t('btnRemoveCategory'))}</button>
         </div>
         <input type="text" class="skills-level-category-name"
-          placeholder="e.g., Communication, Problem Solving, etc."
+          placeholder="${escapeHtml(_t('phCategoryName'))}"
           value="${escapeHtml(category.category)}"
           data-action="update-skills-category-name" data-cat-index="${categoryIndex}">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-          <h5 style="margin:0;">Competencies</h5>
+          <h5 style="margin:0;">${escapeHtml(_t('lblCompetencies'))}</h5>
           <button class="btn-add-competency"
-            data-action="add-skills-competency" data-cat-index="${categoryIndex}">+ Add Competency</button>
+            data-action="add-skills-competency" data-cat-index="${categoryIndex}">+ ${escapeHtml(_t('btnAddCompetency'))}</button>
         </div>
         <div>`;
 
@@ -208,11 +190,12 @@ export function renderSkillsLevel() {
           <div class="skills-competency-input-row">
             <div class="skills-competency-id">${competency.id}:</div>
             <input type="text" class="skills-competency-text"
-              placeholder="Enter competency description"
+              placeholder="${escapeHtml(_t('phCompetencyText'))}"
               value="${escapeHtml(competency.text)}"
               data-action="update-skills-competency-text"
               data-cat-index="${categoryIndex}" data-comp-index="${competencyIndex}">
             <button class="btn-remove-competency"
+              title="${escapeHtml(_t('ttRemoveCompetency'))}"
               data-action="remove-skills-competency"
               data-cat-index="${categoryIndex}" data-comp-index="${competencyIndex}">×</button>
           </div>
@@ -223,7 +206,7 @@ export function renderSkillsLevel() {
                   data-action="handle-skills-level-change"
                   data-cat-index="${categoryIndex}" data-comp-index="${competencyIndex}"
                   data-level="${level}">
-                <span>${level === 'craftsman' ? 'Craftsman/Supervisor' : level === 'semiSkilled' ? 'Semi-skilled' : level === 'foundation' ? 'Foundation skills' : 'Skilled'}</span>
+                <span>${escapeHtml(_t(LEVEL_KEYS[level]))}</span>
               </label>`).join('')}
           </div>
         </div>`;

@@ -314,6 +314,57 @@
       editCompetencies: 'Edit Employability Competencies',
       btnResetSelections: 'Reset All Selections',
       btnAddCategory: 'Add Category',
+      /* ── Skills Level Matrix ──────────────────────────────────
+         slCat* / slComp* are SEED DATA, not interface labels. They are
+         resolved once, when a new matrix is generated (fresh project or
+         an explicit Reset), and then stored as plain text in
+         appState.skillsLevelData. Switching language afterwards does
+         NOT re-translate them — the rows are user-editable, and
+         silently rewriting text a facilitator has adjusted would
+         destroy their work. Category 9 is intentionally blank: it is
+         the empty row users fill in themselves. */
+      slCat1: 'Communication',
+      slCat2: 'Teamwork',
+      slCat3: 'Self-marketing',
+      slCat4: 'Problem Solving',
+      slCat5: 'Entrepreneurship',
+      slCat6: 'Computer/ICT skills',
+      slCat7: 'Foreign Languages',
+      slCat8: 'Mathematical Skills',
+      slComp1_1: 'Verbally communicate with others',
+      slComp1_2: 'Communicate with others in writing',
+      slComp2_1: 'Work within a team',
+      slComp2_2: 'Solve disputes and negotiate with others',
+      slComp2_3: 'Defend rights at work',
+      slComp2_4: 'Time and resource management',
+      slComp2_5: 'Make decisions',
+      slComp3_1: 'CV writing',
+      slComp3_2: 'Job interviews',
+      slComp3_3: 'Presentation skills',
+      slComp4_1: 'Identify and analyse work problems',
+      slComp4_2: 'Solve problems at a work site',
+      slComp4_3: 'Evaluate results and make decisions',
+      slComp5_1: 'Critical thinking',
+      slComp5_2: 'Find/create small business idea project',
+      slComp5_3: 'Prepare simple feasibility studies for their projects',
+      slComp5_4: 'Prepare business plan of project to present to loans institutions',
+      slComp5_5: 'Managing, improving and developing their project',
+      slComp6_1: 'Use a computer',
+      slComp6_2: 'Use internet',
+      slComp7_1: 'Basic communication skills',
+      slComp7_2: 'Use English technical terms related to construction',
+      slComp8_1: 'Perform basic measurement operations',
+      slComp8_2: 'Perform mathematical operations',
+      /* Matrix interface chrome — retranslated on every language
+         switch, unlike the seed data above. */
+      btnRemoveCategory: 'Remove Category',
+      lblCompetencies: 'Competencies',
+      btnAddCompetency: 'Add Competency',
+      phCategoryName: 'e.g., Communication, Problem Solving, etc.',
+      phCompetencyText: 'Enter competency description',
+      ttRemoveCompetency: 'Remove this competency',
+      msgSkillsAtDefaults: 'Skills Level is already at its defaults — nothing to reset',
+      confirmResetSkills: 'Reset all Skills Level data? Your ticks and any rows you have edited will be lost.',
       btnBackDuties: 'Back to Duties & Tasks',
       ttBackDuties: 'Return to Duties & Tasks to review or edit',
       msgSectionAlreadyEmpty: 'This section is already empty — nothing to clear',
@@ -1267,6 +1318,57 @@
       editCompetencies: 'Modifier les compétences d’employabilité',
       btnResetSelections: 'Réinitialiser les sélections',
       btnAddCategory: 'Ajouter une catégorie',
+      /* ── Skills Level Matrix ──────────────────────────────────
+         slCat* / slComp* are SEED DATA, not interface labels. They are
+         resolved once, when a new matrix is generated (fresh project or
+         an explicit Reset), and then stored as plain text in
+         appState.skillsLevelData. Switching language afterwards does
+         NOT re-translate them — the rows are user-editable, and
+         silently rewriting text a facilitator has adjusted would
+         destroy their work. Category 9 is intentionally blank: it is
+         the empty row users fill in themselves. */
+      slCat1: 'Communication',
+      slCat2: 'Travail en équipe',
+      slCat3: 'Marketing de soi',
+      slCat4: 'Résolution de problèmes',
+      slCat5: 'Entrepreneuriat',
+      slCat6: 'Compétences informatiques / TIC',
+      slCat7: 'Langues étrangères',
+      slCat8: 'Compétences mathématiques',
+      slComp1_1: 'Communiquer verbalement avec les autres',
+      slComp1_2: 'Communiquer par écrit avec les autres',
+      slComp2_1: 'Travailler au sein d’une équipe',
+      slComp2_2: 'Résoudre les conflits et négocier avec les autres',
+      slComp2_3: 'Défendre ses droits au travail',
+      slComp2_4: 'Gestion du temps et des ressources',
+      slComp2_5: 'Prendre des décisions',
+      slComp3_1: 'Rédaction d’un CV',
+      slComp3_2: 'Entretiens d’embauche',
+      slComp3_3: 'Techniques de présentation',
+      slComp4_1: 'Identifier et analyser les problèmes de travail',
+      slComp4_2: 'Résoudre les problèmes sur le lieu de travail',
+      slComp4_3: 'Évaluer les résultats et prendre des décisions',
+      slComp5_1: 'Pensée critique',
+      slComp5_2: 'Trouver ou créer une idée de petite entreprise',
+      slComp5_3: 'Réaliser des études de faisabilité simples pour ses projets',
+      slComp5_4: 'Élaborer un plan d’affaires à présenter aux organismes de prêt',
+      slComp5_5: 'Gérer, améliorer et développer son projet',
+      slComp6_1: 'Utiliser un ordinateur',
+      slComp6_2: 'Utiliser Internet',
+      slComp7_1: 'Compétences de communication de base',
+      slComp7_2: 'Utiliser les termes techniques anglais liés à la construction',
+      slComp8_1: 'Effectuer des opérations de mesure de base',
+      slComp8_2: 'Effectuer des opérations mathématiques',
+      /* Matrix interface chrome — retranslated on every language
+         switch, unlike the seed data above. */
+      btnRemoveCategory: 'Supprimer la catégorie',
+      lblCompetencies: 'Compétences',
+      btnAddCompetency: 'Ajouter une compétence',
+      phCategoryName: 'p. ex. Communication, Résolution de problèmes, etc.',
+      phCompetencyText: 'Saisissez la description de la compétence',
+      ttRemoveCompetency: 'Supprimer cette compétence',
+      msgSkillsAtDefaults: 'La matrice est déjà à ses valeurs par défaut — rien à réinitialiser',
+      confirmResetSkills: 'Réinitialiser toute la matrice des niveaux de compétences ? Vos coches et les lignes modifiées seront perdues.',
       btnBackDuties: 'Retour aux tâches & activités',
       ttBackDuties: 'Revenir aux tâches & activités pour vérifier ou modifier',
       msgSectionAlreadyEmpty: 'Cette section est déjà vide — rien à effacer',
@@ -2139,6 +2241,57 @@
       editCompetencies: 'تحرير كفاءات قابلية التوظيف',
       btnResetSelections: 'إعادة ضبط كل الاختيارات',
       btnAddCategory: 'إضافة فئة',
+      /* ── Skills Level Matrix ──────────────────────────────────
+         slCat* / slComp* are SEED DATA, not interface labels. They are
+         resolved once, when a new matrix is generated (fresh project or
+         an explicit Reset), and then stored as plain text in
+         appState.skillsLevelData. Switching language afterwards does
+         NOT re-translate them — the rows are user-editable, and
+         silently rewriting text a facilitator has adjusted would
+         destroy their work. Category 9 is intentionally blank: it is
+         the empty row users fill in themselves. */
+      slCat1: 'التواصل',
+      slCat2: 'العمل ضمن فريق',
+      slCat3: 'التسويق الذاتي',
+      slCat4: 'حل المشكلات',
+      slCat5: 'ريادة الأعمال',
+      slCat6: 'مهارات الحاسوب وتكنولوجيا المعلومات',
+      slCat7: 'اللغات الأجنبية',
+      slCat8: 'المهارات الرياضية',
+      slComp1_1: 'التواصل الشفهي مع الآخرين',
+      slComp1_2: 'التواصل الكتابي مع الآخرين',
+      slComp2_1: 'العمل ضمن فريق',
+      slComp2_2: 'حل الخلافات والتفاوض مع الآخرين',
+      slComp2_3: 'الدفاع عن الحقوق في العمل',
+      slComp2_4: 'إدارة الوقت والموارد',
+      slComp2_5: 'اتخاذ القرارات',
+      slComp3_1: 'كتابة السيرة الذاتية',
+      slComp3_2: 'مقابلات العمل',
+      slComp3_3: 'مهارات العرض والتقديم',
+      slComp4_1: 'تحديد مشكلات العمل وتحليلها',
+      slComp4_2: 'حل المشكلات في موقع العمل',
+      slComp4_3: 'تقييم النتائج واتخاذ القرارات',
+      slComp5_1: 'التفكير الناقد',
+      slComp5_2: 'إيجاد أو ابتكار فكرة مشروع صغير',
+      slComp5_3: 'إعداد دراسات جدوى مبسّطة للمشاريع',
+      slComp5_4: 'إعداد خطة عمل للمشروع لتقديمها إلى مؤسسات الإقراض',
+      slComp5_5: 'إدارة المشروع وتحسينه وتطويره',
+      slComp6_1: 'استخدام الحاسوب',
+      slComp6_2: 'استخدام الإنترنت',
+      slComp7_1: 'مهارات التواصل الأساسية',
+      slComp7_2: 'استخدام المصطلحات الفنية الإنكليزية المتعلقة بالبناء',
+      slComp8_1: 'إجراء عمليات القياس الأساسية',
+      slComp8_2: 'إجراء العمليات الحسابية',
+      /* Matrix interface chrome — retranslated on every language
+         switch, unlike the seed data above. */
+      btnRemoveCategory: 'إزالة الفئة',
+      lblCompetencies: 'الكفاءات',
+      btnAddCompetency: 'إضافة كفاءة',
+      phCategoryName: 'مثال: التواصل، حل المشكلات، إلخ',
+      phCompetencyText: 'أدخل وصف الكفاءة',
+      ttRemoveCompetency: 'حذف هذه الكفاءة',
+      msgSkillsAtDefaults: 'مصفوفة المهارات عند إعداداتها الافتراضية أصلاً — لا شيء لإعادة ضبطه',
+      confirmResetSkills: 'إعادة ضبط كل بيانات مصفوفة المهارات؟ ستفقد علاماتك وأي صفوف عدّلتها.',
       btnBackDuties: 'العودة إلى الواجبات والمهام',
       ttBackDuties: 'العودة إلى الواجبات والمهام للمراجعة أو التعديل',
       btnProceedVerification: 'الانتقال إلى التحقق من المهام',

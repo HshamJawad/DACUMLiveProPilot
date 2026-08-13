@@ -1451,7 +1451,7 @@ export async function exportToWord() {
                                         new Paragraph({
                                             children: [
                                                 new TextRun({
-                                                    text: category.category || `Category ${category.id}`,
+                                                    text: category.category || _tf('expCategoryN', { n: category.id }),
                                                     bold: true,
                                                     size: 24,
                                                 }),

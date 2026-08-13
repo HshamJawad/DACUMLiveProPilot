@@ -33,7 +33,7 @@ import { bypassToClusteringTab, resetVerificationDecision, initializeClusteringF
   updateCreateModuleButton, createModule, renameModule, deleteModule,
   removeLoFromModule, addLoToModuleFromDropdown,
   openModuleBuilderFromMapping, exportModuleMappingJSON }  from './modules.js';
-import { showStatus, toggleInfoBox, escapeHtml,
+import { showStatus, escapeHtml,
   toggleSkillsLevelSection, addSkillsCategory, removeSkillsCategory,
   updateSkillsCategoryName, addSkillsCompetency, removeSkillsCompetency,
   updateSkillsCompetencyText, handleSkillsLevelChange, resetSkillsLevel,
@@ -327,7 +327,9 @@ export function setupEvents() {
 
   // Additional Info
   _on('btnAddCustomSection',        'click', () => addCustomSection());
-  _on('btnToggleInfoBox',           'click', () => toggleInfoBox());
+  /* btnToggleInfoBox removed in 3.20.1 along with toggleInfoBox():
+     the element it targeted is no longer in index.html, so _on() had
+     been silently skipping it. */
 
   // Image upload
   // handleImageUpload is async now (it downscales the logo before

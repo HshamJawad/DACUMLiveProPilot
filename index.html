@@ -108,16 +108,81 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v74';
+      var EXPECTED_SW = 'v76';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bumped together with EXPECTED_SW above.
-      var APP_VERSION = '3.19.1';
-      var APP_RELEASED = '2026-08-13';
+      var APP_VERSION = '3.20.1';
+      var APP_RELEASED = '2026-08-14';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.20.1 — 2026-08-14 — dead info-box code removed ──────
+         PATCH.
+
+         Removed
+           • toggleInfoBox() (renderer.js) and its btnToggleInfoBox
+             wiring and import (events.js). The info box it drove no
+             longer exists: #infoBoxContent, .btn-toggle-info and
+             #btnToggleInfoBox are all absent from index.html. _on()
+             skips missing elements, so the handler was never attached
+             and the function was never reached — had it been, it would
+             have thrown on `infoBoxContent.style` (null).
+             It carried hard-coded 'Hide' / 'Show' strings. Adding two
+             i18n keys would have translated unreachable code; deleting
+             it is the fix.
+
+         Fixed
+           • exports_docx.js: the "Category N" fallback now uses
+             expCategoryN, matching the PDF exporter. Applied to the
+             current version of that file, which is 151 lines ahead of
+             the copy in the project knowledge (it carries the w:lang
+             proofing-language work) — the earlier 3.20.0 attempt had
+             patched the stale copy and is superseded.
+
+         ── 3.20.0 — 2026-08-14 — Skills Level Matrix in ar / fr ──
+         MINOR. The matrix showed a translated title and info box over
+         an entirely English body. Two different causes, fixed
+         differently, because they are two different KINDS of string.
+
+         Interface chrome — retranslates on language switch
+           renderSkillsLevel() built its markup from English literals:
+           "Category N", "Remove Category", "Competencies",
+           "+ Add Competency", both placeholders, and the four level
+           labels. All now resolve through i18n. The checkbox labels
+           reuse lvlCraftsman/lvlSkilled/lvlSemiSkilled/lvlFoundation —
+           the same keys as the legend above the matrix — so the two
+           cannot drift apart in translation.
+
+         Seed data — resolved ONCE, then left alone
+           The 33 default category and competency strings are DATA:
+           they live in appState.skillsLevelData and the user can edit
+           every one of them. They are now generated from i18n keys in
+           the current interface language when a matrix is first
+           created (fresh project, or an explicit Reset), and are NOT
+           re-translated on later language switches. Rewriting wording
+           a facilitator had adapted for their own sector is a worse
+           failure than an English row in an Arabic chart.
+           Consequence, by design: a project started in English keeps
+           its English rows after switching to Arabic. Reset regenerates
+           them in the current language.
+
+         Fixed along the way
+           • The seed existed TWICE — once in state.js, once again as
+             literals inside resetSkillsLevel() in renderer.js, already
+             drifting in whitespace. Both now come from one spec.
+           • defaultSkillsLevelData() deep-cloned the LIVE array rather
+             than the defaults, so it returned edited data whenever it
+             was called after an edit. It had no callers, which is the
+             only reason this never surfaced. It has callers now.
+           • The Word exporter's untranslated "Category N" fallback now
+             uses expCategoryN, matching the PDF exporter.
+
+         Added
+           40 i18n keys x 3 languages: slCat1-8, slComp1_1-8_2, plus
+           matrix chrome and the reset confirm/status messages.
 
          ── 3.19.1 — 2026-08-13 — Arabic PDF: font never embedded ──
          PATCH. Fixes a regression shipped in 3.19.0 that made Arabic

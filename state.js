@@ -18,79 +18,9 @@ export const appState = {
   customSectionCounter: 0,
 
   // ── Skills Level Matrix ────────────────────────────────────
-  skillsLevelData: [
-    {
-      id: 1, category: 'Communication',
-      competencies: [
-        { id: '1.1', text: 'Verbally communicate with others',           levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '1.2', text: 'Communicate with others in writing',         levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-      ]
-    },
-    {
-      id: 2, category: 'Teamwork',
-      competencies: [
-        { id: '2.1', text: 'Work within a team',                         levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '2.2', text: 'Solve disputes and negotiate with others',   levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '2.3', text: 'Defend rights at work',                      levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '2.4', text: 'Time and resource management',               levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '2.5', text: 'Make decisions',                             levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-      ]
-    },
-    {
-      id: 3, category: 'Self-marketing',
-      competencies: [
-        { id: '3.1', text: 'CV writing',                                 levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '3.2', text: 'Job interviews',                             levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '3.3', text: 'Presentation skills',                        levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-      ]
-    },
-    {
-      id: 4, category: 'Problem Solving',
-      competencies: [
-        { id: '4.1', text: 'Identify and analyse work problems',         levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '4.2', text: 'Solve problems at a work site',              levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '4.3', text: 'Evaluate results and make decisions',        levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-      ]
-    },
-    {
-      id: 5, category: 'Entrepreneurship',
-      competencies: [
-        { id: '5.1', text: 'Critical thinking',                          levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '5.2', text: 'Find/create small business idea project',    levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '5.3', text: 'Prepare simple feasibility studies for their projects', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '5.4', text: 'Prepare business plan of project to present to loans institutions', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '5.5', text: 'Managing, improving and developing their project', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-      ]
-    },
-    {
-      id: 6, category: 'Computer/ICT skills',
-      competencies: [
-        { id: '6.1', text: 'Use a computer',                             levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '6.2', text: 'Use internet',                               levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-      ]
-    },
-    {
-      id: 7, category: 'Foreign Languages',
-      competencies: [
-        { id: '7.1', text: 'Basic communication skills',                 levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '7.2', text: 'Use English technical terms related to construction', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-      ]
-    },
-    {
-      id: 8, category: 'Mathematical Skills',
-      competencies: [
-        { id: '8.1', text: 'Perform basic measurement operations',       levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '8.2', text: 'Perform mathematical operations',            levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-      ]
-    },
-    {
-      id: 9, category: '',
-      competencies: [
-        { id: '9.1', text: '', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } },
-        { id: '9.2', text: '', levels: { craftsman: false, skilled: false, semiSkilled: false, foundation: false } }
-      ]
-    }
-  ],
+  // Seeded from i18n at first render, not here: see
+  // defaultSkillsLevelData() at the foot of this file.
+  skillsLevelData: [],
 
   // ── Task Verification ──────────────────────────────────────
   verificationRatings: {},   // { taskKey: { importance, frequency, difficulty, ... } }
@@ -136,13 +66,64 @@ export const appState = {
   }
 };
 
-/** Return a deep-clone of the default skillsLevel data (used by resetSkillsLevel). */
+/* ── Skills Level Matrix defaults ─────────────────────────────
+   The seed used to be written out twice as English literals: once in
+   this file and once again, verbatim, inside resetSkillsLevel() in
+   renderer.js. Two copies of the same 33 strings is one copy too many
+   — the second had already drifted in whitespace — so both are now
+   generated from this single spec.
+
+   Only the STRUCTURE lives here. The wording is resolved from i18n at
+   call time, which is what makes the matrix appear in Arabic or French
+   instead of English.
+
+   Category 9 is deliberately empty: it is the blank row a facilitator
+   fills in themselves, so it has no key and stays empty in every
+   language. */
+const SKILLS_SEED = [
+  { id: 1, key: 'slCat1', comps: ['slComp1_1', 'slComp1_2'] },
+  { id: 2, key: 'slCat2', comps: ['slComp2_1', 'slComp2_2', 'slComp2_3', 'slComp2_4', 'slComp2_5'] },
+  { id: 3, key: 'slCat3', comps: ['slComp3_1', 'slComp3_2', 'slComp3_3'] },
+  { id: 4, key: 'slCat4', comps: ['slComp4_1', 'slComp4_2', 'slComp4_3'] },
+  { id: 5, key: 'slCat5', comps: ['slComp5_1', 'slComp5_2', 'slComp5_3', 'slComp5_4', 'slComp5_5'] },
+  { id: 6, key: 'slCat6', comps: ['slComp6_1', 'slComp6_2'] },
+  { id: 7, key: 'slCat7', comps: ['slComp7_1', 'slComp7_2'] },
+  { id: 8, key: 'slCat8', comps: ['slComp8_1', 'slComp8_2'] },
+  { id: 9, key: null,     comps: [null, null] },
+];
+
+const _t = (k) => (k && window.i18n ? window.i18n.t(k) : '');
+
+const _levels = () => ({ craftsman: false, skilled: false, semiSkilled: false, foundation: false });
+
+/**
+ * Build a fresh default matrix IN THE CURRENT INTERFACE LANGUAGE.
+ *
+ * Called when a new matrix is generated: first render of an empty
+ * project, or an explicit Reset. It is deliberately NOT called on
+ * language switch — once these strings are in appState they are data,
+ * and the rows are user-editable. Re-translating them later would
+ * overwrite wording a facilitator had adjusted for their own sector,
+ * which is a worse failure than an English row in an Arabic chart.
+ *
+ * The old version of this function deep-cloned appState.skillsLevelData
+ * — the LIVE array — so calling it after any edit returned the edited
+ * data, not the defaults. It had no callers, which is the only reason
+ * that never surfaced as a bug.
+ */
 export function defaultSkillsLevelData() {
-  return appState.skillsLevelData.map(cat => ({
-    ...cat,
-    competencies: cat.competencies.map(comp => ({
-      ...comp,
-      levels: { ...comp.levels }
+  return SKILLS_SEED.map(cat => ({
+    id: cat.id,
+    category: _t(cat.key),
+    competencies: cat.comps.map((compKey, i) => ({
+      id: `${cat.id}.${i + 1}`,
+      text: _t(compKey),
+      levels: _levels()
     }))
   }));
+}
+
+/** True when the matrix has never been populated (fresh project). */
+export function skillsLevelIsEmpty() {
+  return !Array.isArray(appState.skillsLevelData) || appState.skillsLevelData.length === 0;
 }
