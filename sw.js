@@ -4,7 +4,7 @@
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v77';
+const CACHE_VERSION = 'v78';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -84,6 +84,10 @@ const PRECACHE_URLS = [
   BASE + 'clustering_ai.js',
   // Full Draft orchestrator — imports every AI module above.
   BASE + 'draft_mode.js',
+  // Occupation-title sanity gate. Imported by BOTH projects.js and
+  // draft_ui.js, so a miss here breaks the duties tab and the Full
+  // Draft dialog together.
+  BASE + 'occupation_check.js',
   BASE + 'draft_agent.js',
   BASE + 'draft_ui.js',
   BASE + 'draft_regen.js',

@@ -12,9 +12,12 @@ import { renderLearningOutcomes, renderPCSourceList, renderModules, renderModule
 import { checkUsageLimit, incrementUsage, showLoadingModal, hideLoadingModal } from './storage.js';
 import { loadDutiesForVerification, syncVerificationTab } from './tasks.js';
 import { isBatchRun } from './draft_mode.js';
+import { verifyOccupation, needsConfirmation, VERDICT,
+         markBypassed, wasBypassed, clearBypass } from './occupation_check.js';
 
 /* i18n access — resolved lazily; see duties.js for why. */
-const _t = (k) => (window.i18n ? window.i18n.t(k) : k);
+const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
 
 
 
@@ -503,6 +506,27 @@ export async function generateAIDacum() {
     return;
   }
 
+  /* ── Soft gate: the occupation title itself ──────────────────
+     Placed HERE, in the validator, and not in _runAIGeneration():
+     that function is what "Generate Anyway" calls directly, so a
+     check inside it would re-open the warning the user just chose
+     to dismiss.
+
+     Skipped during a Full Draft because draft_ui.js asks the same
+     question BEFORE the run starts — which is where it is worth
+     most, ahead of seven chained calls and the whole day's quota,
+     rather than after the first one has already been spent. */
+  if (!isBatchRun() && !wasBypassed(inputs.occupationTitle)) {
+    showStatus(_t('msgCheckingOccupation'), 'info');
+    const check = await verifyOccupation(inputs.occupationTitle);
+    if (needsConfirmation(check)) {
+      _showOccupationWarning(check);
+      showStatus(_t('msgOccupationQuestionable'), 'error');
+      return;
+    }
+    _hideOccupationWarning();
+  }
+
   // ── Soft gate: missing Scope of Work ──
   // If Scope is empty, show the warning card and STOP.  The card's
   // "Generate Anyway" button will resume via _runAIGeneration() when
@@ -857,6 +881,111 @@ function _readAIInputs() {
     sector:          (document.getElementById('sector')?.value          || '').trim(),
     context:         (document.getElementById('context')?.value         || '').trim(),
   };
+}
+
+/* ── Occupation-title warning card ────────────────────────────
+   Built in JS rather than parked in index.html because its body is
+   dynamic: the suggested spelling and the model's one-line reason
+   are not known until the check returns.
+
+   Styled to match #scopeMissingWarning deliberately. A second
+   warning that looked like a different species of alert would read
+   as a system error rather than as the same tool asking a second
+   careful question. */
+let _occWarnEl = null;
+
+function _hideOccupationWarning() {
+  if (_occWarnEl) { _occWarnEl.remove(); _occWarnEl = null; }
+}
+
+function _showOccupationWarning(check) {
+  _hideOccupationWarning();
+
+  const anchor = document.getElementById('scopeMissingWarning');
+  if (!anchor || !anchor.parentNode) return;
+
+  const isTypo  = check.verdict === VERDICT.TYPO;
+  const esc     = (v) => String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const title = isTypo
+    ? _tf('occWarnTypoTitle', { v: check.suggestion })
+    : _t('occWarnUnknownTitle');
+
+  /* The model's own sentence is preferred when it gave one: it can say
+     WHY this particular string looks wrong, which a fixed string
+     cannot. The generic body is the fallback. */
+  const body = check.reason || _t(isTypo ? 'occWarnTypoBody' : 'occWarnUnknownBody');
+
+  const btn = (id, label, primary) => `
+    <button id="${id}" type="button"
+            style="padding:7px 14px; background:${primary ? '#f59e0b' : '#ffffff'};
+                   color:${primary ? '#ffffff' : '#92400e'};
+                   border:1.5px solid #f59e0b; border-radius:7px;
+                   font-size:0.82em; font-weight:600; cursor:pointer;
+                   white-space:nowrap;">${esc(label)}</button>`;
+
+  const el = document.createElement('div');
+  el.id = 'occupationWarning';
+  el.style.margin = '-10px 0 22px 0';
+  el.innerHTML = `
+    <div style="display:flex; align-items:flex-start; gap:14px; padding:14px 18px;
+                background:#fffbeb; border:1.5px solid #fbbf24; border-radius:10px;">
+      <span style="font-size:1.2em; flex-shrink:0; line-height:1.3;">\u{1F50D}</span>
+      <div style="flex:1; min-width:0;">
+        <p style="margin:0 0 3px; font-size:0.88em; font-weight:700; color:#92400e;">
+          ${esc(title)}
+        </p>
+        <p style="margin:0 0 4px; font-size:0.8em; color:#78350f; line-height:1.5;">
+          ${esc(body)}
+        </p>
+        <p style="margin:0 0 10px; font-size:0.8em; color:#78350f;">
+          ${esc(_tf('occWarnYouTyped', { v: check.title }))}
+        </p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${isTypo ? btn('btnOccApply', _tf('occBtnUseSuggestion', { v: check.suggestion }), true) : ''}
+          ${btn('btnOccEdit', _t('occBtnEdit'), !isTypo)}
+          ${btn('btnOccAnyway', _t('occBtnGenerateAnyway'), false)}
+        </div>
+      </div>
+    </div>`;
+
+  anchor.parentNode.insertBefore(el, anchor);
+  _occWarnEl = el;
+
+  /* Apply the suggestion — the ONLY path that writes to the field, and
+     only ever on an explicit click. Nothing here corrects silently. */
+  el.querySelector('#btnOccApply')?.addEventListener('click', () => {
+    const field = document.getElementById('occupationTitle');
+    if (field) {
+      clearBypass(field.value);
+      field.value = check.suggestion;
+      field.dispatchEvent(new Event('input',  { bubbles: true }));
+      field.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    _hideOccupationWarning();
+    showStatus(_tf('msgOccupationCorrected', { v: check.suggestion }), 'success');
+  });
+
+  el.querySelector('#btnOccEdit')?.addEventListener('click', () => {
+    _hideOccupationWarning();
+    const field = document.getElementById('occupationTitle');
+    if (field && typeof window.switchTab === 'function') {
+      try { window.switchTab('info-tab'); } catch (_) {}
+    }
+    setTimeout(() => { if (field) { field.focus(); field.select(); } }, 80);
+  });
+
+  /* Proceed as typed. Recorded so this exact string is not questioned
+     again — see the bypass ledger in occupation_check.js. */
+  el.querySelector('#btnOccAnyway')?.addEventListener('click', () => {
+    markBypassed(check.title);
+    _hideOccupationWarning();
+    generateAIDacum().then(ok => {
+      if (ok) document.dispatchEvent(new CustomEvent('dacum:ai-generated'));
+    });
+  });
 }
 
 function _showScopeMissingWarning() {

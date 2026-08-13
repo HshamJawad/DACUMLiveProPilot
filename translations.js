@@ -293,6 +293,22 @@
       ttAddBullets: 'Add bullets',
       ttRenameHeading: 'Rename this section heading',
       msgHeadingUpdated: 'Heading updated \u2713',
+      /* ── Occupation-title sanity gate ─────────────────────────
+         Shown when the AI cannot recognise the entered title. The
+         wording asks rather than accuses: a curriculum expert may
+         legitimately enter a local trade name the model has not met,
+         and the tool must never imply they are wrong. */
+      msgCheckingOccupation: 'Checking the occupation title…',
+      msgOccupationQuestionable: 'Please confirm the occupation title before generating',
+      msgOccupationCorrected: 'Occupation title set to “{v}”',
+      occWarnTypoTitle: 'Did you mean “{v}”?',
+      occWarnTypoBody: 'The title you entered looks like a misspelling. The entire chart is built from it, so it is worth confirming first.',
+      occWarnUnknownTitle: 'This does not look like an occupation',
+      occWarnUnknownBody: 'The title could not be recognised as an occupation. Generating from it would produce a chart with no real occupational basis.',
+      occWarnYouTyped: 'You entered: {v}',
+      occBtnUseSuggestion: 'Use “{v}”',
+      occBtnEdit: 'Edit the title',
+      occBtnGenerateAnyway: 'Generate anyway',
       btnRemove: 'Remove',
       phKnowledge: 'Enter each knowledge requirement on a new line\nExample:\n• Understanding of electrical systems\n• Knowledge of safety protocols',
       phSkills: 'Enter each skill requirement on a new line\nExample:\n• Ability to read technical diagrams\n• Proficiency in using hand tools',
@@ -1299,6 +1315,22 @@
       ttAddBullets: 'Ajouter des puces',
       ttRenameHeading: 'Renommer le titre de cette section',
       msgHeadingUpdated: 'Titre mis \u00e0 jour \u2713',
+      /* ── Occupation-title sanity gate ─────────────────────────
+         Shown when the AI cannot recognise the entered title. The
+         wording asks rather than accuses: a curriculum expert may
+         legitimately enter a local trade name the model has not met,
+         and the tool must never imply they are wrong. */
+      msgCheckingOccupation: 'Vérification de l’intitulé du métier…',
+      msgOccupationQuestionable: 'Veuillez confirmer l’intitulé du métier avant de générer',
+      msgOccupationCorrected: 'Intitulé du métier remplacé par « {v} »',
+      occWarnTypoTitle: 'Vouliez-vous dire « {v} » ?',
+      occWarnTypoBody: 'L’intitulé saisi semble mal orthographié. Tout le référentiel en découle : mieux vaut le confirmer d’abord.',
+      occWarnUnknownTitle: 'Cela ne ressemble pas à un métier',
+      occWarnUnknownBody: 'L’intitulé n’a pas pu être reconnu comme un métier. Générer à partir de celui-ci produirait un référentiel sans fondement professionnel réel.',
+      occWarnYouTyped: 'Vous avez saisi : {v}',
+      occBtnUseSuggestion: 'Utiliser « {v} »',
+      occBtnEdit: 'Modifier l’intitulé',
+      occBtnGenerateAnyway: 'Générer quand même',
       btnRemove: 'Supprimer',
       phKnowledge: 'Saisissez chaque exigence de connaissance sur une ligne\nExemple :\n• Compréhension des systèmes électriques\n• Connaissance des protocoles de sécurité',
       phSkills: 'Saisissez chaque exigence de compétence sur une ligne\nExemple :\n• Capacité à lire des schémas techniques\n• Maîtrise des outils à main',
@@ -2223,6 +2255,22 @@
       ttAddBullets: 'إضافة نقاط',
       ttRenameHeading: 'إعادة تسمية عنوان هذا القسم',
       msgHeadingUpdated: '\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0627\u0644\u0639\u0646\u0648\u0627\u0646 \u2713',
+      /* ── Occupation-title sanity gate ─────────────────────────
+         Shown when the AI cannot recognise the entered title. The
+         wording asks rather than accuses: a curriculum expert may
+         legitimately enter a local trade name the model has not met,
+         and the tool must never imply they are wrong. */
+      msgCheckingOccupation: 'جارٍ التحقّق من اسم المهنة…',
+      msgOccupationQuestionable: 'يرجى تأكيد اسم المهنة قبل التوليد',
+      msgOccupationCorrected: 'تم ضبط اسم المهنة على «{v}»',
+      occWarnTypoTitle: 'هل تقصد «{v}»؟',
+      occWarnTypoBody: 'الاسم الذي أدخلته يبدو فيه خطأ مطبعي. المخطط بأكمله يُبنى عليه، فيجدر التأكّد منه أولاً.',
+      occWarnUnknownTitle: 'هذا لا يبدو اسم مهنة',
+      occWarnUnknownBody: 'تعذّر التعرّف على هذا الاسم بوصفه مهنة. التوليد منه سينتج مخططاً بلا أساس مهني حقيقي.',
+      occWarnYouTyped: 'ما أدخلته: {v}',
+      occBtnUseSuggestion: 'استخدم «{v}»',
+      occBtnEdit: 'تعديل الاسم',
+      occBtnGenerateAnyway: 'توليد على أي حال',
       btnRemove: 'حذف',
       phKnowledge: 'أدخل كل متطلب معرفي في سطر مستقل\nمثال:\n• فهم الأنظمة الكهربائية\n• معرفة بروتوكولات السلامة',
       phSkills: 'أدخل كل متطلب مهاري في سطر مستقل\nمثال:\n• القدرة على قراءة الرسوم الفنية\n• إتقان استخدام العُدد اليدوية',

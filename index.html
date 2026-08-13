@@ -108,16 +108,74 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v77';
+      var EXPECTED_SW = 'v78';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bumped together with EXPECTED_SW above.
-      var APP_VERSION = '3.21.0';
+      var APP_VERSION = '3.22.0';
       var APP_RELEASED = '2026-08-14';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.22.0 — 2026-08-14 — occupation-title sanity gate ────
+         MINOR.
+
+         The problem
+           Every AI path in this app is rooted in one free-text field,
+           and the only guard on it was that .trim() was non-empty. One
+           character passed. "asdf" passed. A typo passed.
+           A model completes; it does not verify. The generation prompt
+           labels the title "BASE CONTEXT" — an assumed fact — and then
+           demands "valid JSON format only", so even a doubtful model
+           had no channel to object: the sole permitted output is a
+           duties array. Post-response validation checked shape only
+           (Array.isArray, length > 0), then reported a green tick and
+           a duty count. The tool could not distinguish generation from
+           invention.
+           The dangerous case is not gibberish but the typo that lands
+           on a NEIGHBOURING REAL occupation: a chart that is internally
+           perfect, about the wrong job, with nothing in it to betray
+           the drift.
+
+         Added
+           • occupation_check.js — one short classification call before
+             any generation. Verdicts: known / likely_typo / unknown.
+             Caches per title+language; a likely_typo with no suggestion
+             is demoted to unknown rather than shown unactionable.
+           • Gate in generateAIDacum() (duties tab) and, for Full Draft,
+             at Start in draft_ui.js — before quotaCheck() spends the
+             day's allowance on a seven-stage chain rooted in the typo.
+           • Warning card offering: use the suggestion / edit the title /
+             generate anyway. Styled to match the Scope card.
+           • 11 i18n keys x 3 languages.
+
+         Design decisions
+           • NEVER auto-corrects. A curriculum expert may enter a local
+             Iraqi or Gulf trade name the model has not met; silently
+             replacing it would destroy their intent with confidence —
+             worse than the typo. The field is written only by an
+             explicit click on "Use ...".
+           • FAILS OPEN. Backend down, bad JSON, unrecognised verdict →
+             "unchecked" and generation proceeds. A sanity check that
+             can block the app when it breaks is the larger liability.
+           • The prompt treats dialect and emerging occupations as
+             valid, and is strict only about typos and noise. A gate
+             that fires on legitimate input teaches users to click
+             through it, which is how a gate stops working.
+           • "Generate anyway" is remembered per string, unlike the
+             Scope card which re-asks every time. Scope asks you to ADD
+             something; this asks you to confirm a judgement already
+             made, and re-asking would train the click-through.
+
+         Not verified here
+           The backend host is outside this environment's egress
+           allowlist, so the live endpoint could not be exercised. The
+           call reuses /api/generate-dacum with a different prompt and
+           the same request shape as the existing generation call; if
+           that endpoint constrains prompts server-side, this is the one
+           thing to check first.
 
          ── 3.21.0 — 2026-08-14 — Additional Info action buttons ──
          MINOR. Visual + accessibility work on the section header rows.

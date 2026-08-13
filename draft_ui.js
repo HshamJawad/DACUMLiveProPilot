@@ -14,6 +14,9 @@ import { STAGES, runDraft, cancelDraft, resumeDraft,
          estimatedCalls, quotaCheck,
          scopeIsMissing }                    from './draft_agent.js';
 import { switchTab }                         from './projects.js';
+import { verifyOccupation, needsConfirmation, VERDICT,
+         markBypassed, wasBypassed,
+         clearBypass }                       from './occupation_check.js';
 import { showStatus }                        from './renderer.js';
 
 const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
@@ -37,6 +40,12 @@ let _depth   = CHAIN.length;          // default: generate everything
 let _extras  = new Set();             // ids of chosen optional stages
 let _scopeOpen = false;               // inline Scope editor expanded?
 let _phase   = 'setup';               // setup | running | done | error
+
+/* Result of the occupation-title check, held only while this dialog is
+   open. The check runs at Start, not on open: opening the dialog should
+   cost nothing, and the title can still be edited from the
+   prerequisites panel after it is already open. */
+let _occCheck = null;
 let _current = -1;                    // index of the stage in flight
 let _doneIds = new Set();
 let _failed  = null;
@@ -104,6 +113,7 @@ export function openDraftModal() {
 
   _phase = 'setup';
   _scopeOpen = false;
+  _occCheck = null;
   renderModal();
 
   _unsub = onDraftProgress(_onProgress);
@@ -207,6 +217,28 @@ function _setupBody() {
         </span>
       </label>`;
     }).join('')}
+
+    ${_occCheck && needsConfirmation(_occCheck) ? `
+      <div class="dg-note dg-note-warn">
+        <strong>\u{1F50D} ${_esc(_occCheck.verdict === VERDICT.TYPO
+          ? _tf('occWarnTypoTitle', { v: _occCheck.suggestion })
+          : _t('occWarnUnknownTitle'))}</strong>
+        <p>${_esc(_occCheck.reason || _t(_occCheck.verdict === VERDICT.TYPO
+          ? 'occWarnTypoBody' : 'occWarnUnknownBody'))}</p>
+        <p>${_esc(_tf('occWarnYouTyped', { v: _occCheck.title }))}</p>
+        <div class="dg-scope-actions">
+          ${_occCheck.verdict === VERDICT.TYPO ? `
+            <button type="button" class="dg-inline-btn" id="dgOccApply">
+              ${_esc(_tf('occBtnUseSuggestion', { v: _occCheck.suggestion }))}
+            </button>` : ''}
+          <button type="button" class="dg-inline-btn dg-inline-ghost" id="dgOccEdit">
+            ${_esc(_t('occBtnEdit'))}
+          </button>
+          <button type="button" class="dg-inline-btn dg-inline-ghost" id="dgOccAnyway">
+            ${_esc(_t('occBtnGenerateAnyway'))}
+          </button>
+        </div>
+      </div>` : ''}
 
     ${scopeIsMissing() ? `
       <div class="dg-note dg-note-warn">
@@ -453,6 +485,28 @@ function _wire() {
   });
 
   q('#dgStart')?.addEventListener('click', async () => {
+    /* Verify the occupation title BEFORE spending anything.
+
+       This is the highest-value place for the check in the whole app:
+       the title is the root of a seven-stage chain, quotaCheck() has
+       already reserved the entire day's allowance for the run, and each
+       stage consumes the output of the one before it. A typo caught
+       here costs one small call; the same typo caught after stage one
+       costs the day and produces a chart for the wrong occupation. */
+    const title = (document.getElementById('occupationTitle')?.value || '').trim();
+    if (title && !wasBypassed(title)) {
+      const startBtn = q('#dgStart');
+      if (startBtn) { startBtn.disabled = true; startBtn.textContent = _t('msgCheckingOccupation'); }
+
+      _occCheck = await verifyOccupation(title);
+
+      if (needsConfirmation(_occCheck)) {
+        renderModal();   // repaints setup, now carrying the warning
+        return;
+      }
+      _occCheck = null;
+    }
+
     _phase = 'running'; _current = 0; _doneIds = new Set(); _failed = null;
     renderModal();
     const res = await runDraft(selectedIds());
@@ -463,6 +517,40 @@ function _wire() {
       _phase = 'setup';
       renderModal();
     }
+  });
+
+  /* Apply the suggestion — the only path that writes to the field, and
+     only ever on an explicit click. Nothing corrects silently. */
+  q('#dgOccApply')?.addEventListener('click', () => {
+    const field = document.getElementById('occupationTitle');
+    if (field && _occCheck) {
+      clearBypass(field.value);
+      field.value = _occCheck.suggestion;
+      field.dispatchEvent(new Event('input',  { bubbles: true }));
+      field.dispatchEvent(new Event('change', { bubbles: true }));
+      showStatus(_tf('msgOccupationCorrected', { v: _occCheck.suggestion }), 'success');
+    }
+    _occCheck = null;
+    renderModal();
+  });
+
+  /* Sends the user to the field itself. The dialog CLOSES rather than
+     staying open: they are going to Chart Info to retype the title, and
+     a modal hanging in front of that is in the way, not helpful. */
+  q('#dgOccEdit')?.addEventListener('click', () => {
+    _occCheck = null;
+    closeDraftModal();
+    try { switchTab('info-tab'); } catch (_) {}
+    setTimeout(() => {
+      const field = document.getElementById('occupationTitle');
+      if (field) { field.focus(); field.select(); }
+    }, 80);
+  });
+
+  q('#dgOccAnyway')?.addEventListener('click', () => {
+    if (_occCheck) markBypassed(_occCheck.title);
+    _occCheck = null;
+    renderModal();   // clean setup panel; Start now proceeds unchallenged
   });
 
   q('#dgStop')?.addEventListener('click', () => {
