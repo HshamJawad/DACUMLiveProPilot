@@ -291,6 +291,8 @@
       aiInfoHint: 'Uses Occupation Title from Chart Info. If duties & tasks already exist, they are used as the evidence base for far more accurate results. Custom sections you added are never overwritten.',
       ttAddNumbering: 'Add numbering',
       ttAddBullets: 'Add bullets',
+      ttRenameHeading: 'Rename this section heading',
+      msgHeadingUpdated: 'Heading updated \u2713',
       btnRemove: 'Remove',
       phKnowledge: 'Enter each knowledge requirement on a new line\nExample:\n• Understanding of electrical systems\n• Knowledge of safety protocols',
       phSkills: 'Enter each skill requirement on a new line\nExample:\n• Ability to read technical diagrams\n• Proficiency in using hand tools',
@@ -1295,6 +1297,8 @@
       aiInfoHint: 'Utilise l’intitulé du métier de la fiche DACUM. Si des activités et tâches existent déjà, elles servent de base de preuves pour des résultats bien plus précis. Les sections personnalisées ne sont jamais écrasées.',
       ttAddNumbering: 'Ajouter la numérotation',
       ttAddBullets: 'Ajouter des puces',
+      ttRenameHeading: 'Renommer le titre de cette section',
+      msgHeadingUpdated: 'Titre mis \u00e0 jour \u2713',
       btnRemove: 'Supprimer',
       phKnowledge: 'Saisissez chaque exigence de connaissance sur une ligne\nExemple :\n• Compréhension des systèmes électriques\n• Connaissance des protocoles de sécurité',
       phSkills: 'Saisissez chaque exigence de compétence sur une ligne\nExemple :\n• Capacité à lire des schémas techniques\n• Maîtrise des outils à main',
@@ -2217,6 +2221,8 @@
       btnBullet: 'تعداد نقطي',
       ttAddNumbering: 'إضافة ترقيم',
       ttAddBullets: 'إضافة نقاط',
+      ttRenameHeading: 'إعادة تسمية عنوان هذا القسم',
+      msgHeadingUpdated: '\u062a\u0645 \u062a\u062d\u062f\u064a\u062b \u0627\u0644\u0639\u0646\u0648\u0627\u0646 \u2713',
       btnRemove: 'حذف',
       phKnowledge: 'أدخل كل متطلب معرفي في سطر مستقل\nمثال:\n• فهم الأنظمة الكهربائية\n• معرفة بروتوكولات السلامة',
       phSkills: 'أدخل كل متطلب مهاري في سطر مستقل\nمثال:\n• القدرة على قراءة الرسوم الفنية\n• إتقان استخدام العُدد اليدوية',
@@ -3210,6 +3216,20 @@
   function getLang() { return _current; }
 
   function _safeUpdate(el, val, attr) {
+    /* data-i18n-attr accepts a COMMA-SEPARATED list, so one key can feed
+       several attributes on the same element. Icon-only buttons need
+       exactly this: the label has to reach BOTH title (the hover tooltip
+       for mouse users) and aria-label (the only name a screen reader
+       has, since there is no visible text). Before this, a value of
+       "title,aria-label" was passed straight to setAttribute() as a
+       single attribute name and threw InvalidCharacterError. */
+    if (attr && attr !== 'text' && attr.indexOf(',') !== -1) {
+      attr.split(',').forEach(function (one) {
+        _safeUpdate(el, val, one.trim());
+      });
+      return;
+    }
+
     if (attr === 'placeholder') { el.placeholder = val; return; }
     if (attr === 'title')       { el.title       = val; return; }
     if (attr && attr !== 'text') { el.setAttribute(attr, val); return; }

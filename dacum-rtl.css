@@ -839,6 +839,22 @@ html[dir="rtl"] .section-header-editable {
   justify-content: space-between;
 }
 
+/* ── Section action icons ─────────────────────────────────────
+   The list icons are deliberately NOT mirrored under RTL.
+
+   Mirroring them was tried and reverted. Word does flip its own list
+   buttons, and scaleX(-1) moves the markers to the right correctly —
+   but it also mirrors the 1-2-3 glyphs, and a mirrored digit is not a
+   digit. Cancelling that with a per-glyph counter-flip
+   (transform-box: fill-box) collapsed the digits to slivers at the
+   canvas edge in Chromium.
+
+   The alternative was a second set of artwork for RTL. Not worth it:
+   an unmirrored list icon is unambiguous in either direction, and the
+   button's meaning is carried by its title and aria-label anyway. The
+   rename I-beam and the trash are symmetrical, so nothing else here
+   needs a direction rule at all. */
+
 html[dir="rtl"] .section-header-editable h3,
 html[dir="rtl"] .section-container h3,
 html[dir="rtl"] .section-container label {

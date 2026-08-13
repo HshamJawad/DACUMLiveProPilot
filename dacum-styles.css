@@ -1386,43 +1386,102 @@ textarea {
     cursor: text;
 }
 
-.btn-rename {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: white;
-    padding: 8px 16px;
-    font-size: 0.95em;
-}
+/* ── Section header action buttons ────────────────────────────
+   Rename / Number / Bullet / Clear.
 
-.btn-rename:hover {
-    box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
-}
+   These four used to be four different saturated gradients — amber,
+   two purples and a red — sitting side by side above every section.
+   Four competing colours on a row of secondary controls read as
+   decoration, and they out-shouted the section heading itself.
 
-.btn-clear-section {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    color: white;
-    padding: 8px 16px;
-    font-size: 0.95em;
-}
+   They are now built from the SAME token set as .btn-back-step in
+   dacum-components.css: the neutral slate palette, 8px radius, 1px
+   border, 600 weight, 0.15s transition. Identical reasoning too —
+   these are utilities acting ON the content, not the content or the
+   primary action of the tab.
 
-.btn-clear-section:hover {
-    box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
-}
+   Clear keeps its colour, because it is the only DESTRUCTIVE one and
+   must stay distinguishable at a glance. It is toned down to a red
+   TINT at rest and goes solid red on hover: still unmistakably the
+   dangerous button, without shouting at the user for the whole
+   session. It also keeps its text label while the other three are
+   icon-only — a control that wipes a section should be the clearest
+   thing in the row, not the most cryptic. */
 
-.btn-format {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-    color: white;
-    padding: 8px 16px;
-    font-size: 0.95em;
-    border: none;
+.btn-rename,
+.btn-format,
+.btn-clear-section,
+.btn-remove-section {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
     border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
+    font-size: 0.88em;
     font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 8px 16px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
+.btn-rename:hover,
 .btn-format:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+    background: #e2e8f0;
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
+/* Icon-only variant. Square, so the three sit as an even group; the
+   label lives in title + aria-label, never in the visible text. */
+.btn-icon {
+    padding: 0;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+}
+
+.btn-icon svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    pointer-events: none;   /* clicks always land on the button */
+}
+
+/* Keyboard users get the same affordance as mouse users. Without this
+   an icon-only button is invisible to tab navigation. */
+.btn-rename:focus-visible,
+.btn-format:focus-visible,
+.btn-clear-section:focus-visible,
+.btn-remove-section:focus-visible {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Heading is in edit mode — the rename button is a live toggle, so it
+   has to look pressed rather than leaving the user to guess. */
+.btn-rename[aria-pressed="true"] {
+    background: #667eea;
+    color: #ffffff;
+    border-color: #667eea;
+}
+
+.btn-clear-section,
+.btn-remove-section {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+.btn-clear-section:hover,
+.btn-remove-section:hover {
+    background: #dc2626;
+    color: #ffffff;
+    border-color: #dc2626;
 }
 
 .btn-ai-generate:hover {

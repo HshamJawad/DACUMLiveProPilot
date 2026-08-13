@@ -47,6 +47,41 @@ export function escapeHtml(text) {
    'Show' would have meant adding two i18n keys to keep unreachable
    code tidy; deleting it is the actual fix. */
 
+/* ── Section action icons ─────────────────────────────────────
+   Inline SVG rather than emoji: 🔢 and ✏️ render as a different
+   picture on every platform, cannot take the button's colour, and
+   sit on the text baseline instead of centring. These use
+   fill="currentColor", so they follow the button through hover,
+   focus and the pressed state for free.
+
+   Declared here so the custom sections built by addCustomSection()
+   are identical to the seven static ones in index.html. */
+const _ICON_LINES =
+  '<rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/>' +
+  '<rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/>' +
+  '<rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/>';
+
+const ICON_BULLET =
+  '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">' +
+  '<rect x="1" y="2.6" width="2.8" height="2.8" rx=".6"/>' +
+  '<rect x="1" y="6.75" width="2.8" height="2.8" rx=".6"/>' +
+  '<rect x="1" y="10.9" width="2.8" height="2.8" rx=".6"/>' + _ICON_LINES + '</svg>';
+
+const ICON_NUMBER =
+  '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">' +
+  '<text x="0.4" y="5.35" font-size="4.7" font-weight="700" font-family="sans-serif">1</text>' +
+  '<text x="0.4" y="9.5" font-size="4.7" font-weight="700" font-family="sans-serif">2</text>' +
+  '<text x="0.4" y="13.65" font-size="4.7" font-weight="700" font-family="sans-serif">3</text>' + _ICON_LINES + '</svg>';
+
+/* An I-beam text cursor, not a pencil. A pencil reads as "edit the
+   content"; this button edits the HEADING, and the I-beam is the
+   established affordance for entering text-edit mode. */
+const ICON_RENAME =
+  '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">' +
+  '<rect x="7.1" y="2" width="1.8" height="12" rx=".4"/>' +
+  '<rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/>' +
+  '<rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg>';
+
 // ── Skills Level Matrix ───────────────────────────────────────
 
 /* Checkbox labels reuse the SAME keys as the explanatory list in the
@@ -224,10 +259,20 @@ export function toggleEditHeading(headingId) {
   const heading = document.getElementById(headingId);
   const isEditable = heading.getAttribute('contenteditable') === 'true';
 
+  /* The rename button is a TOGGLE, and it is now icon-only — there is
+     no text left to change, so the state has to be carried by
+     aria-pressed. That drives the pressed styling in CSS and is also
+     what a screen reader announces, which is the whole reason the
+     button can afford to lose its label. */
+  const btn = document.querySelector(
+    `[data-action="toggle-edit-heading"][data-heading-id="${headingId}"]`
+  );
+  if (btn) btn.setAttribute('aria-pressed', isEditable ? 'false' : 'true');
+
   if (isEditable) {
     heading.setAttribute('contenteditable', 'false');
     heading.style.cursor = '';
-    showStatus('Heading updated! ✓', 'success');
+    showStatus(_t('msgHeadingUpdated'), 'success');
   } else {
     heading.setAttribute('contenteditable', 'true');
     heading.focus();
@@ -300,13 +345,15 @@ export function addCustomSection() {
   sectionDiv.innerHTML = `
     <div class="section-header-editable">
       <h3 id="${headingId}" contenteditable="false">${_tf('lblCustomSection', { n: appState.customSectionCounter })}</h3>
-      <div style="display:flex;gap:10px;">
-        <button class="btn-rename" data-action="toggle-edit-heading" data-heading-id="${headingId}">✏️ ${_t('btnRename')}</button>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn-rename btn-icon" data-action="toggle-edit-heading"
+          data-heading-id="${headingId}" aria-pressed="false"
+          title="${escapeHtml(_t('ttRenameHeading'))}"
+          aria-label="${escapeHtml(_t('ttRenameHeading'))}">${ICON_RENAME}</button>
         <button class="btn-clear-section" data-action="clear-section"
           data-input-id="${inputId}" data-heading-id="${headingId}"
           data-default-heading="${_tf('lblCustomSection', { n: appState.customSectionCounter })}">🗑️ ${_t('btnClear')}</button>
-        <button class="btn-remove-section" data-action="remove-custom-section" data-section-id="${sectionId}"
-          style="background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);color:white;padding:8px 16px;font-size:0.95em;border:none;border-radius:8px;cursor:pointer;">
+        <button class="btn-remove-section" data-action="remove-custom-section" data-section-id="${sectionId}">
           ❌ ${_t('btnRemove')}
         </button>
       </div>
