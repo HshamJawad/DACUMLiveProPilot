@@ -1,10 +1,10 @@
 // ============================================================
-// sw.js — DACUM Live Pro Service Worker  v13
+// sw.js — DACUM Live Pro Service Worker  v82
 // Path-agnostic: BASE is derived dynamically from scope.
 // Works regardless of repository name (V3.0, V3.1, etc.)
 // ============================================================
 
-const CACHE_VERSION = 'v81';
+const CACHE_VERSION = 'v82';
 const CACHE_NAME    = 'dacum-live-pro-' + CACHE_VERSION;
 // Derive BASE from the SW scope so this file works in any repo path
 const BASE          = self.registration ? self.registration.scope : '/';
@@ -25,6 +25,18 @@ const PRECACHE_URLS = [
   // conference wifi. Precaching it means the facilitator's own
   // device can serve it instantly and it survives a flaky network.
   BASE + 'DACUM_LiveWorkshop_Participant.html',
+  // The user guide, opened from the Help tab. Same reasoning as the
+  // participant page: a facilitator who needs it needs it in the room,
+  // which is exactly where the network is worst. One file carries all
+  // three languages, so this single entry covers EN, FR and AR — the
+  // ?lang= query is stripped by networkFirst() before the cache lookup,
+  // so every language variant resolves to this one cached response.
+  // Its Arabic face is fonts/Cairo.woff2, already precached below.
+  BASE + 'DACUM_Live_Pro_User_Guide.html',
+  // QR image for the guide card. Listed before it exists on purpose:
+  // precaching uses Promise.allSettled and skips a 404 with a warning,
+  // so adding the PNG later needs no further change here.
+  BASE + 'qr-code_DACUM_Live_Pro_User_Guide.png',
 
   // ── Fonts ────────────────────────────────────────────────
   // Precached, not lazily cached: the Arabic interface is unusable

@@ -108,16 +108,56 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v81';
+      var EXPECTED_SW = 'v82';
 
       // ── Human-readable build identity (shown in the toolbar) ──
-      // Bumped together with EXPECTED_SW above.
-      var APP_VERSION = '3.23.1';
+      // Bumped together with EXPECTED_SW above. PATCH, not MINOR: this
+      // build ships no new application behaviour — it repairs the Help
+      // tab's guide links and precaches the guide for offline use.
+      var APP_VERSION = '3.23.2';
       var APP_RELEASED = '2026-08-14';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.23.2 — 2026-08-14 — user guide, three languages ────
+         PATCH. No change to application behaviour.
+
+         Fixed
+           Help tab            the two guide buttons pointed at an
+                               absolute URL containing the repository
+                               name (…/DACUM-Live-Pro-V3.1/…). Renaming
+                               the repository broke both silently, with
+                               nothing on screen to explain why. Now
+                               relative, so the link resolves against
+                               whatever URL the app is served from.
+           Help tab            the second button was a duplicate of the
+                               first — same href, same target. Replaced
+                               with three direct language links.
+           Help tab            the QR image was absolute for the same
+                               reason and is now relative too.
+
+         Added
+           DACUM_Live_Pro_User_Guide.html
+                               rewritten as ONE file carrying English,
+                               French and Arabic, with a switcher in the
+                               page header. English text sits in the
+                               markup and the dictionary holds all three,
+                               so the page still reads correctly if the
+                               script fails. Arabic flips dir=rtl and
+                               uses fonts/Cairo.woff2 — the same file the
+                               interface already precaches, which is why
+                               the guide belongs at the repository root
+                               and not in a subfolder.
+           Help tab            the primary button passes the active
+                               interface language through as ?lang=, so a
+                               user working in Arabic gets the Arabic
+                               guide without a second click.
+           sw.js               the guide and its QR image precached (SW
+                               bumped to v82). networkFirst() strips the
+                               query before the cache lookup, so one
+                               entry covers all three languages.
 
          ── 3.23.1 — 2026-08-14 — native dialogs, part 2 ─────────
          PATCH. Completes 3.23.0 across the remaining modules.
@@ -1964,18 +2004,42 @@
                     <p class="hc-card-desc" data-i18n="hcUserGuideDesc">Access the full documentation for DACUM Live Pro — includes detailed instructions, screenshots, and best practices.</p>
 
                     <div class="hc-btn-row">
-                        <a href="https://hshamjawad.github.io/DACUM-Live-Pro-V3.1/DACUM_Live_Pro_User_Guide.html"
-                           target="_blank" rel="noopener" class="hc-btn hc-btn-primary">
+                        <!-- Relative, not absolute. This used to hard-code
+                             .../DACUM-Live-Pro-V3.1/..., so renaming the
+                             repository broke the button silently and there
+                             was nothing on screen to say why. A relative
+                             path resolves against wherever the app is
+                             actually served from — Pages, a local folder,
+                             or a USB stick in a training room.
+                             The onclick appends the active interface
+                             language so the guide opens in the language on
+                             screen; it runs before navigation, and if
+                             scripting fails the bare href still works. -->
+                        <a href="DACUM_Live_Pro_User_Guide.html"
+                           target="_blank" rel="noopener" class="hc-btn hc-btn-primary"
+                           onclick="this.href='DACUM_Live_Pro_User_Guide.html?lang=' + ((window.i18n &amp;&amp; window.i18n.getLang &amp;&amp; window.i18n.getLang()) || 'en');">
                             📖 <span data-i18n="hcOpenGuide">Open User Guide</span>
-                        </a>
-                        <a href="https://hshamjawad.github.io/DACUM-Live-Pro-V3.1/DACUM_Live_Pro_User_Guide.html"
-                           target="_blank" rel="noopener" class="hc-btn hc-btn-secondary">
-                            🔗 <span data-i18n="hcNewTab">View in New Tab</span>
                         </a>
                     </div>
 
+                    <!-- The second button used to point at the same URL with
+                         the same target as the first, so it did nothing new.
+                         The guide is one file in three languages, so these
+                         open it in a chosen language regardless of the
+                         interface — useful when preparing handouts for a
+                         mixed-language panel. Labels are language names and
+                         stay untranslated on purpose. -->
+                    <div class="hc-btn-row" style="margin-top:8px;">
+                        <a href="DACUM_Live_Pro_User_Guide.html?lang=en"
+                           target="_blank" rel="noopener" class="hc-btn hc-btn-secondary" lang="en">English</a>
+                        <a href="DACUM_Live_Pro_User_Guide.html?lang=fr"
+                           target="_blank" rel="noopener" class="hc-btn hc-btn-secondary" lang="fr">Français</a>
+                        <a href="DACUM_Live_Pro_User_Guide.html?lang=ar"
+                           target="_blank" rel="noopener" class="hc-btn hc-btn-secondary" lang="ar">العربية</a>
+                    </div>
+
                     <div class="hc-qr-wrap">
-                        <img src="https://hshamjawad.github.io/DACUM-Live-Pro-V3.1/qr-code_DACUM_Live_Pro_User_Guide.png"
+                        <img src="qr-code_DACUM_Live_Pro_User_Guide.png"
                              alt="QR code — User Guide"
                              class="hc-qr-img"
                              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
