@@ -108,18 +108,57 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v82';
+      var EXPECTED_SW = 'v83';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bumped together with EXPECTED_SW above. PATCH, not MINOR: this
-      // build ships no new application behaviour — it repairs the Help
-      // tab's guide links and precaches the guide for offline use.
-      var APP_VERSION = '3.23.2';
-      var APP_RELEASED = '2026-08-14';
+      // build removes a display, not a capability — the daily quota is
+      // enforced exactly as before.
+      var APP_VERSION = '3.23.3';
+      var APP_RELEASED = '2026-08-17';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.23.3 — 2026-08-17 — quota display removed ──────────
+         PATCH. The daily allowance is enforced exactly as before;
+         only its unsolicited display is gone.
+
+         Removed
+           draft_ui.js         the cost card at the foot of the Full
+                               Draft dialog ("this run will use 7 of
+                               your 30 daily generations", plus a
+                               second line repeating the remaining
+                               count). It appeared on every open to
+                               report a limit that, in the case where
+                               it actually binds, already announces
+                               itself: _quotaBlock() still renders the
+                               dgQuotaTitle/dgQuotaBody warning and the
+                               start button is still disabled by the
+                               same quotaCheck(). A number the reader
+                               can act on stays; one they cannot does
+                               not, and it was competing with the two
+                               notes above it that DO need a decision.
+           draft_regen.js      the same sentence at the end of the
+                               "Regenerate from here" confirmation, for
+                               the same reason — rgQuotaShort already
+                               refuses the run when the allowance is
+                               short. {n} and {max} no longer passed.
+           draft_ui.js         estimatedCalls import, unused once the
+                               cost card went.
+           translations.js     dgCostLabel and dgQuotaRemaining, all
+                               three languages. Removed in THIS commit
+                               and not earlier: t() falls back to the
+                               English section and then to the key
+                               name, so deleting a key still rendered
+                               somewhere prints "dgCostLabel" on screen.
+
+         Kept
+           dgQuotaTitle / dgQuotaBody   the blocking warning, which
+                               names the shortfall and suggests
+                               reducing how far the chain goes.
+           rgQuotaShort        its equivalent for regeneration.
 
          ── 3.23.2 — 2026-08-14 — user guide, three languages ────
          PATCH. No change to application behaviour.

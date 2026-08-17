@@ -237,17 +237,6 @@
 .dg-note-warn strong { color: #92400e; }
 .dg-note-warn p      { color: #78350f; }
 
-/* Quota cost, stated before the run rather than discovered during it. */
-.dg-cost {
-  margin: 0;
-  padding: 10px 13px;
-  border-radius: 8px;
-  background: #f1f5f9;
-  font-size: 0.83em;
-  color: #475569;
-  text-align: center;
-}
-
 .dg-prereq-field { display: block; margin-bottom: 13px; }
 
 .dg-prereq-field > span {
@@ -367,16 +356,6 @@
      unmissable, and thumb targets beat tidy alignment here. */
   .dg-foot { flex-direction: column-reverse; }
   .dg-btn  { width: 100%; padding: 13px; }
-}
-
-.dg-cost-left {
-  display: block;
-  margin-top: 3px;
-  font-size: 0.92em;
-  color: #64748b;
-  /* "3 of 10" is a pair of Latin numerals; isolate so the bidi
-     algorithm cannot reorder them inside an Arabic sentence. */
-  unicode-bidi: isolate;
 }
 
 .dg-btn:disabled {

@@ -11,7 +11,7 @@
 import { STAGES, runDraft, cancelDraft, resumeDraft,
          onDraftProgress, isDraftRunning,
          missingPrerequisites, stagesWithExistingContent,
-         estimatedCalls, quotaCheck,
+         quotaCheck,
          scopeIsMissing }                    from './draft_agent.js';
 import { switchTab }                         from './projects.js';
 import { verifyOccupation, needsConfirmation, VERDICT,
@@ -274,10 +274,18 @@ function _setupBody() {
     ${_quotaBlock(ids)}`;
 }
 
-/* The quota line is shown BEFORE the run, not discovered during it.
+/* Renders ONLY the case that changes what the user can do: the chain
+   costs more than the allowance has left, so the run cannot start.
    quotaCheck() counts the whole chain, so a run either has room for
-   every stage or does not start — spending four generations and dying
-   at the fifth is the one outcome worth engineering against. */
+   every stage or does not begin — spending four generations and dying
+   at the fifth is the one outcome worth engineering against.
+
+   The "this run will use n of your max" line that used to sit here in
+   the healthy case is gone. It was shown on every open of the dialog
+   to report a constraint that, when it actually binds, announces
+   itself through the warning below and disables the start button. A
+   number the reader can do nothing with is noise, and it competed for
+   attention with the two notes above it that DO require a decision. */
 function _quotaBlock(ids) {
   const q = quotaCheck(ids);
   if (!q.ok) {
@@ -288,12 +296,7 @@ function _quotaBlock(ids) {
           { need: q.need, left: q.left, max: q.max }))}</p>
       </div>`;
   }
-  return `
-    <p class="dg-cost">
-      ${_esc(_tf('dgCostLabel', { n: q.need, max: q.max }))}
-      <span class="dg-cost-left">${_esc(_tf('dgQuotaRemaining',
-        { left: q.left, max: q.max }))}</span>
-    </p>`;
+  return '';
 }
 
 /* Missing prerequisites are COLLECTED here rather than reported as an

@@ -80,7 +80,12 @@ function _confirmAndRun(stageId) {
 
   /* The confirmation NAMES every stage that will be rebuilt. "Are you
      sure?" is useless here — the user's real question is "how much of
-     my work does this throw away", and only a list answers it. */
+     my work does this throw away", and only a list answers it.
+
+     It no longer states the quota cost. quotaCheck() above already
+     refuses the run outright when the allowance is short, with a
+     message naming the shortfall — so the cost line only ever appeared
+     in the case where it did not matter. */
   const list = chain.map(s => '  \u2022 ' + _t(s.labelKey)).join('\n');
 
   const ok = confirm(
@@ -88,8 +93,6 @@ function _confirmAndRun(stageId) {
     _tf('rgConfirmBody', {
       stage:  label,
       stages: list,
-      n:      quota.need,
-      max:    quota.max,
     })
   );
   if (!ok) return;
