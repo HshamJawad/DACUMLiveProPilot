@@ -57,8 +57,8 @@
 /* Hover */
 @media (hover: hover) {
   .tab:hover {
-    background-color: #e5e7eb;
-    color: #111827;
+    background-color: #d0d0d0;
+    color: #666;
   }
 }
 

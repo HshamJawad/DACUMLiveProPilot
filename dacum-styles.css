@@ -16,12 +16,13 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
+    min-height: 100dvh;   /* mobile browser chrome */
     padding: 20px;
-    padding-top: 60px; /* toolbar height — always applied regardless of cache state */
+    padding-top: 56px; /* toolbar height — always applied regardless of cache state */
 }
 
 .container {
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
     background-color: white;
     padding: 40px;
@@ -162,14 +163,15 @@ button:disabled:active {
 }
 
 .btn-export-json {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    background: #8b5cf6;
     color: white;
     padding: 14px 28px;
     font-size: 1.15em;
 }
 
 .btn-export-json:hover {
-    box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+    background: #7c3aed;
+    box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
 }
 
 .btn-save-data {
@@ -184,14 +186,15 @@ button:disabled:active {
 }
 
 .btn-load-data {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    background: #3b82f6;
     color: white;
     padding: 14px 28px;
     font-size: 1.15em;
 }
 
 .btn-load-data:hover {
-    box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+    background: #2563eb;
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
 }
 
 .btn-clear-all {
@@ -259,8 +262,8 @@ input[type="date"]:focus {
 }
 
 .btn-toggle-info {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: white;
+    background: linear-gradient(135deg,#f3f4f6 0%,#dfe3e8 100%);
+    color: #374151;
     padding: 6px 14px;
     font-size: 0.85em;
     border: none;
@@ -270,7 +273,7 @@ input[type="date"]:focus {
 }
 
 .btn-toggle-info:hover {
-    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.4);
+    background: linear-gradient(135deg,#e9ecef 0%,#d3d9e0 100%);
     transform: translateY(-1px);
 }
 
@@ -975,10 +978,10 @@ input[type="date"]:focus {
 #dacumTopToolbar {
     position: fixed;
     top: 0; left: 0; right: 0;
-    height: 60px;
-    background: #f7f7f8;
-    border-bottom: 1px solid #e5e5e6;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.04);
+    height: 56px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.08);
     display: flex;
     align-items: center;
     padding: 0 12px;
@@ -1000,107 +1003,92 @@ input[type="date"]:focus {
     scrollbar-width: none;
 }
 .dtb-center::-webkit-scrollbar { display: none; }
-.dtb-right { display:flex; align-items:center; gap:4px; flex-shrink:0; margin-left:auto; overflow:visible; }
+.dtb-right { display:flex; align-items:center; gap:4px; flex-shrink:0; margin-inline-start:auto; overflow:visible; }
 .dtb-divider {
     width: 1px; height: 28px;
     background: #d9d9db; margin: 0 4px;
     flex-shrink: 0;
 }
-/* Figma-style icon — colored square with rounded corners */
+/* ── Toolbar icon chip ───────────────────────────────────────
+   The action colour lives on the chip, not on the pill. The pill
+   itself is uniform pale grey so the bar stays a frame rather than
+   a row of competing colours; the chip carries the meaning, which
+   is also what survives when the label is hidden under 600px. ── */
+.dtb-icon-chip {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
 .dtb-icon {
     width: 18px;
     height: 18px;
     flex-shrink: 0;
-    border-radius: 4px;
     overflow: visible;
 }
-/* Figma pill base */
+.dtb-icon-chip .dtb-icon { width: 16px; height: 16px; }
+
+/* Panel tints — the only four fills a chip may take */
+.dtb-chip-green  { background: #dcfce7; color: #059669; }
+.dtb-chip-blue   { background: #dbeafe; color: #2563eb; }
+.dtb-chip-violet { background: #ede9fe; color: #7c3aed; }
+.dtb-chip-red    { background: #fee2e2; color: #dc2626; }
+
+/* ── Toolbar pill ── */
 .dtb-btn {
-    display: inline-flex; align-items: center; gap: 7px;
-    padding: 7px 15px;
-    border: 1.5px solid #e2e2e4;
-    border-radius: 99px;          /* full pill */
-    background: #ffffff;
-    color: #1a1a1a;
-    font-size: 0.83em; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px 6px 6px;
+    padding-inline: 6px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 999px;
+    background: #f9fafb;
+    color: #374151;
+    font-size: 0.88em; font-weight: 600;
     cursor: pointer; white-space: nowrap;
-    transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+    transition: background 0.12s, border-color 0.12s;
     line-height: 1;
     letter-spacing: 0.01em;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
-.dtb-btn:hover {
-    background: #f0f0f2;
-    border-color: #c8c8cc;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.10);
-}
-.dtb-btn:active { transform: scale(0.97); box-shadow: none; }
+.dtb-btn:hover { background: #f3f4f6; }
+.dtb-btn:focus-visible { outline: 2px solid #667eea; outline-offset: 2px; }
+.dtb-btn:active { transform: scale(0.97); }
 
-/* Snapshot — amber icon tint */
-.dtb-snapshot {
-    background: #fff8ee;
-    border-color: #fcd68a;
-    color: #92570a;
-}
-.dtb-snapshot:hover { background: #fff0d4; border-color: #f0b64a; }
-
-/* Export Project — indigo tint */
-.dtb-primary {
-    background: #eef0ff;
-    border-color: #b5bbf9;
-    color: #3b3fce;
-}
-.dtb-primary:hover { background: #e0e4ff; border-color: #8891f2; }
-
-/* Import Project — emerald tint */
-.dtb-secondary {
-    background: #edfaf4;
-    border-color: #86e0b5;
-    color: #0e7a4a;
-}
-.dtb-secondary:hover { background: #d5f4e6; border-color: #4dbb88; }
-
-/* PDF / Word — neutral */
-.dtb-ghost {
-    background: #ffffff;
-    border-color: #e2e2e4;
-    color: #444447;
-}
-.dtb-ghost:hover { background: #f0f0f2; border-color: #c4c4c8; }
-
-/* Clear All — red tint */
-.dtb-danger {
-    background: #fff0f0;
-    border-color: #f9b3b3;
-    color: #c41c1c;
-}
-.dtb-danger:hover { background: #ffe0e0; border-color: #f07070; }
+/* The four variant classes survive as hooks for the markup, but they
+   no longer paint the pill — the amber snapshot tint they used to
+   carry was a seventh accent outside the palette and is gone. */
+.dtb-snapshot,
+.dtb-primary,
+.dtb-secondary,
+.dtb-ghost,
+.dtb-danger { background: #f9fafb; border-color: #e5e7eb; color: #374151; }
+.dtb-snapshot:hover,
+.dtb-primary:hover,
+.dtb-secondary:hover,
+.dtb-ghost:hover,
+.dtb-danger:hover { background: #f3f4f6; }
 
 /* Undo / Redo — neutral pill */
 .dtb-undo {
     display: inline-flex; align-items: center;
-    background: #ffffff; color: #444447;
-    border: 1.5px solid #e2e2e4; border-radius: 99px;
+    background: #f9fafb; color: #374151;
+    border: 1.5px solid #e5e7eb; border-radius: 999px;
     padding: 7px 13px; font-size: 0.82em; font-weight: 600;
     cursor: pointer; transition: background 0.12s, border-color 0.12s;
     white-space: nowrap;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 .dtb-undo:not([disabled]):hover {
-    background: #eef0ff; color: #3b3fce; border-color: #b5bbf9;
+    background: #f3f4f6; color: #374151;
 }
 .dtb-undo[disabled] { opacity: 0.35; cursor: not-allowed; }
 
 /* Snapshot lens */
 .dtb-lens {
-    background: #ffffff; border: 1.5px solid #e2e2e4;
-    border-radius: 99px; font-size: 1em;
+    background: #f9fafb; border: 1.5px solid #e5e7eb;
+    border-radius: 999px; font-size: 1em;
     cursor: pointer; padding: 7px 11px;
     transition: background 0.12s, border-color 0.12s;
-    line-height: 1; color: #444447;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    line-height: 1; color: #374151;
 }
-.dtb-lens:hover { background: #fff8ee; border-color: #fcd68a; color: #92570a; }
+.dtb-lens:hover { background: #f3f4f6; }
 
 /* ── Snapshot Modal ────────────────────────────────── */
 #snapModal { position: fixed; inset: 0; z-index: 9000; }
@@ -1159,8 +1147,8 @@ input[type="date"]:focus {
 }
 .snap-restore { background: #eef0ff; border-color: #b5bbf9; color: #3b3fce; }
 .snap-restore:hover { background: #e0e4ff; border-color: #8891f2; }
-.snap-delete  { background: #fff0f0; border-color: #f9b3b3; color: #c41c1c; }
-.snap-delete:hover { background: #ffe0e0; border-color: #f07070; }
+.snap-delete  { background: #fef2f2; border-color: #fee2e2; color: #dc2626; }
+.snap-delete:hover { background: #fee2e2; color: #b91c1c; }
 #snapModalFoot {
   padding: 10px;
   border-top: 1px solid #e5e5e6;
@@ -1179,7 +1167,7 @@ input[type="date"]:focus {
 }
 
 /* Push page content below fixed toolbar */
-body { padding-top: 60px; box-sizing: border-box; }
+body { padding-top: 56px; box-sizing: border-box; }
 
 /* ── Snapshot Panel ─────────────────────────────────── */
 #snapshotPanel {
@@ -1210,10 +1198,10 @@ body { padding-top: 60px; box-sizing: border-box; }
 .snap-actions { display:flex; gap:5px; flex-shrink:0; }
 .snap-btn { border:none; border-radius:5px; padding:4px 10px;
             font-size:0.78em; font-weight:600; cursor:pointer; }
-.snap-restore { background:#667eea; color:#fff; }
-.snap-restore:hover { background:#4f46e5; }
+.snap-restore { background:#3b82f6; color:#fff; }
+.snap-restore:hover { background:#2563eb; box-shadow:0 4px 12px rgba(59,130,246,.4); }
 .snap-delete  { background:#fee2e2; color:#dc2626; }
-.snap-delete:hover { background:#fecaca; }
+.snap-delete:hover { background:#fee2e2; color:#b91c1c; }
 
 .copyright {
     text-align: center;
@@ -1255,48 +1243,41 @@ body { padding-top: 60px; box-sizing: border-box; }
 .tabs {
     display: flex;
     margin-bottom: 30px;
-    border-bottom: 3px solid #e0e0e0;
-    gap: 8px;
+    border-bottom: 3px solid #667eea;
+    gap: 5px;
     flex-wrap: wrap;
 }
 
 .tab {
-    padding: 8px 14px;
+    padding: 15px 30px;
+    min-height: 44px;          /* touch-target minimum, not a style choice */
+    box-sizing: border-box;
     cursor: pointer;
     border: none;
-    background-color: #f3f4f6;
-    border-radius: 999px;
+    background: #e0e0e0;
+    color: #666;
+    border-radius: 8px 8px 0 0;
     font-size: 1.05em;
     font-weight: 600;
     letter-spacing: 0.01em;
-    color: #374151;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     transition:
         background-color 0.15s ease,
-        color 0.15s ease,
-        box-shadow 0.15s ease,
-        transform 0.1s ease;
+        color 0.15s ease;
 }
 
 .tab:hover {
-    background: #e0e0e0;
-    color: #333;
+    background: #d0d0d0;
+    color: #666;
 }
 
 .tab.active {
-    /* The shorthand sets background-image; the background-color line that
-       follows overrides only the colour layer, which the gradient paints
-       over. Both are kept because that is exactly what was rendering when
-       the declarations lived in two separate files. */
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    background-color: #667eea;
+    background: #667eea;
     color: #ffffff;
     border: none;
     font-size: 1.05em;
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    transform: translateY(3px);
 }
 
 .tab-content {
@@ -1628,67 +1609,32 @@ textarea {
     margin: 0;
 }
 
-.duty-accordion {
-    background: white;
-    border: 2px solid #e5e7eb;
-    border-radius: 12px;
-    margin-bottom: 15px;
-    overflow: hidden;
-    transition: all 0.3s;
-}
+.duty-accordion { margin-bottom: 15px; }
+.duty-accordion:hover { border-color: #cbd5e1; }
 
-.duty-accordion:hover {
-    border-color: #667eea;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
-}
-
-.duty-accordion-header {
-    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-    padding: 18px 20px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.3s;
-    border-bottom: 2px solid transparent;
-}
-
-.duty-accordion-header:hover {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.duty-accordion-header.active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-bottom-color: #5a67d8;
-}
-
+/* PHASE 5: .duty-accordion is now <details>/<summary>. The gradient
+   header, the .active class pair and the max-height animation are all
+   gone — the first because a fold bar is silver (a coloured bar makes
+   the fold the loudest thing on the page), the rest because the
+   element does that itself. .fold / .fold-bar / .fold-body in
+   dacum-components.css carry the skin; only the deltas remain here. */
 .duty-title {
     font-size: 1.1em;
     font-weight: 600;
     flex: 1;
+    min-width: 0;
 }
 
-.duty-toggle {
-    font-size: 1.3em;
-    transition: transform 0.3s;
+.duty-header-actions {
+    display: flex; align-items: center; gap: 10px;
+    margin-inline-start: auto;
+    flex-shrink: 0;
 }
 
-.duty-accordion-header.active .duty-toggle {
-    transform: rotate(180deg);
-}
-
-.duty-accordion-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease-out;
-}
-
-.duty-accordion-content.active {
-    max-height: 5000px;
-    transition: max-height 0.5s ease-in;
-}
+/* The table is wider than the fold on a phone; the scroll lives on a
+   wrapper so the fold's own overflow:hidden keeps clipping the
+   rounded corners. Replaces an inline style="overflow-x:auto". */
+.fold-scroll { overflow-x: auto; width: 100%; }
 
 .verification-table {
     width: 100%;
@@ -3068,8 +3014,8 @@ textarea {
 }
 
 .btn-bypass-verification {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: white;
+    background: linear-gradient(135deg,#f3f4f6 0%,#dfe3e8 100%);
+    color: #374151;
     padding: 15px 40px;
     font-size: 1.1em;
     border: none;
@@ -3572,3 +3518,115 @@ textarea {
   }
   .qrm-btn { padding: 13px 18px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   VISUAL IDENTITY — icon system, form controls
+   ───────────────────────────────────────────────────────────────
+   Every destructive/edit/save affordance in the app now draws its
+   glyph as inline SVG with stroke="currentColor". One drawing, and
+   the danger variant recolours it by setting one property — there
+   is deliberately no red copy of any icon.
+
+   Two presentations exist and only two: .icon-btn (glyph alone in
+   a square button) and .has-ico (glyph beside a word).
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── the glyph alone, in a square button ── */
+.icon-btn {
+    width: 36px; height: 36px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid #e3e8ef; border-radius: 10px;
+    background: #eef1f6; color: #475569;
+    font-size: 0; line-height: 0;   /* any stray label collapses */
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.12s, color 0.12s;
+}
+.icon-btn:hover { background: #e2e8f0; color: #1e293b; }
+.icon-btn:focus-visible { outline: 2px solid #667eea; outline-offset: 2px; }
+.icon-btn svg { display: block; width: 19px; height: 19px; }
+
+.icon-btn.danger       { background: #fef2f2; border-color: #fee2e2; color: #dc2626; }
+.icon-btn.danger:hover { background: #fee2e2; color: #b91c1c; }
+
+/* ── the glyph beside a word ──
+   display:inline-block on .ico is deliberate: buttons that carry
+   their own inline styles are often not flex containers, and
+   display:block there pushes the label onto a second line. */
+.has-ico      { display: inline-flex; align-items: center; gap: 5px; }
+.has-ico .ico { width: 18px; height: 18px; flex-shrink: 0;
+                display: inline-block; vertical-align: -4px; }
+
+/* ── Clear-This-Tab / Remove: the inline style="background:#ef4444…"
+   these carried in the markup is now a class. ── */
+.btn-clear-tab {
+    background: #ef4444; color: #fff;
+    padding: 8px 16px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 0.9em;
+    transition: background 0.12s, box-shadow 0.12s;
+}
+.btn-clear-tab:hover {
+    background: #dc2626;
+    box-shadow: 0 4px 12px rgba(239,68,68,.4);
+}
+.btn-clear-tab:focus-visible { outline: 2px solid #667eea; outline-offset: 2px; }
+
+/* ── Form controls ── */
+input[type="text"], textarea, select {
+    padding: 9px 12px;
+    border: 2px solid #d1d5db;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95em;
+    background: #fff;
+    color: #374151;
+    text-align: start;
+}
+input[type="text"]:focus, textarea:focus, select:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 1px;
+    border-color: #667eea;
+}
+/* Digits run left-to-right in every language; flipping them only
+   sends the caret to the wrong end. */
+input[type="number"], input[type="date"], input[type="tel"] { direction: ltr; }
+
+/* ── Action buttons — one colour per action, everywhere it appears.
+   The hover state is the darker step plus that colour's shadow at
+   40% alpha. These replace inline gradients that had drifted into
+   amber, which was a seventh accent outside the palette. ── */
+.btn-action-save   { background:#10b981; }
+.btn-action-load   { background:#3b82f6; }
+.btn-action-export { background:#8b5cf6; }
+.btn-action-delete { background:#ef4444; }
+
+.btn-action-save, .btn-action-load,
+.btn-action-export, .btn-action-delete {
+    color:#fff; padding:15px 20px; border:none; border-radius:8px;
+    cursor:pointer; font-weight:600; font-size:1em;
+    transition: background .12s, box-shadow .12s;
+}
+.btn-action-save:hover   { background:#059669; box-shadow:0 4px 14px rgba(16,185,129,.4); }
+.btn-action-load:hover   { background:#2563eb; box-shadow:0 4px 14px rgba(59,130,246,.4); }
+.btn-action-export:hover { background:#7c3aed; box-shadow:0 4px 14px rgba(139,92,246,.4); }
+.btn-action-delete:hover { background:#dc2626; box-shadow:0 4px 14px rgba(239,68,68,.4); }
+
+.btn-action-save:focus-visible, .btn-action-load:focus-visible,
+.btn-action-export:focus-visible, .btn-action-delete:focus-visible {
+    outline:2px solid #667eea; outline-offset:2px;
+}
+
+/* ── Base size for the glyph wherever it lands ──
+   .has-ico .ico sizes it in the inline case; this covers icon-only
+   buttons that keep their own legacy class (.btn-remove,
+   .dcv-close-btn) rather than taking .icon-btn wholesale. */
+svg.ico { width:18px; height:18px; }
+.btn-remove, .dcv-close-btn, .btn-remove-task, .snap-delete {
+    display:inline-flex; align-items:center; justify-content:center;
+}
+.btn-remove svg.ico, .dcv-close-btn svg.ico,
+.btn-remove-task svg.ico { width:17px; height:17px; }
+
+/* The remove control that used to sit 10px away with an inline
+   margin-left — physical, and inline. Logical, and in the sheet. */
+.btn-remove-task { margin-inline-start:10px; }

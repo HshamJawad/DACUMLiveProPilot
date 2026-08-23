@@ -239,12 +239,13 @@
       .eh-toast-x {
         background: none; border: none;
         color: #64748b; cursor: pointer;
-        font-size: 1rem; padding: 2px 4px;
+        font-size: 0; padding: 2px 4px;
         line-height: 1; flex-shrink: 0;
         border-radius: 4px;
         transition: color 0.15s, background 0.15s;
       }
       .eh-toast-x:hover { color: #e2e8f0; background: rgba(255,255,255,0.08); }
+      .eh-toast-x svg.ico { display: block; width: 15px; height: 15px; }
     `;
     document.head.appendChild(s);
   }
@@ -380,7 +381,7 @@
       '<span class="eh-toast-text">Something went wrong</span>' +
       '<span class="eh-toast-label">Code:</span>' +
       '<span class="eh-toast-code">' + _esc(payload.code) + '</span>' +
-      '<button class="eh-toast-x" title="Dismiss">✕</button>';
+      '<button class="eh-toast-x" title="Dismiss" aria-label="Dismiss"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
 
     document.body.appendChild(toast);
 

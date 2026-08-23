@@ -364,7 +364,7 @@ function _showRecoveryDialog(backup) {
       ${foreignWarning}
       <div class="as-btn-row">
         <button class="as-btn as-btn-restore" id="asBtnRestore"
-                ${info.exists ? '' : 'disabled title="The original project was deleted"'}>↩ Restore</button>
+                ${info.exists ? '' : 'disabled title="The original project was deleted"'}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 14l-5-4 5-4"/><path d="M4 10h9a6 6 0 0 1 0 12h-3"/></svg> Restore</button>
         <button class="as-btn as-btn-discard" id="asBtnDiscard">Discard</button>
       </div>
     </div>

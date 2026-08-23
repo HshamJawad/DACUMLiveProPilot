@@ -144,14 +144,14 @@ function _renderTableView(container) {
       <div class="duty-header">
         <h4>${_tf('lblDuty', { code: _bdi(dutyLetter) })}</h4>
         <div style="display:flex;gap:10px;">
-          <button class="btn-clear-section" data-action="clear-duty"   data-duty-id="${duty.id}">🗑️ ${_t('btnClear')}</button>
-          <button class="btn-remove"         data-action="remove-duty"  data-duty-id="${duty.id}">🗑️ ${_t('btnRemoveDuty')}</button>
+          <button class="btn-clear-section has-ico" data-action="clear-duty"   data-duty-id="${duty.id}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> ${_t('btnClear')}</button>
+          <button class="btn-remove has-ico"         data-action="remove-duty"  data-duty-id="${duty.id}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> ${_t('btnRemoveDuty')}</button>
         </div>
       </div>
       <input type="text" placeholder="${_t('phEnterDutyDesc')}"
              data-duty-id="${duty.id}" value="${_esc(duty.title)}">
       <div class="task-list" id="tasks_${duty.id}"></div>
-      <button class="btn-add" data-action="add-task" data-duty-id="${duty.id}">➕ ${_t('btnAddTask')}</button>
+      <button class="btn-add" data-action="add-task" data-duty-id="${duty.id}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg> ${_t('btnAddTask')}</button>
     `;
     container.appendChild(dutyDiv);
 
@@ -165,7 +165,7 @@ function _renderTableView(container) {
         <input type="text" style="flex:1;" placeholder="${_t('phEnterTaskDesc')}"
                data-task-id="${task.inputId}" value="${_esc(task.text)}">
         <button class="btn-remove" data-action="remove-task" data-task-div-id="${task.divId}"
-                title="${_t('ttRemoveTask')}" aria-label="${_t('ttRemoveTask')}">🗑️</button>
+                title="${_t('ttRemoveTask')}" aria-label="${_t('ttRemoveTask')}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
       `;
       taskList.appendChild(taskDiv);
     });
@@ -207,7 +207,7 @@ function _renderCardView(container) {
           <span class="dcv-duty-label">${_tf('lblDuty', { code: _bdi(dutyLetter) })}</span>
         </div>
         <button class="dcv-close-btn" data-action="remove-duty" data-duty-id="${duty.id}"
-                title="${_t('ttRemoveDuty')}" aria-label="${_t('ttRemoveDuty')}">✕</button>
+                title="${_t('ttRemoveDuty')}" aria-label="${_t('ttRemoveDuty')}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
       </div>
       <textarea class="dcv-duty-input"
                 data-duty-id="${duty.id}"
@@ -255,7 +255,7 @@ function _makeTaskCard(task, displayCode) {
         <span class="dcv-task-label">${_tf('lblTask', { code: _bdi(displayCode) })}</span>
       </div>
       <button class="dcv-close-btn" data-action="remove-task" data-task-div-id="${task.divId}"
-              title="${_t('ttRemoveTask')}" aria-label="${_t('ttRemoveTask')}">✕</button>
+              title="${_t('ttRemoveTask')}" aria-label="${_t('ttRemoveTask')}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
     </div>
     <textarea class="dcv-task-input"
               data-task-id="${task.inputId}"
@@ -464,7 +464,7 @@ function _esc(str) {
 //
 // Auto-zoom runs on each render: computes a base font-size + card
 // width from the largest task row and the viewport.  A sessionStorage
-// multiplier lets the user override via 🔍+ / 🔍− buttons; it does
+// multiplier lets the user override via <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/><path d="M10.5 8v5M8 10.5h5"/></svg> / <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/><path d="M8 10.5h5"/></svg> buttons; it does
 // NOT cross sessions.
 //
 // Editing is fully enabled (as of the sticky-note redesign): each
@@ -550,7 +550,7 @@ function _renderWallView(container) {
       <div class="wall-empty-icon">🧱</div>
       <h3>${_t('emptyWallTitle')}</h3>
       <p>${_t('emptyWallBody')}</p>
-      <button class="wall-btn-primary" data-wall-empty-action="add-duty">＋ Add First Duty</button>
+      <button class="wall-btn-primary" data-wall-empty-action="add-duty"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg> Add First Duty</button>
     `;
     // Matches the floating "＋ Add Duty" button's own onclick (see
     // _setAddDutyVisibility) — neither pushes history before adding,
@@ -677,9 +677,9 @@ function _makeWallDutyCard(duty, dutyLetter) {
       </div>
       <div class="dcv-card-top-right">
         <button class="dcv-add-btn" data-action="add-duty"
-                title="${_t('ttAddDuty')}" aria-label="${_t('ttAddDuty')}">＋</button>
+                title="${_t('ttAddDuty')}" aria-label="${_t('ttAddDuty')}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button>
         <button class="dcv-close-btn" data-action="remove-duty" data-duty-id="${duty.id}"
-                title="${_t('ttRemoveDuty')}" aria-label="${_t('ttRemoveDuty')}">✕</button>
+                title="${_t('ttRemoveDuty')}" aria-label="${_t('ttRemoveDuty')}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
       </div>
     </div>
     <textarea class="dcv-duty-input"
@@ -702,9 +702,9 @@ function _makeWallTaskCard(task, displayCode, dutyId) {
       </div>
       <div class="dcv-card-top-right">
         <button class="dcv-add-btn" data-action="add-task" data-duty-id="${dutyId}"
-                title="${_t('ttAddTask')}" aria-label="${_t('ttAddTask')}">＋</button>
+                title="${_t('ttAddTask')}" aria-label="${_t('ttAddTask')}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg></button>
         <button class="dcv-close-btn" data-action="remove-task" data-task-div-id="${task.divId}"
-                title="${_t('ttRemoveTask')}" aria-label="${_t('ttRemoveTask')}">✕</button>
+                title="${_t('ttRemoveTask')}" aria-label="${_t('ttRemoveTask')}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
       </div>
     </div>
     <textarea class="dcv-task-input"
@@ -748,12 +748,12 @@ function _makeWallToolbar() {
   bar.className = 'wall-toolbar';
   bar.innerHTML = `
     <div class="wv-left">
-      <button class="wv-btn wv-btn-exit" data-wv-action="exit"  title="${_t('ttWvExit')}">✕ ${_t('wvExit')}</button>
+      <button class="wv-btn wv-btn-exit has-ico" data-wv-action="exit"  title="${_t('ttWvExit')}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg> ${_t('wvExit')}</button>
     </div>
     <div class="wv-center">
-      <button class="wv-btn"  data-wv-action="zoom-out"  title="${_t('ttWvZoomOut')}">🔍−</button>
+      <button class="wv-btn"  data-wv-action="zoom-out"  title="${_t('ttWvZoomOut')}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/><path d="M8 10.5h5"/></svg></button>
       <span class="wv-zoom-pct">100%</span>
-      <button class="wv-btn"  data-wv-action="zoom-in"   title="${_t('ttWvZoomIn')}">🔍+</button>
+      <button class="wv-btn"  data-wv-action="zoom-in"   title="${_t('ttWvZoomIn')}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/><path d="M10.5 8v5M8 10.5h5"/></svg></button>
       <button class="wv-btn"  data-wv-action="zoom-reset" title="${_t('ttWvZoomReset')}">⟲ ${_t('wvReset')}</button>
     </div>
     <div class="wv-right">
