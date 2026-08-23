@@ -176,8 +176,8 @@ export function renderClusters() {
           <div class="cluster-actions">
             <button class="btn-rename-cluster" data-action="regen-cluster-criteria" data-cluster-id="${cluster.id}"
                     title="${_t('ttRegenCriteria')}">🤖 ${_t('btnAICriteria')}</button>
-            <button class="btn-rename-cluster has-ico" data-action="rename-cluster" data-cluster-id="${cluster.id}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg> ${_t('btnRename')}</button>
-            <button class="btn-delete-cluster has-ico" data-action="delete-cluster" data-cluster-id="${cluster.id}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> ${_t('btnDelete')}</button>
+            <button class="btn-rename-cluster" data-action="rename-cluster" data-cluster-id="${cluster.id}">✏️ ${_t('btnRename')}</button>
+            <button class="btn-delete-cluster" data-action="delete-cluster" data-cluster-id="${cluster.id}">🗑️ ${_t('btnDelete')}</button>
           </div>
         </div>
 
@@ -190,7 +190,7 @@ export function renderClusters() {
                 <div class="related-task-item" style="display:flex;justify-content:space-between;align-items:center;">
                   <div style="flex:1"><strong>${taskCode}:</strong> ${task.text}</div>
                   <button class="btn-remove-task" data-action="remove-task-from-cluster"
-                    data-cluster-id="${cluster.id}" data-task-index="${taskIndex}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
+                    data-cluster-id="${cluster.id}" data-task-index="${taskIndex}" style="margin-left:10px;">✕</button>
                 </div>`;
             }).join('') || `<div style="color:#999;font-style:italic;">${_t('msgNoTasksAssigned')}</div>`}
           </div>
@@ -458,9 +458,9 @@ export function renderLearningOutcomes() {
           <div class="lo-number">${outcome.number}</div>
           <div class="lo-actions">
             <button class="btn-edit-lo" data-action="toggle-edit-lo" data-lo-id="${outcome.id}">
-              ${isEditing ? `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h11l3 3v13H5z"/><path d="M8.5 4v5h7V4"/><path d="M8 20v-6h8v6"/></svg> ` + _t('btnSave') : `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg> ` + _t('btnEdit')}
+              ${isEditing ? '💾 ' + _t('btnSave') : '✏️ ' + _t('btnEdit')}
             </button>
-            <button class="btn-delete-lo has-ico" data-action="delete-lo" data-lo-id="${outcome.id}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> ${_t('btnDelete')}</button>
+            <button class="btn-delete-lo" data-action="delete-lo" data-lo-id="${outcome.id}">❌ ${_t('btnDelete')}</button>
           </div>
         </div>
         <div class="lo-statement" id="statement_${outcome.id}">
@@ -475,7 +475,7 @@ export function renderLearningOutcomes() {
             <div class="lo-linked-item">
               <div style="flex:1"><strong>${pc.id}:</strong> ${pc.text}</div>
               <button class="btn-remove-task" data-action="unassign-pc-from-lo"
-                data-lo-id="${outcome.id}" data-pc-id="${pc.id}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></button>
+                data-lo-id="${outcome.id}" data-pc-id="${pc.id}" style="margin-left:10px;">✕</button>
             </div>`).join('')}
         </div>
       </div>`;
@@ -641,8 +641,8 @@ export function renderModules() {
         <div class="module-header">
           <div class="module-title">${module.title}</div>
           <div class="module-actions">
-            <button class="btn-rename-module has-ico" data-action="rename-module" data-module-id="${module.id}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-3-3l-10 10z"/><path d="M14.5 6.5l3 3"/><path d="M4.5 19.5l.6-3.4"/></svg> ${_t('btnRename')}</button>
-            <button class="btn-delete-module has-ico" data-action="delete-module" data-module-id="${module.id}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> ${_t('btnDeleteModule')}</button>
+            <button class="btn-rename-module" data-action="rename-module" data-module-id="${module.id}">✏️ ${_t('btnRename')}</button>
+            <button class="btn-delete-module" data-action="delete-module" data-module-id="${module.id}">🗑️ ${_t('btnDeleteModule')}</button>
           </div>
         </div>
         <div class="module-los-list">
@@ -655,8 +655,8 @@ export function renderModules() {
                   <div class="module-lo-assigned-statement">${outcome.statement || `<em>${_t('msgNoStatement')}</em>`}</div>
                   <div class="module-lo-assigned-criteria">${_t('lblMappedPCInline')} ${criteriaText}</div>
                 </div>
-                <button class="btn-remove-lo has-ico" data-action="remove-lo-from-module"
-                  data-module-id="${module.id}" data-lo-id="${outcome.id}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg> ${_t('btnRemove2')}</button>
+                <button class="btn-remove-lo" data-action="remove-lo-from-module"
+                  data-module-id="${module.id}" data-lo-id="${outcome.id}">✕ ${_t('btnRemove2')}</button>
               </div>`;
           }).join('')}
         </div>

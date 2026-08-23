@@ -350,11 +350,11 @@ export function addCustomSection() {
           data-heading-id="${headingId}" aria-pressed="false"
           title="${escapeHtml(_t('ttRenameHeading'))}"
           aria-label="${escapeHtml(_t('ttRenameHeading'))}">${ICON_RENAME}</button>
-        <button class="btn-clear-section has-ico" data-action="clear-section"
+        <button class="btn-clear-section" data-action="clear-section"
           data-input-id="${inputId}" data-heading-id="${headingId}"
-          data-default-heading="${_tf('lblCustomSection', { n: appState.customSectionCounter })}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> ${_t('btnClear')}</button>
-        <button class="btn-remove-section has-ico" data-action="remove-custom-section" data-section-id="${sectionId}">
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> ${_t('btnRemove')}
+          data-default-heading="${_tf('lblCustomSection', { n: appState.customSectionCounter })}">🗑️ ${_t('btnClear')}</button>
+        <button class="btn-remove-section" data-action="remove-custom-section" data-section-id="${sectionId}">
+          ❌ ${_t('btnRemove')}
         </button>
       </div>
     </div>

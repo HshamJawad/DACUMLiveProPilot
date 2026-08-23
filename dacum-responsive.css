@@ -95,15 +95,12 @@
 
   .container { padding: 28px 24px; }
 
-  /* Toolbar: the label goes and the chip grows to carry the meaning
-     on its own. Shrinking the icon at the same moment the word
-     disappears would leave nothing legible. */
+  /* Toolbar: hide text labels at this width, keep icons */
   #dacumTopToolbar .dtb-btn span { font-size: 0 !important; width: 0; overflow: hidden; }
-  #dacumTopToolbar .dtb-btn  { padding: 4px !important; gap: 0 !important; }
+  #dacumTopToolbar .dtb-btn  { padding: 7px 10px !important; gap: 0 !important; }
   #dacumTopToolbar .dtb-undo { padding: 7px 10px !important; font-size: 0 !important; }
   #dacumTopToolbar .dtb-undo svg { flex-shrink: 0; }
-  #dacumTopToolbar .dtb-icon-chip { width: 34px; height: 34px; }
-  #dacumTopToolbar .dtb-icon-chip .dtb-icon { width: 19px; height: 19px; }
+  #dacumTopToolbar .dtb-btn .dtb-icon { width: 18px; height: 18px; }
 }
 
 /* ════════════════════════════════════════════════════════

@@ -352,18 +352,10 @@ body.dacum-rtl ol {
    Emoji and icon glyphs that encode direction (arrows, pointing
    hands) must be flipped; everything else must NOT be, or logos
    and photographs come out mirrored. Applied narrowly, by class. */
-body.dacum-rtl .rtl-flip,
-body.dacum-rtl .ico-dir,
-html[dir="rtl"] .ico-dir {
+body.dacum-rtl .rtl-flip {
   display: inline-block;
   transform: scaleX(-1);
 }
-
-/* The fold chevron points down when closed and up when open in both
-   directions — it encodes vertical disclosure, not reading order, so
-   it must NOT be caught by the flip above. */
-html[dir="rtl"] .fold-chevron { transform: none; }
-html[dir="rtl"] .fold[open] > .fold-bar .fold-chevron { transform: rotate(180deg); }
 
 
 /* ── Tables ────────────────────────────────────────────────────

@@ -181,11 +181,10 @@ function _injectCSS() {
     }
     .errh-toast-x {
       background:transparent; border:none; color:#64748b;
-      cursor:pointer; font-size:0; margin-inline-start:auto;
+      cursor:pointer; font-size:1rem; margin-left:auto;
       padding:0 2px; line-height:1; flex-shrink:0;
     }
     .errh-toast-x:hover { color:#f87171; }
-    .errh-toast-x svg.ico { display:block; width:15px; height:15px; }
   `;
   document.head.appendChild(s);
 }
@@ -322,7 +321,7 @@ function _showToast(payload) {
     '</svg>' +
     '<span style="flex:1;font-weight:600;">Something went wrong</span>' +
     '<span class="errh-toast-code">' + _esc(payload.code) + '</span>' +
-    '<button class="errh-toast-x" title="Dismiss" aria-label="Dismiss"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+    '<button class="errh-toast-x" title="Dismiss">✕</button>';
 
   document.body.appendChild(toast);
 

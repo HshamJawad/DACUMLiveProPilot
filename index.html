@@ -921,8 +921,8 @@
         <div class="tab-content active" id="info-tab">
             <div class="tab-header-row">
                 <h2 data-i18n="h2ChartInfo">DACUM Research Chart Information</h2>
-                <button data-action="clear-tab" data-tab-id="info-tab" class="btn-clear-tab has-ico">
-                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClearTab">Clear This Tab</span>
+                <button data-action="clear-tab" data-tab-id="info-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
             
@@ -948,8 +948,8 @@
                             <button class="btn-add-image" onclick="document.getElementById('producedForImageInput').click()">
                                 🖼️ <span data-i18n="labelAddLogo">Add Logo</span>
                             </button>
-                            <button class="btn-remove-image has-ico" id="removeProducedForImage" style="display: none;">
-                                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="labelRemove">Remove</span>
+                            <button class="btn-remove-image" id="removeProducedForImage" style="display: none;">
+                                🗑️ <span data-i18n="labelRemove">Remove</span>
                             </button>
                             <input type="file" id="producedForImageInput" accept=".jpg,.jpeg,.png,.bmp" style="display: none;">
                         </div>
@@ -967,8 +967,8 @@
                             <button class="btn-add-image" onclick="document.getElementById('producedByImageInput').click()">
                                 🖼️ <span data-i18n="labelAddLogo">Add Logo</span>
                             </button>
-                            <button class="btn-remove-image has-ico" id="removeProducedByImage" style="display: none;">
-                                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="labelRemove">Remove</span>
+                            <button class="btn-remove-image" id="removeProducedByImage" style="display: none;">
+                                🗑️ <span data-i18n="labelRemove">Remove</span>
                             </button>
                             <input type="file" id="producedByImageInput" accept=".jpg,.jpeg,.png,.bmp" style="display: none;">
                         </div>
@@ -1053,7 +1053,7 @@
                      buttons sit on everywhere else. -->
                 <div class="step-nav-row" style="justify-content: flex-end;">
                     <button type="button" class="btn-next-step" data-nav-next="duties-tab">
-                        <span data-i18n="btnProceedDuties">Proceed to Duties &amp; Tasks</span> <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
+                        <span data-i18n="btnProceedDuties">Proceed to Duties &amp; Tasks</span> <span class="rtl-flip">→</span>
                     </button>
                 </div>
             </div>
@@ -1070,8 +1070,8 @@
                             aria-haspopup="dialog">?</button>
                 </div>
                 <div id="regenHost_duties" class="rg-host"></div>
-                <button data-action="clear-tab" data-tab-id="duties-tab" class="btn-clear-tab has-ico">
-                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClearTab">Clear This Tab</span>
+                <button data-action="clear-tab" data-tab-id="duties-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
             
@@ -1174,16 +1174,16 @@
             </div>
 
             <div id="dutiesContainer"></div>
-            <button class="btn-add" id="btnAddDuty"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg> <span data-i18n="btnAddDuty">Add Duty</span></button>
+            <button class="btn-add" id="btnAddDuty">➕ <span data-i18n="btnAddDuty">Add Duty</span></button>
             
             <div class="step-nav-row">
                 <button type="button" class="btn-back-step" data-nav-back="info-tab"
                         title="Return to Chart Info to review or edit"
                         data-i18n="ttBackChartInfo" data-i18n-attr="title">
-                    <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H5"/><path d="M11 18l-6-6 6-6"/></svg> <span data-i18n="btnBackChartInfo">Back to Chart Info</span>
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackChartInfo">Back to Chart Info</span>
                 </button>
                 <button type="button" class="btn-next-step" data-nav-next="additional-info-tab">
-                    <span data-i18n="btnProceedAdditional">Proceed to Additional Info</span> <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
+                    <span data-i18n="btnProceedAdditional">Proceed to Additional Info</span> <span class="rtl-flip">→</span>
                 </button>
             </div>
         </div>
@@ -1199,8 +1199,8 @@
                             aria-haspopup="dialog">?</button>
                 </div>
                 <div id="regenHost_additional" class="rg-host"></div>
-                <button data-action="clear-tab" data-tab-id="additional-info-tab" class="btn-clear-tab has-ico">
-                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClearTab">Clear This Tab</span>
+                <button data-action="clear-tab" data-tab-id="additional-info-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
 
@@ -1220,8 +1220,8 @@
                     <div style="display: flex; gap: 10px;">
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="knowledgeInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title,aria-label" aria-label="Add numbering"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><text x="0.4" y="5.35" font-size="4.7" font-weight="700" font-family="sans-serif">1</text><text x="0.4" y="9.5" font-size="4.7" font-weight="700" font-family="sans-serif">2</text><text x="0.4" y="13.65" font-size="4.7" font-weight="700" font-family="sans-serif">3</text><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="knowledgeInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title,aria-label" aria-label="Add bullets"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="1" y="2.6" width="2.8" height="2.8" rx=".6"/><rect x="1" y="6.75" width="2.8" height="2.8" rx=".6"/><rect x="1" y="10.9" width="2.8" height="2.8" rx=".6"/><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
-                        <button class="btn-rename btn-icon has-ico" data-action="toggle-edit-heading" data-heading-id="knowledgeHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
-                        <button class="btn-clear-section has-ico" data-action="clear-section" data-input-id="knowledgeInput" data-heading-id="knowledgeHeading" data-default-heading="Knowledge Requirements" data-default-heading-key="sectionKnowledge"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClear">Clear</span></button>
+                        <button class="btn-rename btn-icon" data-action="toggle-edit-heading" data-heading-id="knowledgeHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="knowledgeInput" data-heading-id="knowledgeHeading" data-default-heading="Knowledge Requirements" data-default-heading-key="sectionKnowledge">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
                 <textarea id="knowledgeInput" placeholder="Enter each knowledge requirement on a new line&#10;Example:&#10;• Understanding of electrical systems&#10;• Knowledge of safety protocols" data-i18n="phKnowledge" data-i18n-attr="placeholder"></textarea>
@@ -1233,8 +1233,8 @@
                     <div style="display: flex; gap: 10px;">
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="skillsInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title,aria-label" aria-label="Add numbering"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><text x="0.4" y="5.35" font-size="4.7" font-weight="700" font-family="sans-serif">1</text><text x="0.4" y="9.5" font-size="4.7" font-weight="700" font-family="sans-serif">2</text><text x="0.4" y="13.65" font-size="4.7" font-weight="700" font-family="sans-serif">3</text><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="skillsInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title,aria-label" aria-label="Add bullets"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="1" y="2.6" width="2.8" height="2.8" rx=".6"/><rect x="1" y="6.75" width="2.8" height="2.8" rx=".6"/><rect x="1" y="10.9" width="2.8" height="2.8" rx=".6"/><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
-                        <button class="btn-rename btn-icon has-ico" data-action="toggle-edit-heading" data-heading-id="skillsHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
-                        <button class="btn-clear-section has-ico" data-action="clear-section" data-input-id="skillsInput" data-heading-id="skillsHeading" data-default-heading="Skills Requirements" data-default-heading-key="sectionSkills"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClear">Clear</span></button>
+                        <button class="btn-rename btn-icon" data-action="toggle-edit-heading" data-heading-id="skillsHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="skillsInput" data-heading-id="skillsHeading" data-default-heading="Skills Requirements" data-default-heading-key="sectionSkills">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
                 <textarea id="skillsInput" placeholder="Enter each skill requirement on a new line&#10;Example:&#10;• Ability to read technical diagrams&#10;• Proficiency in using hand tools" data-i18n="phSkills" data-i18n-attr="placeholder"></textarea>
@@ -1246,8 +1246,8 @@
                     <div style="display: flex; gap: 10px;">
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="behaviorsInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title,aria-label" aria-label="Add numbering"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><text x="0.4" y="5.35" font-size="4.7" font-weight="700" font-family="sans-serif">1</text><text x="0.4" y="9.5" font-size="4.7" font-weight="700" font-family="sans-serif">2</text><text x="0.4" y="13.65" font-size="4.7" font-weight="700" font-family="sans-serif">3</text><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="behaviorsInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title,aria-label" aria-label="Add bullets"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="1" y="2.6" width="2.8" height="2.8" rx=".6"/><rect x="1" y="6.75" width="2.8" height="2.8" rx=".6"/><rect x="1" y="10.9" width="2.8" height="2.8" rx=".6"/><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
-                        <button class="btn-rename btn-icon has-ico" data-action="toggle-edit-heading" data-heading-id="behaviorsHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
-                        <button class="btn-clear-section has-ico" data-action="clear-section" data-input-id="behaviorsInput" data-heading-id="behaviorsHeading" data-default-heading="Worker Behaviors/Traits" data-default-heading-key="sectionBehaviors"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClear">Clear</span></button>
+                        <button class="btn-rename btn-icon" data-action="toggle-edit-heading" data-heading-id="behaviorsHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="behaviorsInput" data-heading-id="behaviorsHeading" data-default-heading="Worker Behaviors/Traits" data-default-heading-key="sectionBehaviors">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
                 <textarea id="behaviorsInput" placeholder="Enter each behavior or trait on a new line&#10;Example:&#10;• Attention to detail&#10;• Good communication skills" data-i18n="phBehaviors" data-i18n-attr="placeholder"></textarea>
@@ -1259,8 +1259,8 @@
                     <div style="display: flex; gap: 10px;">
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="toolsInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title,aria-label" aria-label="Add numbering"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><text x="0.4" y="5.35" font-size="4.7" font-weight="700" font-family="sans-serif">1</text><text x="0.4" y="9.5" font-size="4.7" font-weight="700" font-family="sans-serif">2</text><text x="0.4" y="13.65" font-size="4.7" font-weight="700" font-family="sans-serif">3</text><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="toolsInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title,aria-label" aria-label="Add bullets"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="1" y="2.6" width="2.8" height="2.8" rx=".6"/><rect x="1" y="6.75" width="2.8" height="2.8" rx=".6"/><rect x="1" y="10.9" width="2.8" height="2.8" rx=".6"/><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
-                        <button class="btn-rename btn-icon has-ico" data-action="toggle-edit-heading" data-heading-id="toolsHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
-                        <button class="btn-clear-section has-ico" data-action="clear-section" data-input-id="toolsInput" data-heading-id="toolsHeading" data-default-heading="Tools, Equipment, Supplies and Materials" data-default-heading-key="sectionTools"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClear">Clear</span></button>
+                        <button class="btn-rename btn-icon" data-action="toggle-edit-heading" data-heading-id="toolsHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="toolsInput" data-heading-id="toolsHeading" data-default-heading="Tools, Equipment, Supplies and Materials" data-default-heading-key="sectionTools">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
                 <textarea id="toolsInput" placeholder="Enter each tool/equipment on a new line&#10;Example:&#10;• Digital multimeter&#10;• Pneumatic impact wrench" data-i18n="phTools" data-i18n-attr="placeholder"></textarea>
@@ -1272,8 +1272,8 @@
                     <div style="display: flex; gap: 10px;">
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="trendsInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title,aria-label" aria-label="Add numbering"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><text x="0.4" y="5.35" font-size="4.7" font-weight="700" font-family="sans-serif">1</text><text x="0.4" y="9.5" font-size="4.7" font-weight="700" font-family="sans-serif">2</text><text x="0.4" y="13.65" font-size="4.7" font-weight="700" font-family="sans-serif">3</text><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="trendsInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title,aria-label" aria-label="Add bullets"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="1" y="2.6" width="2.8" height="2.8" rx=".6"/><rect x="1" y="6.75" width="2.8" height="2.8" rx=".6"/><rect x="1" y="10.9" width="2.8" height="2.8" rx=".6"/><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
-                        <button class="btn-rename btn-icon has-ico" data-action="toggle-edit-heading" data-heading-id="trendsHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
-                        <button class="btn-clear-section has-ico" data-action="clear-section" data-input-id="trendsInput" data-heading-id="trendsHeading" data-default-heading="Future Trends and Concerns" data-default-heading-key="sectionTrends"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClear">Clear</span></button>
+                        <button class="btn-rename btn-icon" data-action="toggle-edit-heading" data-heading-id="trendsHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="trendsInput" data-heading-id="trendsHeading" data-default-heading="Future Trends and Concerns" data-default-heading-key="sectionTrends">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
                 <textarea id="trendsInput" placeholder="Enter each trend/concern on a new line&#10;Example:&#10;• Increased use of electric vehicles&#10;• Advanced driver assistance systems" data-i18n="phTrends" data-i18n-attr="placeholder"></textarea>
@@ -1285,8 +1285,8 @@
                     <div style="display: flex; gap: 10px;">
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="acronymsInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title,aria-label" aria-label="Add numbering"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><text x="0.4" y="5.35" font-size="4.7" font-weight="700" font-family="sans-serif">1</text><text x="0.4" y="9.5" font-size="4.7" font-weight="700" font-family="sans-serif">2</text><text x="0.4" y="13.65" font-size="4.7" font-weight="700" font-family="sans-serif">3</text><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="acronymsInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title,aria-label" aria-label="Add bullets"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="1" y="2.6" width="2.8" height="2.8" rx=".6"/><rect x="1" y="6.75" width="2.8" height="2.8" rx=".6"/><rect x="1" y="10.9" width="2.8" height="2.8" rx=".6"/><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
-                        <button class="btn-rename btn-icon has-ico" data-action="toggle-edit-heading" data-heading-id="acronymsHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
-                        <button class="btn-clear-section has-ico" data-action="clear-section" data-input-id="acronymsInput" data-heading-id="acronymsHeading" data-default-heading="Acronyms" data-default-heading-key="sectionAcronyms"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClear">Clear</span></button>
+                        <button class="btn-rename btn-icon" data-action="toggle-edit-heading" data-heading-id="acronymsHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="acronymsInput" data-heading-id="acronymsHeading" data-default-heading="Acronyms" data-default-heading-key="sectionAcronyms">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
                 <textarea id="acronymsInput" placeholder="Enter acronyms and their definitions on separate lines&#10;Example:&#10;• OBD - On-Board Diagnostics&#10;• ECU - Engine Control Unit&#10;• TPMS - Tire Pressure Monitoring System&#10;• ABS - Anti-lock Braking System" data-i18n="phAcronyms" data-i18n-attr="placeholder"></textarea>
@@ -1298,8 +1298,8 @@
                     <div style="display: flex; gap: 10px;">
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="careerPathInput" data-format-type="number" title="Add numbering" data-i18n="ttAddNumbering" data-i18n-attr="title,aria-label" aria-label="Add numbering"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><text x="0.4" y="5.35" font-size="4.7" font-weight="700" font-family="sans-serif">1</text><text x="0.4" y="9.5" font-size="4.7" font-weight="700" font-family="sans-serif">2</text><text x="0.4" y="13.65" font-size="4.7" font-weight="700" font-family="sans-serif">3</text><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
                         <button class="btn-format btn-icon" data-action="format-list" data-input-id="careerPathInput" data-format-type="bullet" title="Add bullets" data-i18n="ttAddBullets" data-i18n-attr="title,aria-label" aria-label="Add bullets"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="1" y="2.6" width="2.8" height="2.8" rx=".6"/><rect x="1" y="6.75" width="2.8" height="2.8" rx=".6"/><rect x="1" y="10.9" width="2.8" height="2.8" rx=".6"/><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg></button>
-                        <button class="btn-rename btn-icon has-ico" data-action="toggle-edit-heading" data-heading-id="careerPathHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
-                        <button class="btn-clear-section has-ico" data-action="clear-section" data-input-id="careerPathInput" data-heading-id="careerPathHeading" data-default-heading="Career Path" data-default-heading-key="sectionCareerPath"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClear">Clear</span></button>
+                        <button class="btn-rename btn-icon" data-action="toggle-edit-heading" data-heading-id="careerPathHeading" aria-pressed="false" title="Rename this section heading" aria-label="Rename this section heading" data-i18n="ttRenameHeading" data-i18n-attr="title,aria-label"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="7.1" y="2" width="1.8" height="12" rx=".4"/><rect x="4.2" y="1.6" width="7.6" height="1.7" rx=".6"/><rect x="4.2" y="12.7" width="7.6" height="1.7" rx=".6"/></svg></button>
+                        <button class="btn-clear-section" data-action="clear-section" data-input-id="careerPathInput" data-heading-id="careerPathHeading" data-default-heading="Career Path" data-default-heading-key="sectionCareerPath">🗑️ <span data-i18n="btnClear">Clear</span></button>
                     </div>
                 </div>
                 <textarea id="careerPathInput" placeholder="Enter career progression information on separate lines&#10;Example:&#10;• Entry Level: Technician Apprentice&#10;• Mid Level: Certified Technician&#10;• Advanced: Senior Technician / Specialist&#10;• Management: Shop Foreman / Service Manager" data-i18n="phCareerPath" data-i18n-attr="placeholder"></textarea>
@@ -1311,7 +1311,7 @@
             <!-- Add Section Button -->
             <div style="margin-top: 20px; text-align: center;">
                 <button class="btn-add" id="btnAddCustomSection" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 12px 24px; font-size: 1.05em;">
-                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg> <span data-i18n="btnAddSection">Add Section</span>
+                    ➕ <span data-i18n="btnAddSection">Add Section</span>
                 </button>
             </div>
             
@@ -1335,13 +1335,13 @@
 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="margin: 0;" data-i18n="editCompetencies">Edit Employability Competencies</h3>
-                        <button class="btn-reset-skills has-ico" id="btnResetSkillsLevel"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnResetSelections">Reset All Selections</span></button>
+                        <button class="btn-reset-skills" id="btnResetSkillsLevel">🗑️ <span data-i18n="btnResetSelections">Reset All Selections</span></button>
                     </div>
 
                     <div id="skillsLevelContainer"></div>
 
                     <div class="skills-level-buttons">
-                        <button class="btn-add-category" id="btnAddSkillsCategory"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg> <span data-i18n="btnAddCategory">Add Category</span></button>
+                        <button class="btn-add-category" id="btnAddSkillsCategory">➕ <span data-i18n="btnAddCategory">Add Category</span></button>
                     </div>
                 </div>
             </div>
@@ -1350,10 +1350,10 @@
                 <button type="button" class="btn-back-step" data-nav-back="duties-tab"
                         title="Return to Duties & Tasks to review or edit"
                         data-i18n="ttBackDuties" data-i18n-attr="title">
-                    <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H5"/><path d="M11 18l-6-6 6-6"/></svg> <span data-i18n="btnBackDuties">Back to Duties &amp; Tasks</span>
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackDuties">Back to Duties &amp; Tasks</span>
                 </button>
                 <button type="button" class="btn-next-step" data-nav-next="verification-tab">
-                    <span data-i18n="btnProceedVerification">Proceed to Task Verification</span> <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
+                    <span data-i18n="btnProceedVerification">Proceed to Task Verification</span> <span class="rtl-flip">→</span>
                 </button>
             </div>
         </div>
@@ -1368,8 +1368,8 @@
                             aria-label="Why does task verification matter?"
                             aria-haspopup="dialog">?</button>
                 </div>
-                <button data-action="clear-tab" data-tab-id="verification-tab" class="btn-clear-tab has-ico">
-                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClearTab">Clear This Tab</span>
+                <button data-action="clear-tab" data-tab-id="verification-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
             
@@ -1708,8 +1708,8 @@
                             <button id="btnLWExportCSV" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em;">
                                 📊 <span data-i18n="btnExportCSVVoting">Export CSV</span><br><span style="font-size: 0.85em; opacity: 0.9;" data-i18n="subTasksScores">(Tasks & Scores)</span>
                             </button>
-                            <button id="btnLWExportSnapshot" class="btn-action-save has-ico">
-                                <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 4h11l3 3v13H5z"/><path d="M8.5 4v5h7V4"/><path d="M8 20v-6h8v6"/></svg> <span data-i18n="btnDownloadSnapshot">Download Snapshot</span><br><span style="font-size: 0.85em; opacity: 0.9;" data-i18n="subPreVotingBackup">(Pre-Voting Backup)</span>
+                            <button id="btnLWExportSnapshot" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 15px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em;">
+                                💾 <span data-i18n="btnDownloadSnapshot">Download Snapshot</span><br><span style="font-size: 0.85em; opacity: 0.9;" data-i18n="subPreVotingBackup">(Pre-Voting Backup)</span>
                             </button>
                         </div>
                     </div>
@@ -1754,10 +1754,10 @@
                 <button type="button" class="btn-back-step" data-nav-back="additional-info-tab"
                         title="Return to Additional Info to review or edit"
                         data-i18n="ttBackAdditional" data-i18n-attr="title">
-                    <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H5"/><path d="M11 18l-6-6 6-6"/></svg> <span data-i18n="btnBackAdditional">Back to Additional Info</span>
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackAdditional">Back to Additional Info</span>
                 </button>
                 <button type="button" id="btnProceedToClustering" class="btn-next-step">
-                    <span data-i18n="btnProceedClustering">Proceed to Competency Clustering</span> <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
+                    <span data-i18n="btnProceedClustering">Proceed to Competency Clustering</span> <span class="rtl-flip">→</span>
                 </button>
             </div>
 
@@ -1774,8 +1774,8 @@
                             aria-haspopup="dialog">?</button>
                 </div>
                 <div id="regenHost_clusters" class="rg-host"></div>
-                <button data-action="clear-tab" data-tab-id="clustering-tab" class="btn-clear-tab has-ico">
-                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClearTab">Clear This Tab</span>
+                <button data-action="clear-tab" data-tab-id="clustering-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
             
@@ -1825,10 +1825,10 @@
                 <button type="button" class="btn-back-step" data-nav-back="verification-tab"
                         title="Return to Task Verification to review or edit"
                         data-i18n="ttBackVerification" data-i18n-attr="title">
-                    <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H5"/><path d="M11 18l-6-6 6-6"/></svg> <span data-i18n="btnBackVerification">Back to Task Verification</span>
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackVerification">Back to Task Verification</span>
                 </button>
                 <button type="button" class="btn-next-step" data-nav-next="learning-outcomes-tab">
-                    <span data-i18n="btnProceedLO">Proceed to Learning Outcomes</span> <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
+                    <span data-i18n="btnProceedLO">Proceed to Learning Outcomes</span> <span class="rtl-flip">→</span>
                 </button>
             </div>
         </div>
@@ -1849,8 +1849,8 @@
                             aria-haspopup="dialog">?</button>
                 </div>
                 <div id="regenHost_outcomes" class="rg-host"></div>
-                <button data-action="clear-tab" data-tab-id="learning-outcomes-tab" class="btn-clear-tab has-ico">
-                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClearTab">Clear This Tab</span>
+                <button data-action="clear-tab" data-tab-id="learning-outcomes-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
 
@@ -1901,10 +1901,10 @@
                 <button type="button" class="btn-back-step" data-nav-back="clustering-tab"
                         title="Return to Competency Clusters to edit clusters or criteria"
                         data-i18n="ttBackClustering" data-i18n-attr="title">
-                    <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H5"/><path d="M11 18l-6-6 6-6"/></svg> <span data-i18n="btnBackClustering">Back to Competency Clusters</span>
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackClustering">Back to Competency Clusters</span>
                 </button>
                 <button type="button" class="btn-next-step" data-nav-next="module-mapping-tab">
-                    <span data-i18n="btnProceedModuleMapping">Proceed to Module Mapping</span> <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg>
+                    <span data-i18n="btnProceedModuleMapping">Proceed to Module Mapping</span> <span class="rtl-flip">→</span>
                 </button>
             </div>
         </div>
@@ -1924,8 +1924,8 @@
                             aria-haspopup="dialog">?</button>
                 </div>
                 <div id="regenHost_modules" class="rg-host"></div>
-                <button data-action="clear-tab" data-tab-id="module-mapping-tab" class="btn-clear-tab has-ico">
-                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg> <span data-i18n="btnClearTab">Clear This Tab</span>
+                <button data-action="clear-tab" data-tab-id="module-mapping-tab" style="background: #ef4444; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9em;">
+                    🗑️ <span data-i18n="btnClearTab">Clear This Tab</span>
                 </button>
             </div>
 
@@ -1991,7 +1991,7 @@
                 <button type="button" class="btn-back-step" data-nav-back="learning-outcomes-tab"
                         title="Return to Learning Outcomes to review or edit"
                         data-i18n="ttBackLO" data-i18n-attr="title">
-                    <svg class="ico ico-dir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 12H5"/><path d="M11 18l-6-6 6-6"/></svg> <span data-i18n="btnBackLO">Back to Learning Outcomes</span>
+                    <span class="rtl-flip">←</span> <span data-i18n="btnBackLO">Back to Learning Outcomes</span>
                 </button>
             </div>
         </div>
@@ -2203,8 +2203,8 @@
             <button id="btnQRCopy" class="qrm-btn qrm-btn-blue">
               📋 <span data-i18n="qrmCopy">Copy to Clipboard</span>
             </button>
-            <button id="btnLWCloseQR" class="qrm-btn qrm-btn-neutral has-ico">
-              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg> <span data-i18n="qrmClose">Close</span>
+            <button id="btnLWCloseQR" class="qrm-btn qrm-btn-neutral">
+              ✕ <span data-i18n="qrmClose">Close</span>
             </button>
           </div>
 
@@ -2237,27 +2237,27 @@
           </svg>
         </button>
         <button class="dtb-btn dtb-snapshot" id="btnSaveSnapshot" title="Save Snapshot" data-i18n="ttSaveSnapshot" data-i18n-attr="title">
-          <span class="dtb-icon-chip dtb-chip-green" aria-hidden="true"><svg class="dtb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l3 3v13H5z"/><path d="M8.5 4v5h7V4"/><path d="M8 20v-6h8v6"/></svg></span>
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#f59e0b"/><circle cx="9" cy="9" r="3" fill="#fff"/></svg>
           <span data-i18n="tbSnapshot">Snapshot</span>
         </button>
       </div>
       <div class="dtb-center">
         <button class="dtb-btn dtb-primary" id="btnSaveJSON" title="Export project as JSON file" data-i18n="ttExportJSON" data-i18n-attr="title">
-          <span class="dtb-icon-chip dtb-chip-violet" aria-hidden="true"><svg class="dtb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M8 11l4 4 4-4"/><path d="M5 19h14"/></svg></span>
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#6366f1"/><path d="M9 5v8M6 10l3 3 3-3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span data-i18n="tbExport">Export</span>
         </button>
         <button class="dtb-btn dtb-secondary" id="btnLoadImport" title="Import project from JSON file" data-i18n="ttImportJSON" data-i18n-attr="title"
                 onclick="document.getElementById('loadFileInput').click()">
-          <span class="dtb-icon-chip dtb-chip-blue" aria-hidden="true"><svg class="dtb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5"/><path d="M8 9l4-4 4 4"/><path d="M5 19h14"/></svg></span>
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#10b981"/><path d="M9 13V5M6 8l3-3 3 3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span data-i18n="tbImport">Import</span>
         </button>
         <div class="dtb-divider"></div>
         <button class="dtb-btn dtb-ghost" id="btnExportPDF" title="Export as PDF" data-i18n="ttExportPDF" data-i18n-attr="title">
-          <span class="dtb-icon-chip dtb-chip-violet" aria-hidden="true"><svg class="dtb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1.6 1.6 0 0 0-1.6 1.6v14.8A1.6 1.6 0 0 0 7 21h10a1.6 1.6 0 0 0 1.6-1.6V7.6z"/><path d="M14 3v4.6h4.6"/><path d="M8.6 13h6.8M8.6 16.4h4.4"/></svg></span>
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#ef4444"/><text x="9" y="12.5" text-anchor="middle" font-size="6.5" font-weight="700" fill="#fff" font-family="Arial,sans-serif">PDF</text></svg>
           <span data-i18n="tbPDF">PDF</span>
         </button>
         <button class="dtb-btn dtb-ghost" id="btnExportWord" title="Export as Word DOCX" data-i18n="ttExportWord" data-i18n-attr="title">
-          <span class="dtb-icon-chip dtb-chip-violet" aria-hidden="true"><svg class="dtb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1.6 1.6 0 0 0-1.6 1.6v14.8A1.6 1.6 0 0 0 7 21h10a1.6 1.6 0 0 0 1.6-1.6V7.6z"/><path d="M14 3v4.6h4.6"/><path d="M8.6 13h6.8M8.6 16.4h4.4"/></svg></span>
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#2563eb"/><text x="9" y="12.5" text-anchor="middle" font-size="6" font-weight="700" fill="#fff" font-family="Arial,sans-serif">DOC</text></svg>
           <span data-i18n="tbWord">Word</span>
         </button>
         <div class="dtb-divider"></div>
@@ -2278,11 +2278,11 @@
           <span data-i18n="tbRedo">Redo</span>
         </button>
         <button class="dtb-lens" id="btnOpenSnapshots" title="Saved Snapshots" data-i18n="ttSnapshots" data-i18n-attr="title">
-          <svg viewBox="0 0 18 18" width="15" height="15" fill="none"><circle cx="8" cy="8" r="4.5" stroke="currentColor" stroke-width="1.6"/><line x1="11.5" y1="11.5" x2="15" y2="15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <svg viewBox="0 0 18 18" width="15" height="15" fill="none"><circle cx="8" cy="8" r="4.5" stroke="#92570a" stroke-width="1.6"/><line x1="11.5" y1="11.5" x2="15" y2="15" stroke="#92570a" stroke-width="1.6" stroke-linecap="round"/></svg>
         </button>
         <div class="dtb-divider"></div>
         <button class="dtb-btn dtb-danger" id="btnClearAll" title="Clear all data" data-i18n="ttClearAll" data-i18n-attr="title">
-          <span class="dtb-icon-chip dtb-chip-red" aria-hidden="true"><svg class="dtb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7"/><path d="M6.6 7l.75 11.6A1.7 1.7 0 0 0 9.05 20.2h5.9a1.7 1.7 0 0 0 1.7-1.6L17.4 7"/><path d="M10.3 11v5.4M13.7 11v5.4"/></svg></span>
+          <svg class="dtb-icon" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" fill="#ef4444"/><path d="M6 6l6 6M12 6l-6 6" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg>
           <span data-i18n="tbClearAll">Clear All</span>
         </button>
       </div>
@@ -2307,11 +2307,11 @@
       <div id="snapModalBox">
         <div id="snapModalHeader">
           <span>📸 SAVED SNAPSHOTS</span>
-          <button id="snapModalClose" class="icon-btn" title="Close" aria-label="Close" data-i18n="qrmClose" data-i18n-attr="title,aria-label"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          <button id="snapModalClose">✕</button>
         </div>
         <div id="snapshotList"></div>
         <div id="snapModalFoot">
-          <button id="snapModalSave"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg> Save Snapshot</button>
+          <button id="snapModalSave">＋ Save Snapshot</button>
         </div>
       </div>
     </div>

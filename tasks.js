@@ -401,26 +401,26 @@ function createDutyAccordion(dutyId, dutyText, tasks, dutyIndex = 0) {
     <th class="extended-only">${_t('thComments')}</th></tr>`;
 
   return `
-    <details class="fold duty-accordion" name="dacum-duty">
-      <summary class="fold-bar duty-accordion-header" data-duty="${dutyId}">
+    <div class="duty-accordion">
+      <div class="duty-accordion-header" data-duty="${dutyId}">
         <div class="duty-title">${_tf('lblDuty', { code: _bdi(dutyLetter) })}: ${escapeHtml(dutyText)}</div>
         <div class="duty-header-actions">
-          <button type="button" class="tvc-open-btn icon-btn"
+          <button type="button" class="tvc-open-btn"
                   data-action="show-duty-chart" data-duty-index="${dutyIndex}"
                   title="${_t('ttDutyChart')}"
-                  aria-label="${_t('ttDutyChart')}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V4"/><path d="M4 20h16"/><path d="M8.5 20v-6.5M13 20V8.5M17.5 20v-4"/></svg></button>
-          <svg class="fold-chevron ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 9.5l6 6 6-6"/></svg>
+                  aria-label="${_t('ttDutyChart')}">📊</button>
+          <div class="duty-toggle">▼</div>
         </div>
-      </summary>
-      <div class="fold-body duty-accordion-content">
-        <div class="fold-scroll">
+      </div>
+      <div class="duty-accordion-content">
+        <div style="overflow-x:auto;width:100%;">
           <table class="verification-table">
             <thead>${tableHeader}</thead>
             <tbody>${tasksTableRows}</tbody>
           </table>
         </div>
       </div>
-    </details>`;
+    </div>`;
 }
 
 // ── Rating / Count Input Builders ─────────────────────────────
@@ -938,11 +938,19 @@ export function exportDashboard() {
 
 // ── Accordion Listeners ───────────────────────────────────────
 
-/* <details name="dacum-duty"> gives exclusive-accordion behaviour,
-   keyboard operation, correct disclosure semantics and expansion on
-   find-in-page natively. There is nothing left for a click handler to
-   do. The export stays because events.js imports it. */
-export function attachAccordionListeners() {}
+export function attachAccordionListeners() {
+  document.querySelectorAll('.duty-accordion-header').forEach(header => {
+    header.addEventListener('click', function () {
+      const isActive = this.classList.contains('active');
+      document.querySelectorAll('.duty-accordion-header').forEach(h => h.classList.remove('active'));
+      document.querySelectorAll('.duty-accordion-content').forEach(c => c.classList.remove('active'));
+      if (!isActive) {
+        this.classList.add('active');
+        this.nextElementSibling.classList.add('active');
+      }
+    });
+  });
+}
 
 // ── Auto-refresh dashboard when project switches ──────────────
 // Listens for the custom event fired by dacum_projects.js loadProject()
