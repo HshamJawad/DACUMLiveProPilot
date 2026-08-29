@@ -108,18 +108,59 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v86';
+      var EXPECTED_SW = 'v87';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bumped together with EXPECTED_SW above. PATCH, not MINOR: this
       // build removes a display, not a capability — the daily quota is
       // enforced exactly as before.
-      var APP_VERSION = '3.24.2';
+      var APP_VERSION = '3.24.3';
       var APP_RELEASED = '2026-08-28';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.24.3 — 2026-08-29 — Arabic PDF + font path ─────────
+         PATCH. PDF only; the Word export is byte-for-byte unchanged,
+         and so are the English and French PDFs.
+
+           • Harakat are now removed before drawing into the PDF. A
+             PDF simple TrueType font carries no GPOS table, so the
+             viewer has no mark-positioning rules: a damma or shadda
+             was drawn as an ordinary glyph advancing by its own width
+             instead of stacking over its letter, leaving marks
+             floating beside the word (أُعدّ). Neither the shaper nor
+             the bidi pass was at fault — both keep every mark attached
+             to its base — so no amount of reordering could fix it.
+             Undotted Arabic is the normal written register, and
+             الميسرون reads exactly as intended.
+             U+0653–U+0655 are KEPT: they change which letter is read,
+             not only how it is vocalised.
+             WORD IS UNTOUCHED. It does its own OpenType layout and
+             positions every mark correctly, so the .docx keeps its
+             full vocalisation.
+
+           • Portrait continuation pages on the title page were being
+             measured against the LANDSCAPE page height. The document
+             opens landscape (210 mm) and overflow pages are added as
+             portrait (297 mm), but pageHeight was read once from page
+             one — so every continuation page broke at 200 mm on a
+             sheet with 297 and threw away a third of it. A long panel
+             list now fits in one page fewer.
+
+           • Font lookup searches ./fonts/ FIRST, with the repository
+             root kept only as a fallback, so a project keeping its
+             fonts in one folder is served on the first request instead
+             of after a 404.
+
+           • Font payloads are verified before use. A host returning an
+             HTML fallback for a missing file answers 200, and a .woff2
+             renamed .ttf answers 200 with real but compressed data;
+             both used to be registered and produced a document of
+             blank boxes with nothing in the console. The header is now
+             checked, the loader falls through to the next candidate,
+             and the message names the actual problem.
 
          ── 3.24.2 — 2026-08-29 — PDF title-page spacing ─────────
          PATCH. PDF only; the Word export is untouched.

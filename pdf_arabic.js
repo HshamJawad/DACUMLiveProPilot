@@ -55,8 +55,15 @@ import {
     isArabicFontLoaded,
     getArabicFontName,
     shapeArabic,
+    stripTashkeel,
     bidiVisual
 } from './arabic-font.js';
+
+/* Everything drawn into the PDF goes through here, so measurement,
+   wrapping and drawing all see the SAME string. Stripping in only one
+   of the three would make jsPDF measure a string it never draws, and
+   the wrap points would drift. */
+const _forPdf = (v) => shapeArabic(stripTashkeel(String(v ?? '')));
 
 
 /* Re-exported so exports_pdf.js has one import source for the whole
@@ -233,7 +240,7 @@ export function installArabicRTL(pdf) {
     /* Presentation forms are narrower than the base letters they
        replace. Measuring the unshaped string overestimates every
        width, which shows up as premature wrapping and short lines. */
-    pdf.getTextWidth = (text) => orig.getTextWidth(shapeArabic(String(text ?? '')));
+    pdf.getTextWidth = (text) => orig.getTextWidth(_forPdf(text));
 
     // ── Wrapping ──────────────────────────────────────────────
     /* Shape BEFORE splitting, and return the lines still in logical
@@ -245,7 +252,7 @@ export function installArabicRTL(pdf) {
        its table, so a line that comes back through pdf.text() is not
        shaped twice. */
     pdf.splitTextToSize = (text, maxWidth, options) =>
-        orig.splitTextToSize(shapeArabic(String(text ?? '')), maxWidth, options);
+        orig.splitTextToSize(_forPdf(text), maxWidth, options);
 
     // ── Drawing text ──────────────────────────────────────────
     pdf.text = (text, x, y, options, ...rest) => {
@@ -253,7 +260,7 @@ export function installArabicRTL(pdf) {
             ? text
             : String(text ?? '').split('\n');
 
-        const visual = lines.map(l => bidiVisual(shapeArabic(String(l ?? ''))));
+        const visual = lines.map(l => bidiVisual(_forPdf(l)));
 
         /* Mirror the anchor and flip the alignment with it. A string
            drawn left-aligned at x now hangs right-aligned from W - x,

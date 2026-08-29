@@ -791,6 +791,21 @@ export function exportToPDF() {
            and HEAD_ASCENT is the cap height the heading needs above its
            baseline. Both are named so the two roles cannot be collapsed
            back into one number by mistake. */
+        /* The document OPENS landscape (210 mm tall) and every overflow
+           page in this block is added as portrait (297 mm tall). The
+           pageHeight above is read once, from page 1, so these portrait
+           pages were being measured against the landscape height —
+           every continuation page broke at 200 mm on a sheet with 297,
+           throwing away roughly a third of it and splitting a long
+           panel list across more pages than it needed. Read the height
+           of the page actually being drawn on instead.
+           
+           Deliberately scoped to this block: it is the only part of the
+           export that mixes orientations. Everything after the chart
+           uses a bare pdf.addPage(), which inherits landscape, where
+           the outer pageHeight is already correct. */
+        const _bottom = () => pdf.internal.pageSize.getHeight() - margin;
+
         const HEAD_ASCENT  = 5;   // mm reserved above a 14pt heading baseline
         const GROUP_GAP    = 5;   // mm of visible space between groups
         const HEAD_TO_BOX  = 5;   // mm from heading baseline to first box top
@@ -804,7 +819,7 @@ export function exportToPDF() {
         const scopeOfWorkInput    = document.getElementById('scopeOfWork');
         const scopeOfWorkValuePDF = scopeOfWorkInput ? scopeOfWorkInput.value.trim() : '';
         if (scopeOfWorkValuePDF) {
-            if (workshopY + 20 > pageHeight - margin) {
+            if (workshopY + 20 > _bottom()) {
                 pdf.addPage('a4', 'portrait');
                 workshopY = margin + 10;
             }
@@ -817,7 +832,7 @@ export function exportToPDF() {
             pdf.setFont(undefined, 'normal');
             const scopeLines = pdf.splitTextToSize(scopeOfWorkValuePDF, tableWidth);
             scopeLines.forEach(line => {
-                if (workshopY + 5 > pageHeight - margin) {
+                if (workshopY + 5 > _bottom()) {
                     pdf.addPage('a4', 'portrait');
                     workshopY = margin + 10;
                 }
@@ -834,7 +849,7 @@ export function exportToPDF() {
                    the heading plus its first row — a heading alone at the
                    foot of a page with its names overleaf reads as an
                    error, and the 20 mm here is what buys that. */
-                if (workshopY + HEAD_ASCENT + 20 > pageHeight - margin) {
+                if (workshopY + HEAD_ASCENT + 20 > _bottom()) {
                     pdf.addPage('a4', 'portrait');
                     workshopY = margin + 10;
                 } else {
@@ -848,7 +863,7 @@ export function exportToPDF() {
                 pdf.setFontSize(12);
                 
                 facilitatorNames.forEach(name => {
-                    if (workshopY + 7 > pageHeight - margin) {
+                    if (workshopY + 7 > _bottom()) {
                         pdf.addPage('a4', 'portrait');
                         workshopY = margin + 10;
                     }
@@ -867,7 +882,7 @@ export function exportToPDF() {
                    the heading plus its first row — a heading alone at the
                    foot of a page with its names overleaf reads as an
                    error, and the 20 mm here is what buys that. */
-                if (workshopY + HEAD_ASCENT + 20 > pageHeight - margin) {
+                if (workshopY + HEAD_ASCENT + 20 > _bottom()) {
                     pdf.addPage('a4', 'portrait');
                     workshopY = margin + 10;
                 } else {
@@ -881,7 +896,7 @@ export function exportToPDF() {
                 pdf.setFontSize(12);
                 
                 observerNames.forEach(name => {
-                    if (workshopY + 7 > pageHeight - margin) {
+                    if (workshopY + 7 > _bottom()) {
                         pdf.addPage('a4', 'portrait');
                         workshopY = margin + 10;
                     }
@@ -900,7 +915,7 @@ export function exportToPDF() {
                    the heading plus its first row — a heading alone at the
                    foot of a page with its names overleaf reads as an
                    error, and the 20 mm here is what buys that. */
-                if (workshopY + HEAD_ASCENT + 20 > pageHeight - margin) {
+                if (workshopY + HEAD_ASCENT + 20 > _bottom()) {
                     pdf.addPage('a4', 'portrait');
                     workshopY = margin + 10;
                 } else {
@@ -914,7 +929,7 @@ export function exportToPDF() {
                 pdf.setFontSize(12);
                 
                 panelMemberNames.forEach(name => {
-                    if (workshopY + 7 > pageHeight - margin) {
+                    if (workshopY + 7 > _bottom()) {
                         pdf.addPage('a4', 'portrait');
                         workshopY = margin + 10;
                     }

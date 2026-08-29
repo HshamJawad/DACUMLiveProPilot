@@ -50,10 +50,14 @@
 //
 // FONT FILES — PRIORITY ORDER
 // ────────────────────────────
-// jsPDF needs a TTF (not woff2). Place ONE of these next to
-// index.html, or inside a ./fonts/ folder:
+// jsPDF needs a TTF. A woff2 will NOT work: it is a compressed
+// container, and jsPDF's TTF parser cannot read it.
 //
-//   1. Cairo-Regular.ttf   ← current choice. Cairo omits the
+// ./fonts/ is searched FIRST, with the repository root kept only as a
+// fallback, so a project can keep its fonts in one folder and the
+// loader finds them on the first request instead of after a 404.
+//
+//   1. fonts/Cairo-Regular.ttf   ← current choice. Cairo omits the
 //      isolated presentation forms, but it does carry the isolated
 //      shape on the base code point, and the coverage fallback
 //      below routes to it, so nothing is lost.
@@ -68,8 +72,8 @@
 
 // ── Font candidates (tried in order) ─────────────────────────
 const FONT_CANDIDATES = [
-    { file: './Cairo-Regular.ttf',         name: 'Cairo'   },
     { file: './fonts/Cairo-Regular.ttf',   name: 'Cairo'   },
+    { file: './Cairo-Regular.ttf',         name: 'Cairo'   },
     { file: './fonts/Amiri-Regular.ttf',   name: 'Amiri'   },
     { file: './Amiri-Regular.ttf',         name: 'Amiri'   },
     { file: './fonts/Tajawal-Regular.ttf', name: 'Tajawal' },
@@ -137,6 +141,29 @@ async function _fetchFont(filename) {
 
     const buffer = await res.arrayBuffer();
     const bytes  = new Uint8Array(buffer);
+
+    /* Verify this really is a TTF before handing it to jsPDF.
+    
+       Two failures made this worth checking. A host that serves an
+       HTML fallback for a missing file answers 200, so the !res.ok
+       test above passes and the parser is then fed a web page. And a
+       .woff2 renamed to .ttf answers 200 with real font data that
+       jsPDF still cannot decompress. Either way the old code
+       registered the bytes and the export produced a document of
+       blank boxes with nothing in the console to explain it.
+    
+       Throwing here instead lets the loop fall through to the next
+       candidate, and the message names the actual problem. */
+    const tag = String.fromCharCode(...bytes.subarray(0, 4));
+    const isTTF =
+        (bytes[0] === 0x00 && bytes[1] === 0x01 && bytes[2] === 0x00 && bytes[3] === 0x00) ||
+        tag === 'true' || tag === 'ttcf' || tag === 'OTTO';
+    if (!isTTF) {
+        const why = (tag === 'wOF2' || tag === 'wOFF')
+            ? 'this is a WOFF/WOFF2 file — jsPDF needs an uncompressed .ttf'
+            : `unrecognised header "${tag}" (the server may be returning a page, not a font)`;
+        throw new Error(`${filename}: ${why}`);
+    }
 
     let binary  = '';
     const chunk = 8192;
@@ -327,6 +354,50 @@ function _isMark(cp) {
 
 const _canStart = (cp) => !!FORMS[cp] && FORMS[cp].length === 4;  // joins to the next letter
 const _canEnd   = (cp) => !!FORMS[cp];                            // joins to the previous letter
+
+/* Combining marks that PDF cannot place.
+ *
+ * A PDF simple TrueType font carries no GPOS table, so the viewer has
+ * no mark-positioning rules to apply: a damma or a shadda is drawn as
+ * an ordinary glyph advancing by its own width instead of being
+ * stacked over the letter before it. The result is the marks floating
+ * beside the word rather than above it — visible in the exported
+ * charts as أُعدّ rendering with the damma detached.
+ *
+ * Neither the shaper nor the bidi pass is at fault; both keep each
+ * mark attached to its base. The limitation is in how PDF draws simple
+ * fonts, and it cannot be fixed by reordering.
+ *
+ * So the marks are removed before drawing. Undotted Arabic is the
+ * normal written register — الميسرون reads exactly as intended — and a
+ * clean word is far better than a word with a mark hanging off it.
+ *
+ * WHAT IS REMOVED: the eight standard harakat (fatha, damma, kasra,
+ * their tanween forms, shadda, sukun) plus the dagger alef and the
+ * Quranic annotation marks.
+ *
+ * WHAT IS KEPT: U+0653–U+0655 (maddah above, hamza above, hamza
+ * below). Those change which letter a reader sees rather than only how
+ * it is vocalised, so dropping them would alter spelling. They are
+ * rare in this application's text, and they are normally typed as the
+ * precomposed أ إ آ, which are unaffected.
+ *
+ * PDF ONLY. Word is not touched: it does its own OpenType layout and
+ * positions every mark correctly, as the exported .docx files show.
+ */
+const _RE_TASHKEEL = /[\u064B-\u0652\u0670\u06D6-\u06ED\u0610-\u061A]/g;
+
+/**
+ * Remove non-positionable combining marks. Idempotent, so a string may
+ * pass through it more than once (measurement, wrapping and drawing all
+ * call it) without changing further.
+ *
+ * @param {string} input
+ * @returns {string}
+ */
+export function stripTashkeel(input) {
+    return String(input ?? '').replace(_RE_TASHKEEL, '');
+}
 
 /* Can the loaded font actually draw this code point? When no cmap
    was read, assume nothing and let _pick() fall through to the
