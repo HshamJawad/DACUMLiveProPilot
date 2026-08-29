@@ -108,18 +108,40 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v85';
+      var EXPECTED_SW = 'v86';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bumped together with EXPECTED_SW above. PATCH, not MINOR: this
       // build removes a display, not a capability — the daily quota is
       // enforced exactly as before.
-      var APP_VERSION = '3.24.1';
+      var APP_VERSION = '3.24.2';
       var APP_RELEASED = '2026-08-28';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.24.2 — 2026-08-29 — PDF title-page spacing ─────────
+         PATCH. PDF only; the Word export is untouched.
+
+         The Facilitators / Observers / Panel Members headings sat flush
+         against the name box above them. workshopY is a BASELINE cursor
+         for text but a TOP edge for pdf.rect(), so after a name box the
+         cursor rested exactly on that box's bottom rule and the next
+         heading rose its full cap height back into it — roughly 3.5 mm
+         at 14 pt against a 4 mm gap. Word never showed this because it
+         lays out paragraphs by their own line boxes.
+
+         Each heading now reserves its ascent (HEAD_ASCENT) before it is
+         drawn, and the group gap, the heading-to-box distance and the
+         row height are named constants so the two roles of the cursor
+         cannot be collapsed back into one number. The reserve is added
+         AFTER the page-break test so a heading still cannot be stranded
+         at the foot of a page.
+
+         Verified: page counts unchanged (13) in all three languages,
+         only page 1 differs, and it carries the same 23 text draws and
+         6 boxes as before — repositioned, none added or lost.
 
          ── 3.24.1 — 2026-08-29 — save button + career path ──────
          PATCH. The Export Settings panel now stages edits instead of

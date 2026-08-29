@@ -774,6 +774,28 @@ export function exportToPDF() {
         const tableWidth = pageWidth - (2 * margin) - 20;
         const tableX = margin + 10;
 
+        /* Vertical rhythm for the Facilitators / Observers / Panel Members
+           block.
+           
+           workshopY is a BASELINE cursor for text but a TOP edge for
+           pdf.rect(). After a name box the cursor sits exactly on the
+           box's bottom rule, so a following heading — drawn from its
+           baseline — rises its whole cap height back INTO that box. At
+           14 pt the caps stand about 3.5 mm above the baseline, and the
+           gap between groups was 4 mm, which left roughly half a
+           millimetre of air: the headings read as glued to the box
+           above them. The Word export never showed this because Word
+           lays out paragraphs by their own line boxes.
+           
+           GROUP_GAP is therefore the white space the reader should see,
+           and HEAD_ASCENT is the cap height the heading needs above its
+           baseline. Both are named so the two roles cannot be collapsed
+           back into one number by mistake. */
+        const HEAD_ASCENT  = 5;   // mm reserved above a 14pt heading baseline
+        const GROUP_GAP    = 5;   // mm of visible space between groups
+        const HEAD_TO_BOX  = 5;   // mm from heading baseline to first box top
+        const BOX_H        = 6;   // mm — unchanged row height
+
         // ─── Scope of Work / Occupational Definition (full-width, optional) ───
         // Rendered below the two-column Produced For/By + Job block, before
         // the Facilitators section.  Wrapped with splitTextToSize so long
@@ -808,14 +830,20 @@ export function exportToPDF() {
         if (facilitatorsInput && facilitatorsInput.value.trim()) {
             const facilitatorNames = facilitatorsInput.value.split('\n').map(s => s.trim()).filter(s => s);
             if (facilitatorNames.length > 0) {
-                if (workshopY + 20 > pageHeight - margin) {
+                /* Break BEFORE the ascent is added, and require room for
+                   the heading plus its first row — a heading alone at the
+                   foot of a page with its names overleaf reads as an
+                   error, and the 20 mm here is what buys that. */
+                if (workshopY + HEAD_ASCENT + 20 > pageHeight - margin) {
                     pdf.addPage('a4', 'portrait');
                     workshopY = margin + 10;
+                } else {
+                    workshopY += HEAD_ASCENT;   // clear the box above before the caps rise
                 }
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
                 pdf.text(_t('expFacilitators'), tableX, workshopY);
-                workshopY += 5;
+                workshopY += HEAD_TO_BOX;
                 pdf.setFont(undefined, 'normal');
                 pdf.setFontSize(12);
                 
@@ -824,25 +852,31 @@ export function exportToPDF() {
                         pdf.addPage('a4', 'portrait');
                         workshopY = margin + 10;
                     }
-                    pdf.rect(tableX, workshopY, tableWidth, 6, 'S');
+                    pdf.rect(tableX, workshopY, tableWidth, BOX_H, 'S');
                     pdf.text(name, tableX + 2, workshopY + 4);
-                    workshopY += 6;
+                    workshopY += BOX_H;
                 });
-                workshopY += 4;
+                workshopY += GROUP_GAP;
             }
         }
         
         if (observersInput && observersInput.value.trim()) {
             const observerNames = observersInput.value.split('\n').map(s => s.trim()).filter(s => s);
             if (observerNames.length > 0) {
-                if (workshopY + 20 > pageHeight - margin) {
+                /* Break BEFORE the ascent is added, and require room for
+                   the heading plus its first row — a heading alone at the
+                   foot of a page with its names overleaf reads as an
+                   error, and the 20 mm here is what buys that. */
+                if (workshopY + HEAD_ASCENT + 20 > pageHeight - margin) {
                     pdf.addPage('a4', 'portrait');
                     workshopY = margin + 10;
+                } else {
+                    workshopY += HEAD_ASCENT;   // clear the box above before the caps rise
                 }
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
                 pdf.text(_t('expObservers'), tableX, workshopY);
-                workshopY += 5;
+                workshopY += HEAD_TO_BOX;
                 pdf.setFont(undefined, 'normal');
                 pdf.setFontSize(12);
                 
@@ -851,25 +885,31 @@ export function exportToPDF() {
                         pdf.addPage('a4', 'portrait');
                         workshopY = margin + 10;
                     }
-                    pdf.rect(tableX, workshopY, tableWidth, 6, 'S');
+                    pdf.rect(tableX, workshopY, tableWidth, BOX_H, 'S');
                     pdf.text(name, tableX + 2, workshopY + 4);
-                    workshopY += 6;
+                    workshopY += BOX_H;
                 });
-                workshopY += 4;
+                workshopY += GROUP_GAP;
             }
         }
         
         if (panelMembersInput && panelMembersInput.value.trim()) {
             const panelMemberNames = panelMembersInput.value.split('\n').map(s => s.trim()).filter(s => s);
             if (panelMemberNames.length > 0) {
-                if (workshopY + 20 > pageHeight - margin) {
+                /* Break BEFORE the ascent is added, and require room for
+                   the heading plus its first row — a heading alone at the
+                   foot of a page with its names overleaf reads as an
+                   error, and the 20 mm here is what buys that. */
+                if (workshopY + HEAD_ASCENT + 20 > pageHeight - margin) {
                     pdf.addPage('a4', 'portrait');
                     workshopY = margin + 10;
+                } else {
+                    workshopY += HEAD_ASCENT;   // clear the box above before the caps rise
                 }
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
                 pdf.text(_t('expPanelMembers'), tableX, workshopY);
-                workshopY += 5;
+                workshopY += HEAD_TO_BOX;
                 pdf.setFont(undefined, 'normal');
                 pdf.setFontSize(12);
                 
@@ -878,9 +918,9 @@ export function exportToPDF() {
                         pdf.addPage('a4', 'portrait');
                         workshopY = margin + 10;
                     }
-                    pdf.rect(tableX, workshopY, tableWidth, 6, 'S');
+                    pdf.rect(tableX, workshopY, tableWidth, BOX_H, 'S');
                     pdf.text(name, tableX + 2, workshopY + 4);
-                    workshopY += 6;
+                    workshopY += BOX_H;
                 });
             }
         }
