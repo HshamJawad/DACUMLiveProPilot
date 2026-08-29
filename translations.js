@@ -1115,6 +1115,11 @@
       esColTeal: 'Dark teal',
       esColBlack: 'Black',
       esColCurrent: 'Current shade (default)',
+      esSave: 'Save',
+      esCancel: 'Cancel',
+      esSaved: 'Saved',
+      esUnsaved: 'Unsaved changes',
+      esDiscardConfirm: 'You have unsaved changes. Discard them?',
     },
 
     fr: {
@@ -2223,6 +2228,11 @@
       esColTeal: 'Sarcelle foncé',
       esColBlack: 'Noir',
       esColCurrent: 'Teinte actuelle (par défaut)',
+      esSave: 'Enregistrer',
+      esCancel: 'Annuler',
+      esSaved: 'Enregistré',
+      esUnsaved: 'Modifications non enregistrées',
+      esDiscardConfirm: 'Vous avez des modifications non enregistrées. Les abandonner\u00a0?',
     },
 
     ar: {
@@ -3308,6 +3318,11 @@
       esColTeal: 'فيروزي داكن',
       esColBlack: 'أسود',
       esColCurrent: 'الدرجة الحالية (الافتراضي)',
+      esSave: 'حفظ',
+      esCancel: 'إلغاء',
+      esSaved: 'تم الحفظ',
+      esUnsaved: 'تغييرات غير محفوظة',
+      esDiscardConfirm: 'لديك تغييرات غير محفوظة. هل تريد تجاهلها؟',
     },
   };
 

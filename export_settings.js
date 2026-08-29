@@ -204,6 +204,19 @@ export const isShadedTextDefault = () => contrastOn(tableHeaderHex()) === '00000
 
 const MODAL_ID = 'esModal';
 
+/* The panel edits a DRAFT, not the stored settings.
+   Every control used to write to localStorage the instant it was
+   touched, which left no answer to "I was only looking" — there was
+   nothing to press, and nothing to back out of. Now the swatches and
+   the size list move `_draft`, the preview reflects `_draft`, and only
+   Save writes. Since both exporters read the STORED value at export
+   time, an unsaved draft cannot reach a document. */
+let _draft = null;
+
+const _stored = () => getSettings();
+const _isDirty = () =>
+  !!_draft && JSON.stringify(_draft) !== JSON.stringify(_stored());
+
 function _swatchRow(field, current) {
   return PALETTE.map((p) => {
     const on  = p.hex === current;
@@ -254,7 +267,7 @@ function _previewHTML(s) {
 function _render() {
   const box = document.getElementById('esModalBody');
   if (!box) return;
-  const s = getSettings();
+  const s = _draft || (_draft = getSettings());
 
   box.innerHTML = `
     <p class="es-intro">ℹ️ ${_t('esIntro')}</p>
@@ -304,16 +317,32 @@ function _render() {
 
   const sel = document.getElementById('esSizeOffset');
   if (sel) sel.addEventListener('change', function () {
-    saveSettings({ sizeOffset: Number(this.value) });
+    _draft = { ..._draft, sizeOffset: Number(this.value) };
     _render();
   });
 
   box.querySelectorAll('.es-swatch').forEach((b) => {
     b.addEventListener('click', function () {
-      saveSettings({ [this.getAttribute('data-es-field')]: this.getAttribute('data-es-hex') });
+      _draft = { ..._draft, [this.getAttribute('data-es-field')]: this.getAttribute('data-es-hex') };
       _render();
     });
   });
+
+  _syncFooter();
+}
+
+/* Save is enabled only when there is something to save, so the button
+   states the panel's condition instead of the user having to guess
+   whether a click registered. */
+function _syncFooter() {
+  const save = document.getElementById('esModalSave');
+  const flag = document.getElementById('esDirtyFlag');
+  const dirty = _isDirty();
+  if (save) {
+    save.disabled = !dirty;
+    save.classList.toggle('es-armed', dirty);
+  }
+  if (flag) flag.textContent = dirty ? _t('esUnsaved') : '';
 }
 
 function _ensureModal() {
@@ -333,19 +362,51 @@ function _ensureModal() {
       <div id="esModalBody"></div>
       <div id="esModalFoot">
         <button id="esModalReset" type="button">↺ ${_t('esReset')}</button>
-        <button id="esModalDone"  type="button">${_t('esClose')}</button>
+        <span id="esDirtyFlag" class="es-dirty"></span>
+        <button id="esModalCancel" type="button">${_t('esCancel')}</button>
+        <button id="esModalSave" type="button" disabled>\u{1F4BE} ${_t('esSave')}</button>
       </div>
     </div>`;
   document.body.appendChild(m);
 
-  const close = () => { m.style.display = 'none'; };
-  m.querySelector('#esModalOverlay').addEventListener('click', close);
-  m.querySelector('#esModalClose').addEventListener('click', close);
-  m.querySelector('#esModalDone').addEventListener('click', close);
-  m.querySelector('#esModalReset').addEventListener('click', () => { resetSettings(); _render(); });
+  const hide = () => { m.style.display = 'none'; _draft = null; };
+
+  /* Leaving with unsaved edits asks first. Discarding someone's colour
+     choices silently is the kind of small loss that erodes trust in a
+     panel they will open again. */
+  const dismiss = () => {
+    if (_isDirty() && !window.confirm(_t('esDiscardConfirm'))) return;
+    hide();
+  };
+
+  const commit = () => {
+    if (!_draft) return;
+    saveSettings(_draft);
+    _draft = getSettings();
+    _render();
+    const flag = document.getElementById('esDirtyFlag');
+    if (flag) {
+      flag.textContent = '\u2713 ' + _t('esSaved');
+      flag.classList.add('es-saved');
+      setTimeout(() => { flag.classList.remove('es-saved'); _syncFooter(); }, 2200);
+    }
+  };
+
+  m.querySelector('#esModalOverlay').addEventListener('click', dismiss);
+  m.querySelector('#esModalClose').addEventListener('click', dismiss);
+  m.querySelector('#esModalCancel').addEventListener('click', dismiss);
+  m.querySelector('#esModalSave').addEventListener('click', commit);
+
+  /* Reset stages the defaults; it does not write. The user still has to
+     press Save, so Reset behaves like every other control here and can
+     be backed out of with Cancel. */
+  m.querySelector('#esModalReset').addEventListener('click', () => {
+    _draft = { ...DEFAULTS };
+    _render();
+  });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && m.style.display !== 'none') close();
+    if (e.key === 'Escape' && m.style.display !== 'none') dismiss();
   });
 
   /* Labels are rebuilt on a language change like every other generated
@@ -355,8 +416,10 @@ function _ensureModal() {
     if (title) title.textContent = '⚙️ ' + _t('esTitle');
     const reset = m.querySelector('#esModalReset');
     if (reset) reset.textContent = '↺ ' + _t('esReset');
-    const done = m.querySelector('#esModalDone');
-    if (done) done.textContent = _t('esClose');
+    const cancel = m.querySelector('#esModalCancel');
+    if (cancel) cancel.textContent = _t('esCancel');
+    const save = m.querySelector('#esModalSave');
+    if (save) save.textContent = '\u{1F4BE} ' + _t('esSave');
     if (m.style.display !== 'none') _render();
   });
 
@@ -365,6 +428,7 @@ function _ensureModal() {
 
 export function openExportSettings() {
   const m = _ensureModal();
+  _draft = getSettings();
   _render();
   m.style.display = 'block';
 }

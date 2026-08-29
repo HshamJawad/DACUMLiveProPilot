@@ -108,18 +108,44 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v84';
+      var EXPECTED_SW = 'v85';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bumped together with EXPECTED_SW above. PATCH, not MINOR: this
       // build removes a display, not a capability — the daily quota is
       // enforced exactly as before.
-      var APP_VERSION = '3.24.0';
+      var APP_VERSION = '3.24.1';
       var APP_RELEASED = '2026-08-28';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.24.1 — 2026-08-29 — save button + career path ──────
+         PATCH. The Export Settings panel now stages edits instead of
+         writing them the moment a swatch is clicked.
+
+           • Save / Cancel. Swatches and the size list move a draft;
+             only Save writes to localStorage. Save is greyed until
+             there is something to save, and an "unsaved changes"
+             marker sits beside it. Cancel, ✕, Escape and the backdrop
+             all confirm before discarding pending edits.
+           • Reset to defaults now STAGES the defaults rather than
+             writing them, so it can be backed out of like any other
+             change in the panel.
+           • Nothing unsaved can reach a document: both exporters read
+             the STORED value at export time, never the draft.
+
+         Also fixed: Career Path never appeared in the Word export.
+         It is content2 of the Acronyms pair, and that pair has a
+         special branch which rendered content1 only — so whenever
+         Acronyms had text, the Career Path the facilitator typed was
+         read from the field and then discarded. It is now rendered in
+         the same labelled-table form directly beneath Acronyms.
+         Verified as a clean insertion: one shaded label cell and its
+         content, with every other run, size, colour and shading in the
+         document unchanged, in all three languages. The PDF export was
+         never affected — it already handled Career Path correctly.
 
          ── 3.24.0 — 2026-08-28 — export settings ────────────────
          MINOR. New "Export Settings" panel, reached from the sidebar

@@ -2148,8 +2148,28 @@
   border: 1px solid #45475a; background: #313244; color: #cdd6f4;
 }
 #esModalFoot button:hover { background: #45475a; }
-#esModalDone { background: #89b4fa !important; color: #11111b !important; border-color: #89b4fa !important; }
-#esModalDone:hover { filter: brightness(1.08); }
+
+/* Reset stays on the far side; Cancel and Save sit together on the
+   other, with the dirty flag between them taking up the slack. */
+#esModalReset { margin-inline-end: auto; }
+#esDirtyFlag {
+  flex: 1; text-align: end;
+  font-size: 0.8em; color: #f9e2af;
+  padding-inline-end: 4px;
+}
+#esDirtyFlag.es-saved { color: #a6e3a1; }
+
+/* Save is grey until there is something to save, so its state reports
+   whether the panel has pending edits. */
+#esModalSave {
+  background: #45475a; color: #7f849c; border-color: #45475a;
+}
+#esModalSave.es-armed {
+  background: #89b4fa; color: #11111b; border-color: #89b4fa;
+}
+#esModalSave.es-armed:hover { filter: brightness(1.08); }
+#esModalSave:disabled { cursor: default; }
+#esModalSave:disabled:hover { background: #45475a; }
 
 .es-intro {
   margin: 0 0 14px;

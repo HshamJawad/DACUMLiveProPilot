@@ -1269,6 +1269,63 @@ export async function exportToWord() {
                     },
                 ];
 
+                /* Builds the 30/70 "label cell + content cell" table used
+                   by the Acronyms block. Extracted so Career Path can be
+                   rendered the same way instead of being dropped — see the
+                   note in the index === 3 branch below. */
+                const _labelledTable = (headingText, contentText) => {
+                    const row = new TableRow({
+                        children: [
+                            // First cell: heading only, on the shaded fill
+                            new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({ __shaded: true,
+                                                text: headingText,
+                                                bold: true,
+                                                size: 24, // 12pt
+                                            }),
+                                        ],
+                                        bidirectional: _rtl(),
+                                    }),
+                                ],
+                                shading: {
+                                    fill: _tblFill(), // RGB(220,220,220) — matches the duty bar
+                                    type: ShadingType.CLEAR,
+                                    color: "auto",
+                                },
+                                width: { size: 30, type: WidthType.PERCENTAGE },
+                            }),
+                            // Second cell: content only
+                            new TableCell({
+                                children: contentText.split('\n').filter(line => line.trim()).map(line =>
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                text: line.trim().replace(/^[•\-*]\s*/, '• '),
+                                                size: 24, // 12pt
+                                            }),
+                                        ],
+                                        bidirectional: _rtl(),
+                                    })
+                                ),
+                                width: { size: 70, type: WidthType.PERCENTAGE },
+                            }),
+                        ],
+                    });
+
+                    children.push(
+                        new Table({
+                            visuallyRightToLeft: _rtl(),
+                            width: { size: 9071, type: WidthType.DXA }, // 16cm in twips
+                            layout: "fixed",
+                            rows: [row],
+                        })
+                    );
+                    children.push(new Paragraph({ spacing: { after: 200 } }));
+                };
+
                 additionalInfoSections.forEach((section, index) => {
                     // Special handling for Acronyms (index 3, content1) - separate table with heading in first cell
                     if (index === 3 && section.content1) {
@@ -1332,6 +1389,20 @@ export async function exportToWord() {
                         );
                         
                         children.push(new Paragraph({ spacing: { after: 200 } }));
+
+                        /* Career Path is content2 of this same pair. The
+                           branch above renders content1 only, so whenever
+                           Acronyms had text the Career Path the facilitator
+                           typed was read from the field and then silently
+                           discarded — it never reached the document. It is
+                           rendered here in the same labelled-table form.
+                           (When Acronyms is empty this branch is skipped and
+                           the regular two-column format below already carried
+                           Career Path, which is why the loss only showed up
+                           on charts that filled in both.) */
+                        if (section.content2 && section.content2.trim()) {
+                            _labelledTable(section.heading2, section.content2);
+                        }
                     }
                     // Regular format for all other sections (heading + content together)
                     else if (section.content1 || section.content2) {
