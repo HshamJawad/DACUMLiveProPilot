@@ -288,8 +288,6 @@ function _render() {
         <div class="es-swatches">${_swatchRow('tableHeaderColor', s.tableHeaderColor)}</div>
       </div>
 
-      <p class="es-note">ℹ️ ${_t('esContrastNote')}</p>
-      <p class="es-note">ℹ️ ${_t('esGradientNote')}</p>
     </section>
 
     <section class="es-section">
@@ -303,8 +301,6 @@ function _render() {
         <select id="esSizeOffset" class="es-select">${_sizeOptions(s.sizeOffset)}</select>
       </div>
 
-      <p class="es-note">ℹ️ ${_t('esSizeWhyOffset')}</p>
-      <p class="es-note">ℹ️ ${_t('esSizeWhyNoPdf')}</p>
     </section>
 
     <section class="es-section">
