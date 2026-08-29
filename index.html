@@ -108,18 +108,49 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v83';
+      var EXPECTED_SW = 'v84';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bumped together with EXPECTED_SW above. PATCH, not MINOR: this
       // build removes a display, not a capability — the daily quota is
       // enforced exactly as before.
-      var APP_VERSION = '3.23.3';
-      var APP_RELEASED = '2026-08-17';
+      var APP_VERSION = '3.24.0';
+      var APP_RELEASED = '2026-08-28';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.24.0 — 2026-08-28 — export settings ────────────────
+         MINOR. New "Export Settings" panel, reached from the sidebar
+         just above Help. It controls the appearance of the EXPORTED
+         FILES only and never the application UI. One localStorage key
+         (dacum_export_settings), shared by all three languages, read
+         at export time rather than at load.
+
+           • Heading colour and table-header colour — applied to BOTH
+             the Word and PDF exports. Nine presets, including the
+             grey already in the code, which is the default.
+           • Font size — a RELATIVE offset (-2 … +4 pt), Word only.
+             Relative because the report renders section headings at
+             three different sizes (16/14/12 pt) and a single absolute
+             value would flatten that hierarchy for every existing
+             user. The PDF is hand-drawn at fixed coordinates with
+             numeric line heights, so sizes cannot apply there.
+           • Text on any shaded cell or bar takes black or white by
+             WCAG relative luminance, never the heading colour.
+           • Defaults reproduce the previous output exactly: at the
+             default settings not one extra colour property or colour
+             operator is written, so document.xml and the PDF content
+             stream are unchanged.
+           • The verified live-workshop exports are out of scope; they
+             use Word's built-in heading styles.
+
+         Also fixed: lwExportVerifiedDOCX() declared its docx Document
+         as `const document`, shadowing the global for the rest of the
+         function, so the download step called createElement on the
+         wrong object and the export threw before saving. Renamed to
+         `doc`; the document itself is unchanged.
 
          ── 3.23.3 — 2026-08-17 — quota display removed ──────────
          PATCH. The daily allowance is enforced exactly as before;

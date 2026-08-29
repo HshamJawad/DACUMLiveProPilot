@@ -756,7 +756,14 @@ export async function lwExportVerifiedDOCX() {
     ]}));
   });
 
-  const document = new Document({
+  /* Named `doc`, not `document`.
+     This was `const document = new Document(...)`, which shadowed the
+     global `document` for the rest of the function — so the download
+     step below called `createElement` on a docx Document object and
+     threw a TypeError before the file could be saved. The export has
+     never completed. Renaming the local is the whole fix; the document
+     itself is unchanged. */
+  const doc = new Document({
     sections: [{ children: [
       new Paragraph({ text: 'DACUM Live Pro', heading: 'Heading1', alignment: AlignmentType.CENTER }),
       new Paragraph({ text: 'Verified (Post-Vote) Results', heading: 'Heading2', alignment: AlignmentType.CENTER }),
@@ -771,7 +778,7 @@ export async function lwExportVerifiedDOCX() {
     ]}]
   });
 
-  Packer.toBlob(document).then(blob => {
+  Packer.toBlob(doc).then(blob => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

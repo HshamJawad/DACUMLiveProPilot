@@ -13,6 +13,7 @@ import { showStatus } from './renderer.js';
 import { getTaskCode, getDutyLetter } from './codes.js';
 import { buildVerificationDataset, getVerificationCoverage } from './exports_shared.js';
 import { noteExportExclusion } from './draft_unverified.js';
+import * as ExportSettings from './export_settings.js';
 
 
 /* ── i18n + direction helpers ────────────────────────────────────────
@@ -82,13 +83,77 @@ function _runText(o) {
   return [o.text || '', ...kids].join(' ');
 }
 
+/* ── Export Settings, applied at the single point every run passes ───
+   Both Word exporters in this file build their runs through the
+   wrapper below, so transforming the options object here reaches all
+   ~91 explicitly-sized runs without editing a single call site — and,
+   like the Arabic tagging above, covers any run added later.
+
+   Two rules, both written so that DEFAULT SETTINGS EMIT NOTHING NEW.
+   At the defaults this function returns the options object unchanged
+   and document.xml is byte-identical to the previous build.
+
+   1. SIZE — a relative offset, never an absolute value.
+      Only runs that already carry an explicit `size` are touched.
+      Runs without one (the ~30 bold header cells) inherit from
+      docDefaults, and writing an explicit size for them would mean
+      guessing what Word's default is on the reader's machine.
+
+   2. HEADING COLOUR — bold runs at 12 pt (size 24) or larger.
+      That is the heading band in this document: the 32 / 28 / 24
+      groups. Body prose sits at 22 and below and is left black.
+      A run that already sets its own colour (the coverage warning at
+      B91C1C) is never overridden.
+
+      `__shaded: true` opts a run OUT of the heading colour. It marks
+      the three runs that are simultaneously a heading and the contents
+      of a shaded cell — a duty title bar, for example. Those take the
+      automatic contrast colour instead, because a dark heading colour
+      on a dark fill is unreadable. */
+function _applyExportSettings(o) {
+  const shaded = o.__shaded === true;
+  let out = o;
+
+  if (typeof out.size === 'number' && !ExportSettings.isSizeDefault()) {
+    out = { ...out, size: ExportSettings.docxSize(out.size) };
+  }
+
+  if (!shaded &&
+      out.bold === true &&
+      typeof out.size === 'number' &&
+      out.size >= 24 &&
+      out.color === undefined &&
+      !ExportSettings.isHeadingColorDefault()) {
+    out = { ...out, color: ExportSettings.headingColor() };
+  }
+
+  if (shaded && out.color === undefined && !ExportSettings.isShadedTextDefault()) {
+    out = { ...out, color: ExportSettings.contrastOn(ExportSettings.tableHeaderHex()) };
+  }
+
+  if (out.__shaded !== undefined) {
+    /* Never reaches the library — it is our marker, not an option. */
+    const { __shaded, ...clean } = out;
+    out = clean;
+  }
+  return out;
+}
+
+/* The fill for every shaded cell in this document — 30 sites that all
+   carried the literal 'DCDCDC'. Only the VALUE is centralised; each
+   shading object keeps its original shape (some pass ShadingType.CLEAR
+   explicitly, some do not), so nothing about the emitted <w:shd>
+   changes at the default. */
+const _tblFill = () => ExportSettings.tableHeaderHex();
+
 /* Wraps TextRun so every run holding Arabic is tagged at the source.
    Doing it here rather than at ~150 call sites means a run added later
    is covered automatically and cannot be forgotten. */
 function _withArabicLang(BaseRun) {
   return class extends BaseRun {
     constructor(options) {
-      const o = (typeof options === 'string') ? { text: options } : (options || {});
+      let o = (typeof options === 'string') ? { text: options } : (options || {});
+      o = _applyExportSettings(o);
       const isAr = _rtl() && _hasArabic(_runText(o));
       /* w:rtl marks the run as complex script, which is what makes Word
          read w:bidi (not w:val) as the proofing language and apply the
@@ -405,32 +470,32 @@ export async function exportTaskVerificationWord() {
                 tableRows.push(new TableRow({
                     children: [
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _t('expRank'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expRank'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expDutyLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _t('expTaskLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTaskLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanI'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanI'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanF'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanF'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanD'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanD'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ text: _t('expPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                         }),
                     ],
                 }));
@@ -513,10 +578,10 @@ export async function exportTaskVerificationWord() {
                 const dutyTableRows = [
                     new TableRow({
                         children: [
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyTitle'), bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTasks'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expAvgPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTrainingLoad'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expDutyTitle'), bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTasks'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expAvgPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTrainingLoad'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
                         ],
                     })
                 ];
@@ -1071,7 +1136,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({
+                                                new TextRun({ __shaded: true,
                                                     text: dutyLabel,
                                                     bold: true,
                                                     size: 24, // 12pt
@@ -1085,7 +1150,7 @@ export async function exportToWord() {
                                         // DCDCDC = RGB(220,220,220) — the exact grey the
                                         // PDF exporter fills duty bars with, so the Word
                                         // and PDF versions of the same chart match.
-                                        fill: "DCDCDC",
+                                        fill: _tblFill(),
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1214,7 +1279,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({
+                                                new TextRun({ __shaded: true,
                                                     text: section.heading1,
                                                     bold: true,
                                                     size: 24, // 12pt
@@ -1224,7 +1289,7 @@ export async function exportToWord() {
                                         }),
                                     ],
                                     shading: {
-                                        fill: "DCDCDC", // RGB(220,220,220) — matches the duty bar
+                                        fill: _tblFill(), // RGB(220,220,220) — matches the duty bar
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1448,7 +1513,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({
+                                                new TextRun({ __shaded: true,
                                                     text: category.category || _tf('expCategoryN', { n: category.id }),
                                                     bold: true,
                                                     size: 24,
@@ -1459,7 +1524,7 @@ export async function exportToWord() {
                                     ],
                                     columnSpan: 5,
                                     shading: {
-                                        fill: "DCDCDC",
+                                        fill: _tblFill(),
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1474,7 +1539,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({
+                                                new TextRun({ __shaded: true,
                                                     text: _t('expCompetency'),
                                                     bold: true,
                                                     size: 22,
@@ -1485,7 +1550,7 @@ export async function exportToWord() {
                                     ],
                                     width: { size: 40, type: WidthType.PERCENTAGE },
                                     shading: {
-                                        fill: "DCDCDC",
+                                        fill: _tblFill(),
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1494,7 +1559,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({
+                                                new TextRun({ __shaded: true,
                                                     text: _t('expCraftsman'),
                                                     bold: true,
                                                     size: 20,
@@ -1505,7 +1570,7 @@ export async function exportToWord() {
                                     ],
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
-                                        fill: "DCDCDC",
+                                        fill: _tblFill(),
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1514,7 +1579,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({
+                                                new TextRun({ __shaded: true,
                                                     text: _t('expSkilled'),
                                                     bold: true,
                                                     size: 20,
@@ -1525,7 +1590,7 @@ export async function exportToWord() {
                                     ],
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
-                                        fill: "DCDCDC",
+                                        fill: _tblFill(),
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1534,7 +1599,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({
+                                                new TextRun({ __shaded: true,
                                                     text: _t('expSemiSkilled'),
                                                     bold: true,
                                                     size: 20,
@@ -1545,7 +1610,7 @@ export async function exportToWord() {
                                     ],
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
-                                        fill: "DCDCDC",
+                                        fill: _tblFill(),
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1554,7 +1619,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({
+                                                new TextRun({ __shaded: true,
                                                     text: _t('expFoundation'),
                                                     bold: true,
                                                     size: 20,
@@ -1565,7 +1630,7 @@ export async function exportToWord() {
                                     ],
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
-                                        fill: "DCDCDC",
+                                        fill: _tblFill(),
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1814,32 +1879,32 @@ export async function exportToWord() {
                         tableRows.push(new TableRow({
                             children: [
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expRank'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expRank'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expDutyLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expTaskLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTaskLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanI'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanI'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanF'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanF'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanD'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanD'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                             ],
                         }));
@@ -1922,10 +1987,10 @@ export async function exportToWord() {
                         const dutyTableRows = [
                             new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyTitle'), bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTasks'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expAvgPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTrainingLoad'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expDutyTitle'), bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTasks'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expAvgPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTrainingLoad'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
                                 ],
                             })
                         ];

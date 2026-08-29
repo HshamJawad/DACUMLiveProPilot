@@ -565,6 +565,20 @@ export function initProjectsSidebar() {
         <span class="dps-nav-icon">📦</span>
         <span class="dps-nav-text">${_t('tabModuleMapping')}</span>
       </button>
+      <!-- ── Export Settings ──────────────────────────────────────
+           Sits immediately before Help, and takes its SHAPE from
+           .dps-nav-item (icon, size, padding, collapsed-rail tooltip)
+           so it reads as part of the rail rather than something glued
+           on. It deliberately does NOT take that class's BEHAVIOUR:
+           it carries no data-target-tab, and the delegated navigation
+           handler below is scoped to nav items that HAVE one, so it
+           cannot match this button and cannot clear the active tab.
+           Its own click listener is bound directly to the element. -->
+      <button class="dps-nav-item dps-nav-settings" id="dpsExportSettings"
+              type="button" data-tooltip="${_t('esTitle')}">
+        <span class="dps-nav-icon">⚙️</span>
+        <span class="dps-nav-text">${_t('esTitle')}</span>
+      </button>
       <button class="dps-nav-item" data-target-tab="contact-tab" data-tooltip="${_t('tabHelp')}">
         <span class="dps-nav-icon">❓</span>
         <span class="dps-nav-text">${_t('tabHelp')}</span>
@@ -637,6 +651,21 @@ export function initProjectsSidebar() {
 
   // ── Wire: Collapse/expand button ──
   document.getElementById('dpsCollapseBtn').addEventListener('click', _toggleSidebar);
+
+  // ── Wire: Export Settings (own handler, not the nav delegate) ──
+  // Bound to the element itself so it can never participate in tab
+  // switching. The module is loaded lazily: the modal is only needed
+  // when the button is pressed, and keeping it off the boot path means
+  // this addition cannot slow or break startup.
+  const _esBtn = document.getElementById('dpsExportSettings');
+  if (_esBtn) {
+    _esBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      import('./export_settings.js')
+        .then(m => m.openExportSettings())
+        .catch(err => console.error('[export-settings] load failed:', err));
+    });
+  }
 
   // ── Wire: Navigation tab items → delegate to window.switchTab ──
   document.getElementById('dpsSidebarNav').addEventListener('click', function (e) {
@@ -1877,6 +1906,16 @@ window.addEventListener('dacum:langchange', () => {
     // The tooltip is the ONLY label visible on the collapsed rail.
     btn.setAttribute('data-tooltip', label);
   });
+
+  /* Not in NAV_KEYS — it has no data-target-tab, by design — so it is
+     re-labelled explicitly rather than by the loop above. */
+  const esBtn = document.getElementById('dpsExportSettings');
+  if (esBtn) {
+    const esLabel = _t('esTitle');
+    const esTxt = esBtn.querySelector('.dps-nav-text');
+    if (esTxt) esTxt.textContent = esLabel;
+    esBtn.setAttribute('data-tooltip', esLabel);
+  }
 
   const title = document.querySelector('.dps-title');
   if (title) title.textContent = '\u{1F4C1} ' + _t('sbProjects');

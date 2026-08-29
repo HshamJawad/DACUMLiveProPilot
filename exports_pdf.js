@@ -18,6 +18,7 @@ import { noteExportExclusion } from './draft_unverified.js';
    exports verified live-workshop results as a standalone PDF, which is
    why it survived this long. Found by check_imports.js. */
 import { lwExportVerifiedPDF } from './workshop.js';
+import * as ExportSettings from './export_settings.js';
 import {
     ensureArabicFont,
     isArabicFontLoaded,
@@ -103,6 +104,121 @@ function _beginArabic(pdf) {
 }
 
 
+/* ── Export Settings — COLOURS ONLY on this side ─────────────────────
+   Both PDF writers in this file draw at fixed coordinates. Line
+   heights are numeric constants derived from the point size they were
+   written for (LINE_H_TASK 4.9 mm for 12 pt, LINE_H_DUTY 5.7 mm for
+   14 pt), cell insets are absolute (CELL_PAD_T 4.6 mm to the first
+   baseline), row height has a 15 mm floor, and the page-break test is
+   `yPos + rowHeight > bottomEdge`. Enlarging the font makes
+   splitTextToSize() return more lines while the per-line advance stays
+   the same: the lines overlap inside the cell, spill past the rule,
+   and every page break after that point lands in the wrong place.
+   So sizes are a Word-only control, and nothing below touches a single
+   geometric number.
+
+   Every helper here is a NO-OP AT THE DEFAULTS — no extra colour
+   operator is written into the content stream — so a default export
+   produces the same drawing commands as the previous build. */
+
+/** Heading text colour, applied by intercepting pdf.text().
+ *
+ *  Doing it here rather than at ~30 call sites means no heading can be
+ *  missed and none of the surrounding layout code is disturbed. A draw
+ *  counts as a heading when the current font is bold at 14 pt or more,
+ *  which is exactly the heading band in these documents; body prose
+ *  runs at 12 pt and below.
+ *
+ *  jsPDF's setTextColor is STICKY — it stays in force until changed —
+ *  so the colour is reset to black immediately after every intercepted
+ *  draw. Without that, the first coloured heading would bleed into all
+ *  the body text following it.
+ *
+ *  Install AFTER _beginArabic(): the Arabic layer replaces pdf.text to
+ *  mirror coordinates, and this wrapper must sit on top of it and
+ *  delegate down, not the other way round.
+ *
+ *  Returns a teardown function. */
+function _installHeadingColor(pdf) {
+    if (ExportSettings.isHeadingColorDefault()) return () => {};
+
+    const [hr, hg, hb] = ExportSettings.rgb(ExportSettings.headingColor());
+    const origText = pdf.text.bind(pdf);
+
+    pdf.text = function (...args) {
+        let heading = false;
+        try {
+            const size  = pdf.internal.getFontSize();
+            const style = (pdf.getFont && pdf.getFont().fontStyle) || '';
+            heading = !pdf.__esSuppressHeadingColor &&
+                      /bold/i.test(style) &&
+                      size >= 14;
+        } catch (e) {
+            /* If jsPDF ever stops exposing these, fall back to the
+               uncoloured draw rather than throwing mid-export. */
+            heading = false;
+        }
+        if (!heading) return origText(...args);
+
+        pdf.setTextColor(hr, hg, hb);
+        const r = origText(...args);
+        pdf.setTextColor(0, 0, 0);
+        return r;
+    };
+
+    return () => { pdf.text = origText; };
+}
+
+/** Fill for the duty title bar and the "continued" bar — the two
+ *  places that carried RGB(220,220,220), the same grey as the Word
+ *  export's DCDCDC.
+ *
+ *  Deliberately NOT applied to the other three greys in this file. The
+ *  section banner is 200 — DARKER than the duty bar, not lighter — and
+ *  the clustering table uses 232 and 245 as progressively lighter
+ *  tints. Driving all four from one control would need a ramp, and
+ *  getting the direction wrong inverts a gradient that is correct
+ *  today. */
+function _setTableFill(pdf) {
+    const [r, g, b] = ExportSettings.rgb(ExportSettings.tableHeaderHex());
+    pdf.setFillColor(r, g, b);
+}
+
+/** Suppresses the heading colour for a draw that sits on a fill this
+ *  feature does not control (the 200-grey section banner). The ink
+ *  stays black, which is both what it is today and what WCAG contrast
+ *  returns for that grey. */
+function _onFixedFill(pdf, draw) {
+    const was = pdf.__esSuppressHeadingColor;
+    pdf.__esSuppressHeadingColor = true;
+    try { return draw(); } finally { pdf.__esSuppressHeadingColor = was; }
+}
+
+/** Runs `draw` with the text colour set for legibility against the
+ *  table-header fill, computed by WCAG relative luminance rather than
+ *  guessed. Also suppresses the heading colour for the duration: a bar
+ *  caption is both a heading and the contents of a filled shape, and
+ *  a dark heading colour on a dark fill cannot be read. */
+function _onTableFill(pdf, draw) {
+    const wasSuppressed = pdf.__esSuppressHeadingColor;
+    pdf.__esSuppressHeadingColor = true;
+
+    const needsInk = !ExportSettings.isShadedTextDefault();
+    if (needsInk) {
+        const [r, g, b] = ExportSettings.rgb(
+            ExportSettings.contrastOn(ExportSettings.tableHeaderHex())
+        );
+        pdf.setTextColor(r, g, b);
+    }
+    try {
+        return draw();
+    } finally {
+        if (needsInk) pdf.setTextColor(0, 0, 0);
+        pdf.__esSuppressHeadingColor = wasSuppressed;
+    }
+}
+
+
 export function exportTaskVerificationPDF() {
     // Tell the user WHY the appendix is missing rather than
     // shipping a report that is quietly short a section.
@@ -111,6 +227,7 @@ export function exportTaskVerificationPDF() {
     if (_arabicNotReady(exportTaskVerificationPDF)) return;
 
     let _endArabic = () => {};
+    let _endHeadingColor = () => {};
     try {
         // See exportTaskVerificationWord: same adapter, same reasoning.
         const tvResults = buildVerificationDataset();
@@ -136,6 +253,10 @@ export function exportTaskVerificationPDF() {
         // Arabic: suspend jsPDF's own shaper and mirror the document.
         // Everything below keeps writing left-to-right coordinates.
         _endArabic = _beginArabic(pdf);
+
+        // Heading colour sits ON TOP of the Arabic layer and delegates
+        // down to it, so mirrored coordinates are unaffected.
+        _endHeadingColor = _installHeadingColor(pdf);
 
         const margin = 10;
         const pageWidth = pdf.internal.pageSize.getWidth();
@@ -436,6 +557,7 @@ export function exportTaskVerificationPDF() {
            document. Leaving it detached would break Arabic for any
            other code that uses the library afterwards, so the restore
            runs even when generation throws. */
+        _endHeadingColor();
         _endArabic();
     }
 }
@@ -483,6 +605,7 @@ export function exportToPDF() {
     
     // ============ NORMAL DACUM EXPORT (with optional appendix) ============
     let _endArabic = () => {};
+    let _endHeadingColor = () => {};
     try {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
@@ -493,6 +616,7 @@ export function exportToPDF() {
 
         // Arabic: suspend jsPDF's own shaper and mirror the document.
         _endArabic = _beginArabic(pdf);
+        _endHeadingColor = _installHeadingColor(pdf);
 
         // Get input values
         const dacumDateInput = document.getElementById('dacumDate');
@@ -796,11 +920,18 @@ export function exportToPDF() {
         }
         
         // DUTIES AND TASKS header
+        // Fill stays 200 — the section banner is the DARKEST of the four
+        // greys in this file, darker than the 220 duty bar, and the
+        // table-header setting deliberately drives only the 220 sites.
+        // Its caption is still exempted from the heading colour: it is
+        // text on a filled shape, so it takes the automatic contrast
+        // ink like every other bar caption.
         pdf.setFillColor(200, 200, 200);
         pdf.rect(margin, yPos, pageWidth - (margin * 2), 8, 'FD');
         pdf.setFontSize(14); // 14pt for heading
         pdf.setFont(undefined, 'bold');
-        pdf.text(_t('expDutiesAndTasks'), pageWidth / 2, yPos + 5.5, { align: 'center' });
+        _onFixedFill(pdf, () =>
+            pdf.text(_t('expDutiesAndTasks'), pageWidth / 2, yPos + 5.5, { align: 'center' }));
         yPos += 8;
         
         // ── DUTIES AND TASKS grid — horizontal (Word-style) layout ──
@@ -838,7 +969,8 @@ export function exportToPDF() {
             pdf.rect(margin, yPos, chartWidth, 8, 'FD');
             pdf.setFontSize(14);
             pdf.setFont(undefined, 'bold');
-            pdf.text(text, pageWidth / 2, yPos + 5.5, { align: 'center' });
+            _onFixedFill(pdf, () =>
+                pdf.text(text, pageWidth / 2, yPos + 5.5, { align: 'center' }));
             yPos += 8;
         };
 
@@ -865,9 +997,10 @@ export function exportToPDF() {
             // alone at the foot of a page reads as an error.
             if (yPos + headerH + 15 > bottomEdge) newChartPage();
 
-            pdf.setFillColor(220, 220, 220);
+            _setTableFill(pdf);
             pdf.rect(margin, yPos, chartWidth, headerH, 'FD');
-            pdf.text(headerLines, margin + CELL_PAD_X, yPos + CELL_PAD_T + 0.6);
+            _onTableFill(pdf, () =>
+                pdf.text(headerLines, margin + CELL_PAD_X, yPos + CELL_PAD_T + 0.6));
             yPos += headerH;
 
             // ── Task rows, four per row ───────────────────────────
@@ -894,11 +1027,12 @@ export function exportToPDF() {
                 if (yPos + rowHeight > bottomEdge) {
                     newChartPage();
                     // Restate which duty these rows belong to
-                    pdf.setFillColor(220, 220, 220);
+                    _setTableFill(pdf);
                     pdf.rect(margin, yPos, chartWidth, 8, 'FD');
                     pdf.setFontSize(12);
                     pdf.setFont(undefined, 'bold');
-                    pdf.text(_tf('expContinued', { v: _tf('lblDuty', { code: letter }) }), margin + CELL_PAD_X, yPos + 5.5);
+                    _onTableFill(pdf, () =>
+                        pdf.text(_tf('expContinued', { v: _tf('lblDuty', { code: letter }) }), margin + CELL_PAD_X, yPos + 5.5));
                     yPos += 8;
                 }
 
@@ -1911,6 +2045,7 @@ export function exportToPDF() {
     } finally {
         // See exportTaskVerificationPDF: the parser is suspended on the
         // class, so it must be restored even on failure.
+        _endHeadingColor();
         _endArabic();
     }
 }
