@@ -18,7 +18,6 @@ import { noteExportExclusion } from './draft_unverified.js';
    exports verified live-workshop results as a standalone PDF, which is
    why it survived this long. Found by check_imports.js. */
 import { lwExportVerifiedPDF } from './workshop.js';
-import * as ExportSettings from './export_settings.js';
 import {
     ensureArabicFont,
     isArabicFontLoaded,
@@ -104,121 +103,6 @@ function _beginArabic(pdf) {
 }
 
 
-/* ── Export Settings — COLOURS ONLY on this side ─────────────────────
-   Both PDF writers in this file draw at fixed coordinates. Line
-   heights are numeric constants derived from the point size they were
-   written for (LINE_H_TASK 4.9 mm for 12 pt, LINE_H_DUTY 5.7 mm for
-   14 pt), cell insets are absolute (CELL_PAD_T 4.6 mm to the first
-   baseline), row height has a 15 mm floor, and the page-break test is
-   `yPos + rowHeight > bottomEdge`. Enlarging the font makes
-   splitTextToSize() return more lines while the per-line advance stays
-   the same: the lines overlap inside the cell, spill past the rule,
-   and every page break after that point lands in the wrong place.
-   So sizes are a Word-only control, and nothing below touches a single
-   geometric number.
-
-   Every helper here is a NO-OP AT THE DEFAULTS — no extra colour
-   operator is written into the content stream — so a default export
-   produces the same drawing commands as the previous build. */
-
-/** Heading text colour, applied by intercepting pdf.text().
- *
- *  Doing it here rather than at ~30 call sites means no heading can be
- *  missed and none of the surrounding layout code is disturbed. A draw
- *  counts as a heading when the current font is bold at 14 pt or more,
- *  which is exactly the heading band in these documents; body prose
- *  runs at 12 pt and below.
- *
- *  jsPDF's setTextColor is STICKY — it stays in force until changed —
- *  so the colour is reset to black immediately after every intercepted
- *  draw. Without that, the first coloured heading would bleed into all
- *  the body text following it.
- *
- *  Install AFTER _beginArabic(): the Arabic layer replaces pdf.text to
- *  mirror coordinates, and this wrapper must sit on top of it and
- *  delegate down, not the other way round.
- *
- *  Returns a teardown function. */
-function _installHeadingColor(pdf) {
-    if (ExportSettings.isHeadingColorDefault()) return () => {};
-
-    const [hr, hg, hb] = ExportSettings.rgb(ExportSettings.headingColor());
-    const origText = pdf.text.bind(pdf);
-
-    pdf.text = function (...args) {
-        let heading = false;
-        try {
-            const size  = pdf.internal.getFontSize();
-            const style = (pdf.getFont && pdf.getFont().fontStyle) || '';
-            heading = !pdf.__esSuppressHeadingColor &&
-                      /bold/i.test(style) &&
-                      size >= 14;
-        } catch (e) {
-            /* If jsPDF ever stops exposing these, fall back to the
-               uncoloured draw rather than throwing mid-export. */
-            heading = false;
-        }
-        if (!heading) return origText(...args);
-
-        pdf.setTextColor(hr, hg, hb);
-        const r = origText(...args);
-        pdf.setTextColor(0, 0, 0);
-        return r;
-    };
-
-    return () => { pdf.text = origText; };
-}
-
-/** Fill for the duty title bar and the "continued" bar — the two
- *  places that carried RGB(220,220,220), the same grey as the Word
- *  export's DCDCDC.
- *
- *  Deliberately NOT applied to the other three greys in this file. The
- *  section banner is 200 — DARKER than the duty bar, not lighter — and
- *  the clustering table uses 232 and 245 as progressively lighter
- *  tints. Driving all four from one control would need a ramp, and
- *  getting the direction wrong inverts a gradient that is correct
- *  today. */
-function _setTableFill(pdf) {
-    const [r, g, b] = ExportSettings.rgb(ExportSettings.tableHeaderHex());
-    pdf.setFillColor(r, g, b);
-}
-
-/** Suppresses the heading colour for a draw that sits on a fill this
- *  feature does not control (the 200-grey section banner). The ink
- *  stays black, which is both what it is today and what WCAG contrast
- *  returns for that grey. */
-function _onFixedFill(pdf, draw) {
-    const was = pdf.__esSuppressHeadingColor;
-    pdf.__esSuppressHeadingColor = true;
-    try { return draw(); } finally { pdf.__esSuppressHeadingColor = was; }
-}
-
-/** Runs `draw` with the text colour set for legibility against the
- *  table-header fill, computed by WCAG relative luminance rather than
- *  guessed. Also suppresses the heading colour for the duration: a bar
- *  caption is both a heading and the contents of a filled shape, and
- *  a dark heading colour on a dark fill cannot be read. */
-function _onTableFill(pdf, draw) {
-    const wasSuppressed = pdf.__esSuppressHeadingColor;
-    pdf.__esSuppressHeadingColor = true;
-
-    const needsInk = !ExportSettings.isShadedTextDefault();
-    if (needsInk) {
-        const [r, g, b] = ExportSettings.rgb(
-            ExportSettings.contrastOn(ExportSettings.tableHeaderHex())
-        );
-        pdf.setTextColor(r, g, b);
-    }
-    try {
-        return draw();
-    } finally {
-        if (needsInk) pdf.setTextColor(0, 0, 0);
-        pdf.__esSuppressHeadingColor = wasSuppressed;
-    }
-}
-
-
 export function exportTaskVerificationPDF() {
     // Tell the user WHY the appendix is missing rather than
     // shipping a report that is quietly short a section.
@@ -227,7 +111,6 @@ export function exportTaskVerificationPDF() {
     if (_arabicNotReady(exportTaskVerificationPDF)) return;
 
     let _endArabic = () => {};
-    let _endHeadingColor = () => {};
     try {
         // See exportTaskVerificationWord: same adapter, same reasoning.
         const tvResults = buildVerificationDataset();
@@ -253,10 +136,6 @@ export function exportTaskVerificationPDF() {
         // Arabic: suspend jsPDF's own shaper and mirror the document.
         // Everything below keeps writing left-to-right coordinates.
         _endArabic = _beginArabic(pdf);
-
-        // Heading colour sits ON TOP of the Arabic layer and delegates
-        // down to it, so mirrored coordinates are unaffected.
-        _endHeadingColor = _installHeadingColor(pdf);
 
         const margin = 10;
         const pageWidth = pdf.internal.pageSize.getWidth();
@@ -557,7 +436,6 @@ export function exportTaskVerificationPDF() {
            document. Leaving it detached would break Arabic for any
            other code that uses the library afterwards, so the restore
            runs even when generation throws. */
-        _endHeadingColor();
         _endArabic();
     }
 }
@@ -605,7 +483,6 @@ export function exportToPDF() {
     
     // ============ NORMAL DACUM EXPORT (with optional appendix) ============
     let _endArabic = () => {};
-    let _endHeadingColor = () => {};
     try {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
@@ -616,7 +493,6 @@ export function exportToPDF() {
 
         // Arabic: suspend jsPDF's own shaper and mirror the document.
         _endArabic = _beginArabic(pdf);
-        _endHeadingColor = _installHeadingColor(pdf);
 
         // Get input values
         const dacumDateInput = document.getElementById('dacumDate');
@@ -774,43 +650,6 @@ export function exportToPDF() {
         const tableWidth = pageWidth - (2 * margin) - 20;
         const tableX = margin + 10;
 
-        /* Vertical rhythm for the Facilitators / Observers / Panel Members
-           block.
-           
-           workshopY is a BASELINE cursor for text but a TOP edge for
-           pdf.rect(). After a name box the cursor sits exactly on the
-           box's bottom rule, so a following heading — drawn from its
-           baseline — rises its whole cap height back INTO that box. At
-           14 pt the caps stand about 3.5 mm above the baseline, and the
-           gap between groups was 4 mm, which left roughly half a
-           millimetre of air: the headings read as glued to the box
-           above them. The Word export never showed this because Word
-           lays out paragraphs by their own line boxes.
-           
-           GROUP_GAP is therefore the white space the reader should see,
-           and HEAD_ASCENT is the cap height the heading needs above its
-           baseline. Both are named so the two roles cannot be collapsed
-           back into one number by mistake. */
-        /* The document OPENS landscape (210 mm tall) and every overflow
-           page in this block is added as portrait (297 mm tall). The
-           pageHeight above is read once, from page 1, so these portrait
-           pages were being measured against the landscape height —
-           every continuation page broke at 200 mm on a sheet with 297,
-           throwing away roughly a third of it and splitting a long
-           panel list across more pages than it needed. Read the height
-           of the page actually being drawn on instead.
-           
-           Deliberately scoped to this block: it is the only part of the
-           export that mixes orientations. Everything after the chart
-           uses a bare pdf.addPage(), which inherits landscape, where
-           the outer pageHeight is already correct. */
-        const _bottom = () => pdf.internal.pageSize.getHeight() - margin;
-
-        const HEAD_ASCENT  = 5;   // mm reserved above a 14pt heading baseline
-        const GROUP_GAP    = 5;   // mm of visible space between groups
-        const HEAD_TO_BOX  = 5;   // mm from heading baseline to first box top
-        const BOX_H        = 6;   // mm — unchanged row height
-
         // ─── Scope of Work / Occupational Definition (full-width, optional) ───
         // Rendered below the two-column Produced For/By + Job block, before
         // the Facilitators section.  Wrapped with splitTextToSize so long
@@ -819,7 +658,7 @@ export function exportToPDF() {
         const scopeOfWorkInput    = document.getElementById('scopeOfWork');
         const scopeOfWorkValuePDF = scopeOfWorkInput ? scopeOfWorkInput.value.trim() : '';
         if (scopeOfWorkValuePDF) {
-            if (workshopY + 20 > _bottom()) {
+            if (workshopY + 20 > pageHeight - margin) {
                 pdf.addPage('a4', 'portrait');
                 workshopY = margin + 10;
             }
@@ -832,7 +671,7 @@ export function exportToPDF() {
             pdf.setFont(undefined, 'normal');
             const scopeLines = pdf.splitTextToSize(scopeOfWorkValuePDF, tableWidth);
             scopeLines.forEach(line => {
-                if (workshopY + 5 > _bottom()) {
+                if (workshopY + 5 > pageHeight - margin) {
                     pdf.addPage('a4', 'portrait');
                     workshopY = margin + 10;
                 }
@@ -845,97 +684,79 @@ export function exportToPDF() {
         if (facilitatorsInput && facilitatorsInput.value.trim()) {
             const facilitatorNames = facilitatorsInput.value.split('\n').map(s => s.trim()).filter(s => s);
             if (facilitatorNames.length > 0) {
-                /* Break BEFORE the ascent is added, and require room for
-                   the heading plus its first row — a heading alone at the
-                   foot of a page with its names overleaf reads as an
-                   error, and the 20 mm here is what buys that. */
-                if (workshopY + HEAD_ASCENT + 20 > _bottom()) {
+                if (workshopY + 20 > pageHeight - margin) {
                     pdf.addPage('a4', 'portrait');
                     workshopY = margin + 10;
-                } else {
-                    workshopY += HEAD_ASCENT;   // clear the box above before the caps rise
                 }
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
                 pdf.text(_t('expFacilitators'), tableX, workshopY);
-                workshopY += HEAD_TO_BOX;
+                workshopY += 5;
                 pdf.setFont(undefined, 'normal');
                 pdf.setFontSize(12);
                 
                 facilitatorNames.forEach(name => {
-                    if (workshopY + 7 > _bottom()) {
+                    if (workshopY + 7 > pageHeight - margin) {
                         pdf.addPage('a4', 'portrait');
                         workshopY = margin + 10;
                     }
-                    pdf.rect(tableX, workshopY, tableWidth, BOX_H, 'S');
+                    pdf.rect(tableX, workshopY, tableWidth, 6, 'S');
                     pdf.text(name, tableX + 2, workshopY + 4);
-                    workshopY += BOX_H;
+                    workshopY += 6;
                 });
-                workshopY += GROUP_GAP;
+                workshopY += 4;
             }
         }
         
         if (observersInput && observersInput.value.trim()) {
             const observerNames = observersInput.value.split('\n').map(s => s.trim()).filter(s => s);
             if (observerNames.length > 0) {
-                /* Break BEFORE the ascent is added, and require room for
-                   the heading plus its first row — a heading alone at the
-                   foot of a page with its names overleaf reads as an
-                   error, and the 20 mm here is what buys that. */
-                if (workshopY + HEAD_ASCENT + 20 > _bottom()) {
+                if (workshopY + 20 > pageHeight - margin) {
                     pdf.addPage('a4', 'portrait');
                     workshopY = margin + 10;
-                } else {
-                    workshopY += HEAD_ASCENT;   // clear the box above before the caps rise
                 }
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
                 pdf.text(_t('expObservers'), tableX, workshopY);
-                workshopY += HEAD_TO_BOX;
+                workshopY += 5;
                 pdf.setFont(undefined, 'normal');
                 pdf.setFontSize(12);
                 
                 observerNames.forEach(name => {
-                    if (workshopY + 7 > _bottom()) {
+                    if (workshopY + 7 > pageHeight - margin) {
                         pdf.addPage('a4', 'portrait');
                         workshopY = margin + 10;
                     }
-                    pdf.rect(tableX, workshopY, tableWidth, BOX_H, 'S');
+                    pdf.rect(tableX, workshopY, tableWidth, 6, 'S');
                     pdf.text(name, tableX + 2, workshopY + 4);
-                    workshopY += BOX_H;
+                    workshopY += 6;
                 });
-                workshopY += GROUP_GAP;
+                workshopY += 4;
             }
         }
         
         if (panelMembersInput && panelMembersInput.value.trim()) {
             const panelMemberNames = panelMembersInput.value.split('\n').map(s => s.trim()).filter(s => s);
             if (panelMemberNames.length > 0) {
-                /* Break BEFORE the ascent is added, and require room for
-                   the heading plus its first row — a heading alone at the
-                   foot of a page with its names overleaf reads as an
-                   error, and the 20 mm here is what buys that. */
-                if (workshopY + HEAD_ASCENT + 20 > _bottom()) {
+                if (workshopY + 20 > pageHeight - margin) {
                     pdf.addPage('a4', 'portrait');
                     workshopY = margin + 10;
-                } else {
-                    workshopY += HEAD_ASCENT;   // clear the box above before the caps rise
                 }
                 pdf.setFontSize(14);
                 pdf.setFont(undefined, 'bold');
                 pdf.text(_t('expPanelMembers'), tableX, workshopY);
-                workshopY += HEAD_TO_BOX;
+                workshopY += 5;
                 pdf.setFont(undefined, 'normal');
                 pdf.setFontSize(12);
                 
                 panelMemberNames.forEach(name => {
-                    if (workshopY + 7 > _bottom()) {
+                    if (workshopY + 7 > pageHeight - margin) {
                         pdf.addPage('a4', 'portrait');
                         workshopY = margin + 10;
                     }
-                    pdf.rect(tableX, workshopY, tableWidth, BOX_H, 'S');
+                    pdf.rect(tableX, workshopY, tableWidth, 6, 'S');
                     pdf.text(name, tableX + 2, workshopY + 4);
-                    workshopY += BOX_H;
+                    workshopY += 6;
                 });
             }
         }
@@ -975,18 +796,11 @@ export function exportToPDF() {
         }
         
         // DUTIES AND TASKS header
-        // Fill stays 200 — the section banner is the DARKEST of the four
-        // greys in this file, darker than the 220 duty bar, and the
-        // table-header setting deliberately drives only the 220 sites.
-        // Its caption is still exempted from the heading colour: it is
-        // text on a filled shape, so it takes the automatic contrast
-        // ink like every other bar caption.
         pdf.setFillColor(200, 200, 200);
         pdf.rect(margin, yPos, pageWidth - (margin * 2), 8, 'FD');
         pdf.setFontSize(14); // 14pt for heading
         pdf.setFont(undefined, 'bold');
-        _onFixedFill(pdf, () =>
-            pdf.text(_t('expDutiesAndTasks'), pageWidth / 2, yPos + 5.5, { align: 'center' }));
+        pdf.text(_t('expDutiesAndTasks'), pageWidth / 2, yPos + 5.5, { align: 'center' });
         yPos += 8;
         
         // ── DUTIES AND TASKS grid — horizontal (Word-style) layout ──
@@ -1024,8 +838,7 @@ export function exportToPDF() {
             pdf.rect(margin, yPos, chartWidth, 8, 'FD');
             pdf.setFontSize(14);
             pdf.setFont(undefined, 'bold');
-            _onFixedFill(pdf, () =>
-                pdf.text(text, pageWidth / 2, yPos + 5.5, { align: 'center' }));
+            pdf.text(text, pageWidth / 2, yPos + 5.5, { align: 'center' });
             yPos += 8;
         };
 
@@ -1052,10 +865,9 @@ export function exportToPDF() {
             // alone at the foot of a page reads as an error.
             if (yPos + headerH + 15 > bottomEdge) newChartPage();
 
-            _setTableFill(pdf);
+            pdf.setFillColor(220, 220, 220);
             pdf.rect(margin, yPos, chartWidth, headerH, 'FD');
-            _onTableFill(pdf, () =>
-                pdf.text(headerLines, margin + CELL_PAD_X, yPos + CELL_PAD_T + 0.6));
+            pdf.text(headerLines, margin + CELL_PAD_X, yPos + CELL_PAD_T + 0.6);
             yPos += headerH;
 
             // ── Task rows, four per row ───────────────────────────
@@ -1082,12 +894,11 @@ export function exportToPDF() {
                 if (yPos + rowHeight > bottomEdge) {
                     newChartPage();
                     // Restate which duty these rows belong to
-                    _setTableFill(pdf);
+                    pdf.setFillColor(220, 220, 220);
                     pdf.rect(margin, yPos, chartWidth, 8, 'FD');
                     pdf.setFontSize(12);
                     pdf.setFont(undefined, 'bold');
-                    _onTableFill(pdf, () =>
-                        pdf.text(_tf('expContinued', { v: _tf('lblDuty', { code: letter }) }), margin + CELL_PAD_X, yPos + 5.5));
+                    pdf.text(_tf('expContinued', { v: _tf('lblDuty', { code: letter }) }), margin + CELL_PAD_X, yPos + 5.5);
                     yPos += 8;
                 }
 
@@ -2087,6 +1898,155 @@ export function exportToPDF() {
             });
         }
         
+        // ============ ASSESSMENT PLAN SECTION ============
+        //
+        // Mirror of the Word appendix — see exports_docx.js for the full
+        // reasoning. In short: every criterion below is pc.text copied
+        // verbatim from Competency Clustering, so an assessment sheet can
+        // never drift away from the standard it is supposed to measure.
+        //
+        // Laid out with plain pdf.text at fixed left offsets rather than a
+        // bordered table, matching every other section in this file. Under
+        // Arabic the whole document is mirrored by _beginArabic, so all
+        // offsets here stay left-to-right and need no special casing.
+        const _apModules = (appState.moduleMappingData.modules || []).filter(m =>
+            (m.learningOutcomes || []).some(lo => (lo.linkedCriteria || []).length)
+        );
+
+        if (_apModules.length > 0) {
+            pdf.addPage();
+            yPos = margin + 5;
+
+            pdf.setFontSize(16);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(_t('expAssessmentPlan'), pageWidth / 2, yPos, { align: 'center' });
+            yPos += 8;
+
+            pdf.setFontSize(9);
+            pdf.setFont(undefined, 'italic');
+            const _apNoteLines = pdf.splitTextToSize(_t('expAssessmentPlanNote'), pageWidth - 2 * margin);
+            _apNoteLines.forEach(line => {
+                pdf.text(line, margin, yPos);
+                yPos += 4;
+            });
+            yPos += 4;
+
+            // Column origins. Landscape A4 is 297mm wide, so 180mm of
+            // criterion text still leaves room for a source column and a
+            // writable verdict field without crowding either.
+            const _apColText    = margin + 5;
+            const _apColSource  = margin + 185;
+            const _apColVerdict = margin + 240;
+            const _apTextWidth  = 172;
+
+            _apModules.forEach(module => {
+                if (yPos + 20 > pageHeight - margin) {
+                    pdf.addPage();
+                    yPos = margin + 5;
+                }
+
+                pdf.setFontSize(14);
+                pdf.setFont(undefined, 'bold');
+                pdf.text(module.title, margin, yPos);
+                yPos += 7;
+
+                (module.learningOutcomes || []).forEach(lo => {
+                    const pcs = lo.linkedCriteria || [];
+                    if (!pcs.length) return;
+
+                    if (yPos + 20 > pageHeight - margin) {
+                        pdf.addPage();
+                        yPos = margin + 5;
+                    }
+
+                    // Outcome heading
+                    pdf.setFontSize(11);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(`${lo.number}:`, margin + 5, yPos);
+                    yPos += 5;
+
+                    if (lo.statement && lo.statement.trim()) {
+                        pdf.setFontSize(10);
+                        pdf.setFont(undefined, 'normal');
+                        const stLines = pdf.splitTextToSize(lo.statement, pageWidth - 2 * margin - 15);
+                        stLines.forEach(line => {
+                            if (yPos + 5 > pageHeight - margin) {
+                                pdf.addPage();
+                                yPos = margin + 5;
+                            }
+                            pdf.text(line, margin + 10, yPos);
+                            yPos += 5;
+                        });
+                    }
+                    yPos += 2;
+
+                    // Column headers, repeated per outcome so a criterion
+                    // that lands on a fresh page is never unlabelled.
+                    pdf.setFontSize(9);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(_t('expAssessmentCriterion'), _apColText, yPos);
+                    pdf.text(_t('expCriterionSource'),     _apColSource, yPos);
+                    pdf.text(_t('expVerdict'),             _apColVerdict, yPos);
+                    yPos += 5;
+
+                    /* Not de-duplicated across outcomes — see the Word
+                       exporter for why a repeated criterion is correct. */
+                    pdf.setFont(undefined, 'normal');
+                    pdf.setFontSize(9);
+                    pcs.forEach(pc => {
+                        const pcLines = pdf.splitTextToSize(pc.text || '', _apTextWidth);
+                        const blockHeight = Math.max(pcLines.length, 1) * 4.5 + 2;
+
+                        if (yPos + blockHeight > pageHeight - margin) {
+                            pdf.addPage();
+                            yPos = margin + 5;
+                            pdf.setFontSize(9);
+                            pdf.setFont(undefined, 'bold');
+                            pdf.text(_t('expAssessmentCriterion'), _apColText, yPos);
+                            pdf.text(_t('expCriterionSource'),     _apColSource, yPos);
+                            pdf.text(_t('expVerdict'),             _apColVerdict, yPos);
+                            yPos += 5;
+                            pdf.setFont(undefined, 'normal');
+                        }
+
+                        // Source and the blank verdict rule sit on the first
+                        // line of the criterion, so a wrapped criterion still
+                        // reads as one row.
+                        const rowTop = yPos;
+                        pcLines.forEach(line => {
+                            pdf.text(line, _apColText, yPos);
+                            yPos += 4.5;
+                        });
+                        pdf.setFontSize(8);
+                        pdf.text(_tf('expCriterionSourceValue', { c: pc.clusterNumber, id: pc.id }), _apColSource, rowTop);
+                        /* Blank field rather than a ☐ glyph: the Arabic
+                           face here is a simple TrueType file that may not
+                           carry U+2610, and a missing-glyph box in the
+                           verdict column would be worse than no mark. */
+                        pdf.text('__________________', _apColVerdict, rowTop);
+                        pdf.setFontSize(9);
+
+                        yPos += 2;
+                    });
+
+                    yPos += 3;
+                });
+
+                // One signature block per module — the module is the unit
+                // a learner passes or repeats.
+                if (yPos + 14 > pageHeight - margin) {
+                    pdf.addPage();
+                    yPos = margin + 5;
+                }
+                pdf.setFontSize(9);
+                pdf.setFont(undefined, 'normal');
+                pdf.text(_t('expTeacherSignature'), margin + 5, yPos);
+                yPos += 5;
+                pdf.text(_t('expLearnerSignature'), margin + 5, yPos);
+                yPos += 8;
+            });
+        }
+
         const _pdfJobVal = (jobTitleInput.value || '').trim();
         pdf.save(_safeFilename(
             occupationTitleInput.value + (_pdfJobVal ? ' ' + _pdfJobVal : ''),
@@ -2100,7 +2060,6 @@ export function exportToPDF() {
     } finally {
         // See exportTaskVerificationPDF: the parser is suspended on the
         // class, so it must be restored even on failure.
-        _endHeadingColor();
         _endArabic();
     }
 }

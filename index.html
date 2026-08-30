@@ -108,138 +108,18 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v87';
+      var EXPECTED_SW = 'v83';
 
       // ── Human-readable build identity (shown in the toolbar) ──
       // Bumped together with EXPECTED_SW above. PATCH, not MINOR: this
       // build removes a display, not a capability — the daily quota is
       // enforced exactly as before.
-      var APP_VERSION = '3.24.3';
-      var APP_RELEASED = '2026-08-28';
+      var APP_VERSION = '3.23.3';
+      var APP_RELEASED = '2026-08-17';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
-
-         ── 3.24.3 — 2026-08-29 — Arabic PDF + font path ─────────
-         PATCH. PDF only; the Word export is byte-for-byte unchanged,
-         and so are the English and French PDFs.
-
-           • Harakat are now removed before drawing into the PDF. A
-             PDF simple TrueType font carries no GPOS table, so the
-             viewer has no mark-positioning rules: a damma or shadda
-             was drawn as an ordinary glyph advancing by its own width
-             instead of stacking over its letter, leaving marks
-             floating beside the word (أُعدّ). Neither the shaper nor
-             the bidi pass was at fault — both keep every mark attached
-             to its base — so no amount of reordering could fix it.
-             Undotted Arabic is the normal written register, and
-             الميسرون reads exactly as intended.
-             U+0653–U+0655 are KEPT: they change which letter is read,
-             not only how it is vocalised.
-             WORD IS UNTOUCHED. It does its own OpenType layout and
-             positions every mark correctly, so the .docx keeps its
-             full vocalisation.
-
-           • Portrait continuation pages on the title page were being
-             measured against the LANDSCAPE page height. The document
-             opens landscape (210 mm) and overflow pages are added as
-             portrait (297 mm), but pageHeight was read once from page
-             one — so every continuation page broke at 200 mm on a
-             sheet with 297 and threw away a third of it. A long panel
-             list now fits in one page fewer.
-
-           • Font lookup searches ./fonts/ FIRST, with the repository
-             root kept only as a fallback, so a project keeping its
-             fonts in one folder is served on the first request instead
-             of after a 404.
-
-           • Font payloads are verified before use. A host returning an
-             HTML fallback for a missing file answers 200, and a .woff2
-             renamed .ttf answers 200 with real but compressed data;
-             both used to be registered and produced a document of
-             blank boxes with nothing in the console. The header is now
-             checked, the loader falls through to the next candidate,
-             and the message names the actual problem.
-
-         ── 3.24.2 — 2026-08-29 — PDF title-page spacing ─────────
-         PATCH. PDF only; the Word export is untouched.
-
-         The Facilitators / Observers / Panel Members headings sat flush
-         against the name box above them. workshopY is a BASELINE cursor
-         for text but a TOP edge for pdf.rect(), so after a name box the
-         cursor rested exactly on that box's bottom rule and the next
-         heading rose its full cap height back into it — roughly 3.5 mm
-         at 14 pt against a 4 mm gap. Word never showed this because it
-         lays out paragraphs by their own line boxes.
-
-         Each heading now reserves its ascent (HEAD_ASCENT) before it is
-         drawn, and the group gap, the heading-to-box distance and the
-         row height are named constants so the two roles of the cursor
-         cannot be collapsed back into one number. The reserve is added
-         AFTER the page-break test so a heading still cannot be stranded
-         at the foot of a page.
-
-         Verified: page counts unchanged (13) in all three languages,
-         only page 1 differs, and it carries the same 23 text draws and
-         6 boxes as before — repositioned, none added or lost.
-
-         ── 3.24.1 — 2026-08-29 — save button + career path ──────
-         PATCH. The Export Settings panel now stages edits instead of
-         writing them the moment a swatch is clicked.
-
-           • Save / Cancel. Swatches and the size list move a draft;
-             only Save writes to localStorage. Save is greyed until
-             there is something to save, and an "unsaved changes"
-             marker sits beside it. Cancel, ✕, Escape and the backdrop
-             all confirm before discarding pending edits.
-           • Reset to defaults now STAGES the defaults rather than
-             writing them, so it can be backed out of like any other
-             change in the panel.
-           • Nothing unsaved can reach a document: both exporters read
-             the STORED value at export time, never the draft.
-
-         Also fixed: Career Path never appeared in the Word export.
-         It is content2 of the Acronyms pair, and that pair has a
-         special branch which rendered content1 only — so whenever
-         Acronyms had text, the Career Path the facilitator typed was
-         read from the field and then discarded. It is now rendered in
-         the same labelled-table form directly beneath Acronyms.
-         Verified as a clean insertion: one shaded label cell and its
-         content, with every other run, size, colour and shading in the
-         document unchanged, in all three languages. The PDF export was
-         never affected — it already handled Career Path correctly.
-
-         ── 3.24.0 — 2026-08-28 — export settings ────────────────
-         MINOR. New "Export Settings" panel, reached from the sidebar
-         just above Help. It controls the appearance of the EXPORTED
-         FILES only and never the application UI. One localStorage key
-         (dacum_export_settings), shared by all three languages, read
-         at export time rather than at load.
-
-           • Heading colour and table-header colour — applied to BOTH
-             the Word and PDF exports. Nine presets, including the
-             grey already in the code, which is the default.
-           • Font size — a RELATIVE offset (-2 … +4 pt), Word only.
-             Relative because the report renders section headings at
-             three different sizes (16/14/12 pt) and a single absolute
-             value would flatten that hierarchy for every existing
-             user. The PDF is hand-drawn at fixed coordinates with
-             numeric line heights, so sizes cannot apply there.
-           • Text on any shaded cell or bar takes black or white by
-             WCAG relative luminance, never the heading colour.
-           • Defaults reproduce the previous output exactly: at the
-             default settings not one extra colour property or colour
-             operator is written, so document.xml and the PDF content
-             stream are unchanged.
-           • The verified live-workshop exports are out of scope; they
-             use Word's built-in heading styles.
-
-         Also fixed: lwExportVerifiedDOCX() declared its docx Document
-         as `const document`, shadowing the global for the rest of the
-         function, so the download step called createElement on the
-         wrong object and the export threw before saving. Renamed to
-         `doc`; the document itself is unchanged.
 
          ── 3.23.3 — 2026-08-17 — quota display removed ──────────
          PATCH. The daily allowance is enforced exactly as before;
@@ -1127,7 +1007,16 @@
 
                 <div class="mb-10">
                     <label for="jobTitle">👔 <span data-i18n="labelJobTitle">Job Title:</span></label>
-                    <input type="text" id="jobTitle" placeholder="e.g., Service Technician Level 2" data-i18n="phJobTitle" data-i18n-attr="placeholder">
+                    <input type="text" id="jobTitle" placeholder="e.g., Brake and Suspension Technician" data-i18n="phJobTitle" data-i18n-attr="placeholder">
+                    <!-- The two fields above look interchangeable, and the old
+                         placeholder ("Service Technician Level 2") read like an
+                         occupation title, so nothing told the facilitator which
+                         one narrows the analysis. This line does — and it is the
+                         only place in the UI that says Job Title is what the AI
+                         generator treats as the primary focus. -->
+                    <p style="margin: 6px 0 0 0; color: #666; font-size: 0.9em;" data-i18n="hintJobTitle">
+                        The occupation is the general category; the job is the specific role within it. When filled, this field is what drives AI generation.
+                    </p>
                 </div>
                 
                 <div class="mb-10">

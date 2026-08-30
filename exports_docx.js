@@ -13,7 +13,6 @@ import { showStatus } from './renderer.js';
 import { getTaskCode, getDutyLetter } from './codes.js';
 import { buildVerificationDataset, getVerificationCoverage } from './exports_shared.js';
 import { noteExportExclusion } from './draft_unverified.js';
-import * as ExportSettings from './export_settings.js';
 
 
 /* ── i18n + direction helpers ────────────────────────────────────────
@@ -83,77 +82,13 @@ function _runText(o) {
   return [o.text || '', ...kids].join(' ');
 }
 
-/* ── Export Settings, applied at the single point every run passes ───
-   Both Word exporters in this file build their runs through the
-   wrapper below, so transforming the options object here reaches all
-   ~91 explicitly-sized runs without editing a single call site — and,
-   like the Arabic tagging above, covers any run added later.
-
-   Two rules, both written so that DEFAULT SETTINGS EMIT NOTHING NEW.
-   At the defaults this function returns the options object unchanged
-   and document.xml is byte-identical to the previous build.
-
-   1. SIZE — a relative offset, never an absolute value.
-      Only runs that already carry an explicit `size` are touched.
-      Runs without one (the ~30 bold header cells) inherit from
-      docDefaults, and writing an explicit size for them would mean
-      guessing what Word's default is on the reader's machine.
-
-   2. HEADING COLOUR — bold runs at 12 pt (size 24) or larger.
-      That is the heading band in this document: the 32 / 28 / 24
-      groups. Body prose sits at 22 and below and is left black.
-      A run that already sets its own colour (the coverage warning at
-      B91C1C) is never overridden.
-
-      `__shaded: true` opts a run OUT of the heading colour. It marks
-      the three runs that are simultaneously a heading and the contents
-      of a shaded cell — a duty title bar, for example. Those take the
-      automatic contrast colour instead, because a dark heading colour
-      on a dark fill is unreadable. */
-function _applyExportSettings(o) {
-  const shaded = o.__shaded === true;
-  let out = o;
-
-  if (typeof out.size === 'number' && !ExportSettings.isSizeDefault()) {
-    out = { ...out, size: ExportSettings.docxSize(out.size) };
-  }
-
-  if (!shaded &&
-      out.bold === true &&
-      typeof out.size === 'number' &&
-      out.size >= 24 &&
-      out.color === undefined &&
-      !ExportSettings.isHeadingColorDefault()) {
-    out = { ...out, color: ExportSettings.headingColor() };
-  }
-
-  if (shaded && out.color === undefined && !ExportSettings.isShadedTextDefault()) {
-    out = { ...out, color: ExportSettings.contrastOn(ExportSettings.tableHeaderHex()) };
-  }
-
-  if (out.__shaded !== undefined) {
-    /* Never reaches the library — it is our marker, not an option. */
-    const { __shaded, ...clean } = out;
-    out = clean;
-  }
-  return out;
-}
-
-/* The fill for every shaded cell in this document — 30 sites that all
-   carried the literal 'DCDCDC'. Only the VALUE is centralised; each
-   shading object keeps its original shape (some pass ShadingType.CLEAR
-   explicitly, some do not), so nothing about the emitted <w:shd>
-   changes at the default. */
-const _tblFill = () => ExportSettings.tableHeaderHex();
-
 /* Wraps TextRun so every run holding Arabic is tagged at the source.
    Doing it here rather than at ~150 call sites means a run added later
    is covered automatically and cannot be forgotten. */
 function _withArabicLang(BaseRun) {
   return class extends BaseRun {
     constructor(options) {
-      let o = (typeof options === 'string') ? { text: options } : (options || {});
-      o = _applyExportSettings(o);
+      const o = (typeof options === 'string') ? { text: options } : (options || {});
       const isAr = _rtl() && _hasArabic(_runText(o));
       /* w:rtl marks the run as complex script, which is what makes Word
          read w:bidi (not w:val) as the proofing language and apply the
@@ -470,32 +405,32 @@ export async function exportTaskVerificationWord() {
                 tableRows.push(new TableRow({
                     children: [
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expRank'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expRank'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expDutyLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTaskLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expTaskLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanI'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanI'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanF'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanF'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanD'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanD'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                         new TableCell({
-                            children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                            shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                            children: [new Paragraph({ children: [new TextRun({ text: _t('expPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                         }),
                     ],
                 }));
@@ -578,10 +513,10 @@ export async function exportTaskVerificationWord() {
                 const dutyTableRows = [
                     new TableRow({
                         children: [
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expDutyTitle'), bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTasks'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expAvgPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
-                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTrainingLoad'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyTitle'), bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTasks'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expAvgPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTrainingLoad'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
                         ],
                     })
                 ];
@@ -1136,7 +1071,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({ __shaded: true,
+                                                new TextRun({
                                                     text: dutyLabel,
                                                     bold: true,
                                                     size: 24, // 12pt
@@ -1150,7 +1085,7 @@ export async function exportToWord() {
                                         // DCDCDC = RGB(220,220,220) — the exact grey the
                                         // PDF exporter fills duty bars with, so the Word
                                         // and PDF versions of the same chart match.
-                                        fill: _tblFill(),
+                                        fill: "DCDCDC",
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1269,63 +1204,6 @@ export async function exportToWord() {
                     },
                 ];
 
-                /* Builds the 30/70 "label cell + content cell" table used
-                   by the Acronyms block. Extracted so Career Path can be
-                   rendered the same way instead of being dropped — see the
-                   note in the index === 3 branch below. */
-                const _labelledTable = (headingText, contentText) => {
-                    const row = new TableRow({
-                        children: [
-                            // First cell: heading only, on the shaded fill
-                            new TableCell({
-                                children: [
-                                    new Paragraph({
-                                        children: [
-                                            new TextRun({ __shaded: true,
-                                                text: headingText,
-                                                bold: true,
-                                                size: 24, // 12pt
-                                            }),
-                                        ],
-                                        bidirectional: _rtl(),
-                                    }),
-                                ],
-                                shading: {
-                                    fill: _tblFill(), // RGB(220,220,220) — matches the duty bar
-                                    type: ShadingType.CLEAR,
-                                    color: "auto",
-                                },
-                                width: { size: 30, type: WidthType.PERCENTAGE },
-                            }),
-                            // Second cell: content only
-                            new TableCell({
-                                children: contentText.split('\n').filter(line => line.trim()).map(line =>
-                                    new Paragraph({
-                                        children: [
-                                            new TextRun({
-                                                text: line.trim().replace(/^[•\-*]\s*/, '• '),
-                                                size: 24, // 12pt
-                                            }),
-                                        ],
-                                        bidirectional: _rtl(),
-                                    })
-                                ),
-                                width: { size: 70, type: WidthType.PERCENTAGE },
-                            }),
-                        ],
-                    });
-
-                    children.push(
-                        new Table({
-                            visuallyRightToLeft: _rtl(),
-                            width: { size: 9071, type: WidthType.DXA }, // 16cm in twips
-                            layout: "fixed",
-                            rows: [row],
-                        })
-                    );
-                    children.push(new Paragraph({ spacing: { after: 200 } }));
-                };
-
                 additionalInfoSections.forEach((section, index) => {
                     // Special handling for Acronyms (index 3, content1) - separate table with heading in first cell
                     if (index === 3 && section.content1) {
@@ -1336,7 +1214,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({ __shaded: true,
+                                                new TextRun({
                                                     text: section.heading1,
                                                     bold: true,
                                                     size: 24, // 12pt
@@ -1346,7 +1224,7 @@ export async function exportToWord() {
                                         }),
                                     ],
                                     shading: {
-                                        fill: _tblFill(), // RGB(220,220,220) — matches the duty bar
+                                        fill: "DCDCDC", // RGB(220,220,220) — matches the duty bar
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1389,20 +1267,6 @@ export async function exportToWord() {
                         );
                         
                         children.push(new Paragraph({ spacing: { after: 200 } }));
-
-                        /* Career Path is content2 of this same pair. The
-                           branch above renders content1 only, so whenever
-                           Acronyms had text the Career Path the facilitator
-                           typed was read from the field and then silently
-                           discarded — it never reached the document. It is
-                           rendered here in the same labelled-table form.
-                           (When Acronyms is empty this branch is skipped and
-                           the regular two-column format below already carried
-                           Career Path, which is why the loss only showed up
-                           on charts that filled in both.) */
-                        if (section.content2 && section.content2.trim()) {
-                            _labelledTable(section.heading2, section.content2);
-                        }
                     }
                     // Regular format for all other sections (heading + content together)
                     else if (section.content1 || section.content2) {
@@ -1584,7 +1448,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({ __shaded: true,
+                                                new TextRun({
                                                     text: category.category || _tf('expCategoryN', { n: category.id }),
                                                     bold: true,
                                                     size: 24,
@@ -1595,7 +1459,7 @@ export async function exportToWord() {
                                     ],
                                     columnSpan: 5,
                                     shading: {
-                                        fill: _tblFill(),
+                                        fill: "DCDCDC",
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1610,7 +1474,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({ __shaded: true,
+                                                new TextRun({
                                                     text: _t('expCompetency'),
                                                     bold: true,
                                                     size: 22,
@@ -1621,7 +1485,7 @@ export async function exportToWord() {
                                     ],
                                     width: { size: 40, type: WidthType.PERCENTAGE },
                                     shading: {
-                                        fill: _tblFill(),
+                                        fill: "DCDCDC",
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1630,7 +1494,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({ __shaded: true,
+                                                new TextRun({
                                                     text: _t('expCraftsman'),
                                                     bold: true,
                                                     size: 20,
@@ -1641,7 +1505,7 @@ export async function exportToWord() {
                                     ],
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
-                                        fill: _tblFill(),
+                                        fill: "DCDCDC",
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1650,7 +1514,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({ __shaded: true,
+                                                new TextRun({
                                                     text: _t('expSkilled'),
                                                     bold: true,
                                                     size: 20,
@@ -1661,7 +1525,7 @@ export async function exportToWord() {
                                     ],
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
-                                        fill: _tblFill(),
+                                        fill: "DCDCDC",
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1670,7 +1534,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({ __shaded: true,
+                                                new TextRun({
                                                     text: _t('expSemiSkilled'),
                                                     bold: true,
                                                     size: 20,
@@ -1681,7 +1545,7 @@ export async function exportToWord() {
                                     ],
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
-                                        fill: _tblFill(),
+                                        fill: "DCDCDC",
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1690,7 +1554,7 @@ export async function exportToWord() {
                                     children: [
                                         new Paragraph({
                                             children: [
-                                                new TextRun({ __shaded: true,
+                                                new TextRun({
                                                     text: _t('expFoundation'),
                                                     bold: true,
                                                     size: 20,
@@ -1701,7 +1565,7 @@ export async function exportToWord() {
                                     ],
                                     width: { size: 15, type: WidthType.PERCENTAGE },
                                     shading: {
-                                        fill: _tblFill(),
+                                        fill: "DCDCDC",
                                         type: ShadingType.CLEAR,
                                         color: "auto",
                                     },
@@ -1950,32 +1814,32 @@ export async function exportToWord() {
                         tableRows.push(new TableRow({
                             children: [
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expRank'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expRank'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expDutyLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTaskLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expTaskLabel'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanI'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanI'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanF'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanF'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expMeanD'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expMeanD'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                                 new TableCell({
-                                    children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
-                                    shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                                    children: [new Paragraph({ children: [new TextRun({ text: _t('expPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                    shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
                                 }),
                             ],
                         }));
@@ -2058,10 +1922,10 @@ export async function exportToWord() {
                         const dutyTableRows = [
                             new TableRow({
                                 children: [
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expDutyTitle'), bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTasks'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expAvgPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
-                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ __shaded: true, text: _t('expTrainingLoad'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: _tblFill() } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expDutyTitle'), bold: true })], alignment: _start(AlignmentType), bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTasks'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expAvgPriority'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
+                                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: _t('expTrainingLoad'), bold: true })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })], shading: { fill: 'DCDCDC' } }),
                                 ],
                             })
                         ];
@@ -2558,6 +2422,173 @@ export async function exportToWord() {
                                 }));
                             });
                         });
+                    });
+                }
+
+                // ============ ASSESSMENT PLAN SECTION ============
+                //
+                // WHY THIS EXISTS
+                //
+                // A curriculum breaks at exactly one joint: the assessment
+                // sheet gets written from the CONTENT (the exercises that
+                // ended up in the manual) instead of from the STANDARD (the
+                // performance criteria the panel agreed on). Once that
+                // happens, editing an exercise silently detaches the
+                // qualification from its occupational standard and nothing
+                // in the document reveals it.
+                //
+                // So nothing here is authored. Every row is pc.text copied
+                // verbatim out of the Competency Clustering tab, carried
+                // through learningOutcomesData.linkedCriteria — the same
+                // objects the Module Mapping section above prints. The table
+                // is a re-ordering of data that already exists, which is
+                // what makes drift structurally impossible rather than
+                // merely discouraged.
+                //
+                // Gated on modules: assessment is a property of the module
+                // a learner is enrolled in, not of a loose outcome. A
+                // project with no modules produces no section at all, and
+                // therefore a byte-identical document to previous builds.
+                const _apModules = (appState.moduleMappingData.modules || []).filter(m =>
+                    (m.learningOutcomes || []).some(lo => (lo.linkedCriteria || []).length)
+                );
+
+                if (_apModules.length > 0) {
+                    children.push(new Paragraph({ children: [new PageBreak()], bidirectional: _rtl() }));
+
+                    children.push(new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: _t('expAssessmentPlan'),
+                                bold: true,
+                                size: 32, // 16pt
+                            }),
+                        ],
+                        spacing: { before: 400, after: 200 },
+                        alignment: AlignmentType.CENTER,
+                        bidirectional: _rtl(),
+                    }));
+
+                    children.push(new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: _t('expAssessmentPlanNote'),
+                                italics: true,
+                                size: 20, // 10pt
+                            }),
+                        ],
+                        spacing: { after: 300 },
+                        bidirectional: _rtl(),
+                    }));
+
+                    _apModules.forEach(module => {
+                        // Module title
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: module.title,
+                                    bold: true,
+                                    size: 28, // 14pt
+                                }),
+                            ],
+                            spacing: { before: 300, after: 200 },
+                            bidirectional: _rtl(),
+                        }));
+
+                        (module.learningOutcomes || []).forEach(lo => {
+                            const pcs = lo.linkedCriteria || [];
+                            if (!pcs.length) return;
+
+                            // Learning outcome heading — number and statement
+                            // together, because the criteria below are only
+                            // meaningful as evidence FOR this outcome.
+                            children.push(new Paragraph({
+                                children: [
+                                    new TextRun({ text: `${lo.number}: `, bold: true, size: 24 }),
+                                    new TextRun({ text: lo.statement || '', size: 24 }),
+                                ],
+                                spacing: { before: 200, after: 100 },
+                                bidirectional: _rtl(),
+                            }));
+
+                            const rows = [
+                                new TableRow({
+                                    tableHeader: true,
+                                    children: [
+                                        new TableCell({
+                                            children: [new Paragraph({ children: [new TextRun({ text: _t('expAssessmentCriterion'), bold: true, size: 20 })], alignment: _start(AlignmentType), bidirectional: _rtl() })],
+                                            width: { size: 5260, type: WidthType.DXA },
+                                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                                        }),
+                                        new TableCell({
+                                            children: [new Paragraph({ children: [new TextRun({ text: _t('expCriterionSource'), bold: true, size: 20 })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                            width: { size: 1814, type: WidthType.DXA },
+                                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                                        }),
+                                        new TableCell({
+                                            children: [new Paragraph({ children: [new TextRun({ text: _t('expVerdict'), bold: true, size: 20 })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                            width: { size: 1997, type: WidthType.DXA },
+                                            shading: { fill: 'DCDCDC', type: ShadingType.CLEAR, color: 'auto' },
+                                        }),
+                                    ],
+                                }),
+                            ];
+
+                            /* Criteria are NOT de-duplicated across outcomes.
+                               Pattern C can link one criterion to two outcomes,
+                               and each outcome is assessed in its own context —
+                               dropping the second occurrence would leave that
+                               outcome with no evidence to be judged against. */
+                            pcs.forEach(pc => {
+                                rows.push(new TableRow({
+                                    children: [
+                                        new TableCell({
+                                            children: [new Paragraph({ children: [new TextRun({ text: pc.text || '', size: 20 })], alignment: _start(AlignmentType), bidirectional: _rtl() })],
+                                        }),
+                                        new TableCell({
+                                            children: [new Paragraph({ children: [new TextRun({ text: _tf('expCriterionSourceValue', { c: pc.clusterNumber, id: pc.id }), size: 18 })], alignment: AlignmentType.CENTER, bidirectional: _rtl() })],
+                                        }),
+                                        /* Deliberately blank: this column is
+                                           filled in by hand on the printed
+                                           sheet. A ☐ glyph was considered and
+                                           rejected — the Arabic PDF path uses a
+                                           simple TrueType face that may not
+                                           carry U+2610, and Word and PDF must
+                                           not disagree about what the column
+                                           looks like. */
+                                        new TableCell({
+                                            children: [new Paragraph({ text: '', bidirectional: _rtl() })],
+                                        }),
+                                    ],
+                                }));
+                            });
+
+                            /* Same geometry as every other table in this
+                               document: 16cm DXA with a fixed layout, so the
+                               Assessment Plan does not render at a different
+                               width from the Employability matrix above it. */
+                            children.push(new Table({
+                                visuallyRightToLeft: _rtl(),
+                                width: { size: 9071, type: WidthType.DXA },
+                                layout: 'fixed',
+                                rows,
+                            }));
+
+                            children.push(new Paragraph({ text: '', spacing: { after: 120 }, bidirectional: _rtl() }));
+                        });
+
+                        // One signature block per module, not per outcome:
+                        // the module is what a learner passes or repeats.
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: _t('expTeacherSignature'), size: 20 })],
+                            spacing: { before: 200, after: 80 },
+                            bidirectional: _rtl(),
+                        }));
+                        children.push(new Paragraph({
+                            children: [new TextRun({ text: _t('expLearnerSignature'), size: 20 })],
+                            spacing: { after: 200 },
+                            bidirectional: _rtl(),
+                        }));
                     });
                 }
 
