@@ -494,7 +494,15 @@ export async function exportOccupationalStandardWord() {
             styles: { default: { document: { run: { font: _font() } } } },
             sections: [{
                 properties: {
-                    page: { margin: { top: 720, right: 720, bottom: 720, left: 720 } },
+                    /* 1440 twips = 1 inch = 2.54 cm, Word's own default and
+                       the same value exportToWord() uses. The OS document
+                       had been at 720 (1.27 cm), so the two exports from
+                       one project printed on visibly different page setups
+                       — and a standard that goes to an endorsement file has
+                       to sit inside normal binding margins. TABLE_W stays
+                       at 9071 so both documents keep identical table
+                       geometry. */
+                    page: { margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } },
                 },
                 children,
             }],
