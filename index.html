@@ -108,18 +108,86 @@
          The two constants are in different files that cannot import
          each other (a service worker has no module scope), so the only
          guard is discipline: bump BOTH in the same commit, always. */
-      var EXPECTED_SW = 'v83';
+      var EXPECTED_SW = 'v88';
 
       // ── Human-readable build identity (shown in the toolbar) ──
-      // Bumped together with EXPECTED_SW above. PATCH, not MINOR: this
-      // build removes a display, not a capability — the daily quota is
-      // enforced exactly as before.
-      var APP_VERSION = '3.23.3';
-      var APP_RELEASED = '2026-08-17';
+      // Bumped together with EXPECTED_SW above. MINOR: this build adds
+      // two capabilities (the Assessment Plan appendix and the
+      // Occupational Standard export) without changing any existing
+      // one — a project with no modules still exports byte-identically.
+      var APP_VERSION = '3.24.0';
+      var APP_RELEASED = '2026-08-31';
 
       /* ── CHANGELOG ────────────────────────────────────────────
          Newest first. There is no version.js in this tool, so the
          release record lives here, next to the constants it explains.
+
+         ── 3.24.0 — 2026-08-31 — assessment traceability ────────
+         MINOR. Two additions, both of which only appear when the data
+         they describe exists. Default output is unchanged.
+
+         Added
+           exports_docx.js     "Assessment Plan" appendix. For every
+           exports_pdf.js      module, every learning outcome, a table
+                               of its linked performance criteria —
+                               reproduced VERBATIM, never reworded.
+                               An assessment sheet written from the
+                               content instead of the standard is how a
+                               qualification silently detaches from the
+                               occupational standard it claims to
+                               measure; deriving the sheet from
+                               pc.text makes that drift impossible
+                               rather than merely discouraged.
+                               Rendered only when at least one module
+                               has a learning outcome carrying linked
+                               criteria, so a chart-only project
+                               exports exactly as it did in 3.23.3.
+
+           exports_os_docx.js  NEW. Second DOCX layout over existing
+                               data: Occupational Profile + Occupational
+                               Standard, in the two-part form that
+                               qualification bodies endorse. Reads no
+                               field the app did not already collect.
+                               The reference code and the endorsement
+                               chain print as blank labelled lines —
+                               they belong to a qualifications
+                               framework, not to a DACUM workshop, and
+                               collecting them would push framework
+                               bureaucracy into a facilitation tool.
+                               Performance criteria are numbered n.1,
+                               n.2 here and nowhere else, so a module
+                               descriptor citing "5.6" refers to
+                               something a reader can actually find.
+                               Kept as a separate module rather than a
+                               branch inside exports_docx.js: that
+                               exporter is the artefact every existing
+                               project was validated against.
+
+           index.html          Inline hint under Job Title. The two
+                               title fields looked interchangeable and
+                               the old placeholder read like an
+                               occupation, so nothing told the
+                               facilitator which one narrows AI
+                               generation.
+
+         Changed
+           exports_docx.js     Seven private helpers (_rtl, _start,
+                               _font, _withArabicLang,
+                               _withArabicLangParagraph,
+                               _applyDocDefaultsLang, _safeFilename)
+                               are now exported. Bodies untouched —
+                               visibility only, so the two DOCX
+                               documents cannot drift apart in how they
+                               handle Arabic.
+
+           sw.js               v87 → v88, precaching exports_os_docx.js.
+
+         Fixed
+           index.html          EXPECTED_SW had drifted to v83 while
+                               sw.js reached v87, so every load saw a
+                               version mismatch and offered an update
+                               that was already installed. Both now
+                               read v88.
 
          ── 3.23.3 — 2026-08-17 — quota display removed ──────────
          PATCH. The daily allowance is enforced exactly as before;
