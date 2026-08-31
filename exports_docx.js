@@ -31,11 +31,11 @@ import { noteExportExclusion } from './draft_unverified.js';
    therefore both sufficient and correct. */
 const _t   = (k)    => (window.i18n ? window.i18n.t(k)     : k);
 const _tf  = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
-const _rtl = ()     => (window.i18n ? window.i18n.isRTL()  : false);
+export const _rtl = ()     => (window.i18n ? window.i18n.isRTL()  : false);
 
 /* Start/end alignment. AlignmentType has no logical START, so it is
    resolved here rather than at 48 call sites. */
-const _start = (A) => (_rtl() ? A.RIGHT : A.LEFT);
+export const _start = (A) => (_rtl() ? A.RIGHT : A.LEFT);
 
 /* Arabic needs a face that actually carries the glyphs. Word falls back
    silently when it cannot find one, which is how a document ends up
@@ -43,7 +43,7 @@ const _start = (A) => (_rtl() ? A.RIGHT : A.LEFT);
    Cairo are common on Arabic systems; Arial ships everywhere and has
    full Arabic coverage, so it is the safe default rather than the
    pretty one. */
-const _font = () => (_rtl() ? 'Arial' : 'Calibri');
+export const _font = () => (_rtl() ? 'Arial' : 'Calibri');
 
 
 /* ── Proofing language (w:lang) ──────────────────────────────────────
@@ -85,7 +85,7 @@ function _runText(o) {
 /* Wraps TextRun so every run holding Arabic is tagged at the source.
    Doing it here rather than at ~150 call sites means a run added later
    is covered automatically and cannot be forgotten. */
-function _withArabicLang(BaseRun) {
+export function _withArabicLang(BaseRun) {
   return class extends BaseRun {
     constructor(options) {
       const o = (typeof options === 'string') ? { text: options } : (options || {});
@@ -111,7 +111,7 @@ function _withArabicLang(BaseRun) {
    library's own TextRun, bypassing the wrapper above. Rewriting the
    shorthand into an explicit child keeps those 20-odd paragraphs from
    being the one gap. */
-function _withArabicLangParagraph(BaseParagraph, WrappedRun) {
+export function _withArabicLangParagraph(BaseParagraph, WrappedRun) {
   return class extends BaseParagraph {
     constructor(options) {
       const o = (typeof options === 'string') ? { text: options } : (options || {});
@@ -132,7 +132,7 @@ function _withArabicLangParagraph(BaseParagraph, WrappedRun) {
    `styles.default.document.run`, which also has no language option, so
    the node is added to the tree the library already built. The walk is
    by rootKey and tolerates the structure moving in a future version. */
-function _applyDocDefaultsLang(doc) {
+export function _applyDocDefaultsLang(doc) {
   if (!_rtl()) return;
   try {
     const find = (node, key) => {
@@ -166,7 +166,7 @@ const _today = () => new Date().toLocaleDateString(
    into a row of underscores — every Arabic export arrived as
    "________.docx". Keep Unicode letters and digits; strip only what a
    filesystem actually objects to. */
-function _safeFilename(title, suffix) {
+export function _safeFilename(title, suffix) {
   const base = String(title || '')
     .replace(/[\\/:*?"<>|\u0000-\u001F]/g, '')   // illegal on Windows
     .replace(/\s+/g, '_')

@@ -41,6 +41,7 @@ import { showStatus, escapeHtml,
   addCustomSection, removeCustomSection }                  from './renderer.js';
 import { exportToPDF, exportTaskVerificationPDF }         from './exports_pdf.js';
 import { exportToWord, exportTaskVerificationWord }       from './exports_docx.js';
+import { exportOccupationalStandardWord }                 from './exports_os_docx.js';
 import { clearAll, clearAllSilent, clearCurrentTab, generateAIDacum,
          switchTab } from './projects.js';
 import { handleImageUpload, removeImage }                  from './storage.js';
@@ -267,6 +268,7 @@ export function setupEvents() {
   _on('btnRefineResults', 'click', () => refineResults());
   _on('btnExportPDF',          'click', () => exportToPDF());
   _on('btnExportWord',         'click', () => exportToWord());
+  _on('btnExportOS',           'click', () => exportOccupationalStandardWord());
 
   // Task Verification controls
   _onRadioGroup('collectionMode',  () => { updateCollectionMode(); });
