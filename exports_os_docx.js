@@ -25,6 +25,17 @@
    whose job is to run a panel. They are filled in institutionally,
    after the document leaves this application.
 
+   TABLE GEOMETRY — the bug that produced the first broken build
+   docx@7.8.2 writes <w:tblGrid> from the table's `columnWidths` option
+   and NOTHING else. Omit it and the grid is emitted as 100 twips per
+   column; under <w:tblLayout w:type="fixed"/> that grid overrides every
+   tcW, and the table collapses — columns ignore their declared widths
+   and cell text drifts to the wrong edge. It looks like an RTL failure
+   and is not one: <w:bidi/>, <w:bidiVisual/> and <w:jc w:val="right"/>
+   were all present and correct in the broken output. Every _table()
+   call below therefore passes columnWidths, and the widths are declared
+   once per table and reused for both the grid and the cells.
+
    ARABIC
    Every paragraph — including the ones inside table cells — carries
    bidirectional:_rtl() and start-edge alignment, and every table
@@ -38,11 +49,11 @@
 
 import { appState } from './state.js';
 import { showStatus } from './renderer.js';
-import { getTaskCode } from './codes.js';
+import { getTaskCode, getDutyLetter } from './codes.js';
 import {
     _rtl,
-    _start,
     _font,
+    _tblFill,
     _withArabicLang,
     _withArabicLangParagraph,
     _applyDocDefaultsLang,
@@ -55,7 +66,12 @@ const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
 /* Same grey the rest of the suite fills header bars with, and the same
    ShadingType.CLEAR rule: val="solid" paints the cell in the PATTERN
    colour and ignores w:fill, which renders as solid black. */
-const HEADER_FILL = 'DCDCDC';
+/* The shaded-cell fill is whatever Export Settings says it is, exactly
+   as in exports_docx.js — a hardcoded grey here would make the OS
+   document ignore a setting the chart export honours. Runs inside a
+   shaded cell carry __shaded:true so they take the automatic contrast
+   colour instead of the heading colour, which is unreadable on a dark
+   fill. */
 const LABEL_FILL  = 'F2F2F2';
 
 const _val = (id) => {
@@ -96,8 +112,23 @@ export async function exportOccupationalStandardWord() {
                 text: String(text == null ? '' : text),
                 bold: !!opts.bold,
                 size: opts.size || 22,
+                /* Marks a run that is both a heading and the contents of a
+                   shaded cell, so Export Settings gives it the automatic
+                   contrast colour rather than the heading colour. Same
+                   convention as exports_docx.js. */
+                ...(opts.shaded ? { __shaded: true } : {}),
             })],
-            alignment: opts.center ? AlignmentType.CENTER : _start(AlignmentType),
+            /* NO `alignment` for the start-aligned case, and this is not an
+               oversight. ECMA-376 makes w:jc LOGICAL inside a bidi
+               paragraph: in an RTL paragraph w:val="right" means END, which
+               renders at the LEFT edge. Setting _start(AlignmentType) here —
+               which resolves to RIGHT — therefore pushed every Arabic cell
+               to the wrong side, and looked exactly like an RTL failure.
+               Omitting w:jc leaves the paragraph at its natural start edge,
+               which is right under RTL and left under LTR. This is also
+               precisely what the duty/task cells in exports_docx.js do, so
+               the two documents now align identically. */
+            ...(opts.center ? { alignment: AlignmentType.CENTER } : {}),
             bidirectional: _rtl(),
             spacing: { before: 40, after: 40 },
         });
@@ -113,19 +144,25 @@ export async function exportOccupationalStandardWord() {
             columnSpan: opts.span || undefined,
         });
 
-        const _table = (rows) => new Table({
+        // cols is REQUIRED, not optional — see the table-geometry note at
+        // the top of this file. Total is always TABLE_W so every table on
+        // the page shares one left and right edge.
+        const TABLE_W = 9071;   // 16 cm in twips
+        const _table = (rows, cols) => new Table({
             visuallyRightToLeft: _rtl(),
-            width: { size: 9071, type: WidthType.DXA },
+            width: { size: TABLE_W, type: WidthType.DXA },
+            columnWidths: cols,
             layout: 'fixed',
             rows,
         });
 
         // Two-column label/value row — the shape of every header block in
         // the standard.
+        const KV_COLS = [2600, 6471];
         const _kvRow = (label, value) => new TableRow({
             children: [
-                _cell(label, { bold: true, width: 2600, fill: LABEL_FILL }),
-                _cell(value, { width: 6471 }),
+                _cell(label, { bold: true, width: KV_COLS[0], fill: LABEL_FILL }),
+                _cell(value, { width: KV_COLS[1] }),
             ],
         });
 
@@ -139,15 +176,13 @@ export async function exportOccupationalStandardWord() {
         const _h2 = (text) => new Paragraph({
             children: [new TextRun({ text, bold: true, size: 26 })],
             spacing: { before: 300, after: 150 },
-            alignment: _start(AlignmentType),
             bidirectional: _rtl(),
         });
 
         const _body = (text, indent) => new Paragraph({
             children: [new TextRun({ text, size: 22 })],
             spacing: { after: 100 },
-            indent: indent ? { left: 720 } : undefined,
-            alignment: _start(AlignmentType),
+            indent: indent ? { start: 720 } : undefined,
             bidirectional: _rtl(),
         });
 
@@ -188,7 +223,7 @@ export async function exportOccupationalStandardWord() {
             _kvRow(_t('osFieldVenueDate'),
                 [_val('venue'), _val('workshopDate') || _val('date')].filter(Boolean).join(' — ')),
         );
-        children.push(_table(panelRows));
+        children.push(_table(panelRows, KV_COLS));
 
         // ---- Duties and Tasks -------------------------------------
         // Read from the live DOM, exactly as exportToWord does, so the
@@ -212,25 +247,57 @@ export async function exportOccupationalStandardWord() {
             children.push(_break());
             children.push(_h2(_t('osDutiesTasks')));
 
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            /* Same grid as exportToWord: a shaded duty bar spanning four
+               columns, then four tasks per row labelled "Task A1". The two
+               documents describe the same chart, so a facilitator holding
+               both should not have to re-learn the layout. */
+            const TASKS_PER_ROW = 4;
+            const TASK_COLS = [
+                Math.floor(TABLE_W / TASKS_PER_ROW),
+                Math.floor(TABLE_W / TASKS_PER_ROW),
+                Math.floor(TABLE_W / TASKS_PER_ROW),
+                TABLE_W - 3 * Math.floor(TABLE_W / TASKS_PER_ROW),
+            ];
+
             duties.forEach((d, di) => {
-                const letter = letters[di] || String(di + 1);
-                const rows = [
-                    new TableRow({
-                        children: [_cell(`${letter}. ${d.duty}`, {
-                            bold: true, fill: HEADER_FILL, span: 2,
+                const letter = getDutyLetter(di);
+                const rows = [new TableRow({
+                    children: [new TableCell({
+                        children: [new Paragraph({
+                            children: [new TextRun({
+                                text: `${_tf('lblDuty', { code: letter })}: ${d.duty}`,
+                                bold: true,
+                                size: 24,
+                                __shaded: true,
+                            })],
+                            bidirectional: _rtl(),
                         })],
-                    }),
-                ];
-                d.tasks.forEach((task, ti) => {
-                    rows.push(new TableRow({
-                        children: [
-                            _cell(`${letter}${ti + 1}`, { bold: true, width: 1000, center: true }),
-                            _cell(task, { width: 8071 }),
-                        ],
-                    }));
-                });
-                children.push(_table(rows));
+                        columnSpan: TASKS_PER_ROW,
+                        shading: { fill: _tblFill(), type: ShadingType.CLEAR, color: 'auto' },
+                        width: { size: TABLE_W, type: WidthType.DXA },
+                    })],
+                })];
+
+                const numRows = Math.ceil(d.tasks.length / TASKS_PER_ROW) || 0;
+                for (let r = 0; r < numRows; r++) {
+                    const cells = [];
+                    for (let c = 0; c < TASKS_PER_ROW; c++) {
+                        const idx = r * TASKS_PER_ROW + c;
+                        const label = _tf('lblTask', { code: `${letter}${idx + 1}` });
+                        cells.push(new TableCell({
+                            children: [new Paragraph({
+                                children: idx < d.tasks.length
+                                    ? [new TextRun({ text: `${label}: ${d.tasks[idx]}`, size: 24 })]
+                                    : [new TextRun({ text: '', size: 24 })],
+                                bidirectional: _rtl(),
+                            })],
+                            width: { size: TASK_COLS[c], type: WidthType.DXA },
+                        }));
+                    }
+                    rows.push(new TableRow({ children: cells }));
+                }
+
+                children.push(_table(rows, TASK_COLS));
                 children.push(_spacer());
             });
         }
@@ -271,9 +338,9 @@ export async function exportOccupationalStandardWord() {
             children.push(_break());
             narrative.forEach(sec => {
                 children.push(_table([
-                    new TableRow({ children: [_cell(sec.head, { bold: true, fill: HEADER_FILL })] }),
-                    new TableRow({ children: [_cell(_lines(sec.body))] }),
-                ]));
+                    new TableRow({ children: [_cell(sec.head, { bold: true, shaded: true, fill: _tblFill(), width: TABLE_W })] }),
+                    new TableRow({ children: [_cell(_lines(sec.body), { width: TABLE_W })] }),
+                ], [TABLE_W]));
                 children.push(_spacer());
             });
         }
@@ -298,7 +365,7 @@ export async function exportOccupationalStandardWord() {
             _kvRow(_t('osFieldApprovedBy'),    ''),
             _kvRow(_t('osFieldApprovalDate'),  ''),
             _kvRow(_t('osFieldReviewDate'),    ''),
-        ]));
+        ], KV_COLS));
 
         // ---- Employability competencies by occupational level -------
         // skillsLevelData is an ARRAY of categories, each holding
@@ -315,11 +382,14 @@ export async function exportOccupationalStandardWord() {
                 _t('expSemiSkilled'), _t('expFoundation'),
             ];
 
+            const EMP_COLS = [4271, 1200, 1200, 1200, 1200];
             const rows = [new TableRow({
                 tableHeader: true,
                 children: [
-                    _cell(_t('osColCompetency'), { bold: true, fill: HEADER_FILL, width: 4271 }),
-                    ...levelLabels.map(l => _cell(l, { bold: true, fill: HEADER_FILL, center: true, width: 1200 })),
+                    _cell(_t('osColCompetency'), { bold: true, shaded: true, fill: _tblFill(), width: EMP_COLS[0] }),
+                    ...levelLabels.map((l, i) => _cell(l, {
+                        bold: true, shaded: true, fill: _tblFill(), center: true, width: EMP_COLS[i + 1],
+                    })),
                 ],
             })];
 
@@ -332,7 +402,7 @@ export async function exportOccupationalStandardWord() {
                 if (!catName && !comps.some(c => c.text)) return;
 
                 rows.push(new TableRow({
-                    children: [_cell(catName, { bold: true, fill: LABEL_FILL, span: 5 })],
+                    children: [_cell(catName, { bold: true, fill: LABEL_FILL, span: 5, width: TABLE_W })],
                 }));
 
                 comps.forEach(comp => {
@@ -340,8 +410,8 @@ export async function exportOccupationalStandardWord() {
                     const lv = comp.levels || {};
                     rows.push(new TableRow({
                         children: [
-                            _cell(comp.text, { width: 4271 }),
-                            ...levelKeys.map(k => _cell(lv[k] ? 'X' : '', { center: true, width: 1200 })),
+                            _cell(comp.text, { width: EMP_COLS[0] }),
+                            ...levelKeys.map((k, i) => _cell(lv[k] ? 'X' : '', { center: true, width: EMP_COLS[i + 1] })),
                         ],
                     }));
                     printed++;
@@ -349,7 +419,7 @@ export async function exportOccupationalStandardWord() {
             });
 
             if (printed) {
-                children.push(_table(rows));
+                children.push(_table(rows, EMP_COLS));
                 children.push(_spacer());
             } else {
                 children.pop(); // drop the heading we just pushed
@@ -368,8 +438,8 @@ export async function exportOccupationalStandardWord() {
             if (cluster.range && cluster.range.trim()) {
                 rows.push(new TableRow({
                     children: [
-                        _cell(_t('expRangeLabel'), { bold: true, width: 2600, fill: LABEL_FILL }),
-                        _cell(_lines(cluster.range), { width: 6471 }),
+                        _cell(_t('expRangeLabel'), { bold: true, width: KV_COLS[0], fill: LABEL_FILL }),
+                        _cell(_lines(cluster.range), { width: KV_COLS[1] }),
                     ],
                 }));
             }
@@ -377,8 +447,8 @@ export async function exportOccupationalStandardWord() {
             if (Array.isArray(cluster.tasks) && cluster.tasks.length) {
                 rows.push(new TableRow({
                     children: [
-                        _cell(_t('osRelatedTasksFromProfile'), { bold: true, width: 2600, fill: LABEL_FILL }),
-                        _cell(cluster.tasks.map(task => `${getTaskCode(task.id)}: ${task.text}`), { width: 6471 }),
+                        _cell(_t('osRelatedTasksFromProfile'), { bold: true, width: KV_COLS[0], fill: LABEL_FILL }),
+                        _cell(cluster.tasks.map(task => `${getTaskCode(task.id)}: ${task.text}`), { width: KV_COLS[1] }),
                     ],
                 }));
             }
@@ -386,8 +456,8 @@ export async function exportOccupationalStandardWord() {
             if (Array.isArray(cluster.performanceCriteria) && cluster.performanceCriteria.length) {
                 rows.push(new TableRow({
                     children: [
-                        _cell(_t('expPCLabel'), { bold: true, width: 2600, fill: LABEL_FILL }),
-                        _cell(cluster.performanceCriteria.map((c, ci) => `${n}.${ci + 1}  ${c}`), { width: 6471 }),
+                        _cell(_t('expPCLabel'), { bold: true, width: KV_COLS[0], fill: LABEL_FILL }),
+                        _cell(cluster.performanceCriteria.map((c, ci) => `${n}.${ci + 1}  ${c}`), { width: KV_COLS[1] }),
                     ],
                 }));
             }
@@ -400,7 +470,7 @@ export async function exportOccupationalStandardWord() {
                which is how a curriculum quietly detaches from its
                standard. */
 
-            if (rows.length) children.push(_table(rows));
+            if (rows.length) children.push(_table(rows, KV_COLS));
         });
 
         // ---- Tools, equipment and materials -------------------------
@@ -411,11 +481,11 @@ export async function exportOccupationalStandardWord() {
                 new TableRow({
                     children: [_cell(
                         (document.getElementById('toolsHeading')?.textContent || '').trim() || _t('osToolsEquipment'),
-                        { bold: true, fill: HEADER_FILL }
+                        { bold: true, shaded: true, fill: _tblFill(), width: TABLE_W }
                     )],
                 }),
-                new TableRow({ children: [_cell(_lines(tools))] }),
-            ]));
+                new TableRow({ children: [_cell(_lines(tools), { width: TABLE_W })] }),
+            ], [TABLE_W]));
         }
 
         /* ---- assemble --------------------------------------------- */
