@@ -987,6 +987,11 @@ export async function exportToWord() {
                         children.push(new Table({
                             visuallyRightToLeft: _rtl(),
                             width: { size: 100, type: WidthType.PERCENTAGE },
+                            /* Single full-width column. Declared so <w:tblGrid> matches
+                               the cell instead of the library's 100-twip placeholder —
+                               harmless under auto layout, fatal the day someone adds
+                               layout:"fixed" here. */
+                            columnWidths: [9071],
                             rows: facilitatorRows,
                         }));
                     }
@@ -1030,6 +1035,11 @@ export async function exportToWord() {
                         children.push(new Table({
                             visuallyRightToLeft: _rtl(),
                             width: { size: 100, type: WidthType.PERCENTAGE },
+                            /* Single full-width column. Declared so <w:tblGrid> matches
+                               the cell instead of the library's 100-twip placeholder —
+                               harmless under auto layout, fatal the day someone adds
+                               layout:"fixed" here. */
+                            columnWidths: [9071],
                             rows: observerRows,
                         }));
                     }
@@ -1073,6 +1083,11 @@ export async function exportToWord() {
                         children.push(new Table({
                             visuallyRightToLeft: _rtl(),
                             width: { size: 100, type: WidthType.PERCENTAGE },
+                            /* Single full-width column. Declared so <w:tblGrid> matches
+                               the cell instead of the library's 100-twip placeholder —
+                               harmless under auto layout, fatal the day someone adds
+                               layout:"fixed" here. */
+                            columnWidths: [9071],
                             rows: panelMemberRows,
                         }));
                     }
@@ -1218,6 +1233,19 @@ export async function exportToWord() {
                                 size: 9071, // 16cm in twips (16 * 567.05 ≈ 9071)
                                 type: WidthType.DXA,
                             },
+                            /* columnWidths is what docx@7.8.2 builds
+                               <w:tblGrid> from — and the ONLY thing. Omit it
+                               and the grid is written as 100 twips per
+                               column; under <w:tblLayout w:type="fixed"/>
+                               that grid outranks every tcW and the table
+                               collapses. It survived here only because the
+                               cells are sized in PERCENTAGE, which Word
+                               happens to honour anyway; the moment a cell
+                               moves to DXA the table breaks. Values below
+                               are the same proportions the cells declare,
+                               resolved against the 9071-twip (16 cm) width.
+                               Four task columns at 25% each; the last absorbs the rounding remainder. */
+                            columnWidths: [2268, 2268, 2268, 2267],
                             layout: "fixed", // Fixed table layout for consistent width
                             rows: tableRows,
                         })
@@ -1319,6 +1347,19 @@ export async function exportToWord() {
                         new Table({
                             visuallyRightToLeft: _rtl(),
                             width: { size: 9071, type: WidthType.DXA }, // 16cm in twips
+                            /* columnWidths is what docx@7.8.2 builds
+                               <w:tblGrid> from — and the ONLY thing. Omit it
+                               and the grid is written as 100 twips per
+                               column; under <w:tblLayout w:type="fixed"/>
+                               that grid outranks every tcW and the table
+                               collapses. It survived here only because the
+                               cells are sized in PERCENTAGE, which Word
+                               happens to honour anyway; the moment a cell
+                               moves to DXA the table breaks. Values below
+                               are the same proportions the cells declare,
+                               resolved against the 9071-twip (16 cm) width.
+                               Two columns at 30% / 70%. */
+                            columnWidths: [2721, 6350],
                             layout: "fixed",
                             rows: [row],
                         })
@@ -1383,6 +1424,16 @@ export async function exportToWord() {
                                     size: 9071, // 16cm in twips
                                     type: WidthType.DXA,
                                 },
+                                /* columnWidths is what docx@7.8.2 builds <w:tblGrid> from —
+                                   and the ONLY thing. Omit it and the grid is written as 100
+                                   twips per column, which under <w:tblLayout w:type="fixed"/>
+                                   outranks every tcW and collapses the table. This one
+                                   survived only because its cells are sized in PERCENTAGE,
+                                   which Word honours anyway; the moment one moves to DXA the
+                                   table breaks. Widths below are the same proportions the
+                                   cells declare, resolved against 9071 twips (16 cm).
+                                   Two columns at 30% / 70%. */
+                                columnWidths: [2721, 6350],
                                 layout: "fixed",
                                 rows: [row],
                             })
@@ -1478,6 +1529,16 @@ export async function exportToWord() {
                                     size: 9071, // 16cm in twips
                                     type: WidthType.DXA,
                                 },
+                                /* columnWidths is what docx@7.8.2 builds <w:tblGrid> from —
+                                   and the ONLY thing. Omit it and the grid is written as 100
+                                   twips per column, which under <w:tblLayout w:type="fixed"/>
+                                   outranks every tcW and collapses the table. This one
+                                   survived only because its cells are sized in PERCENTAGE,
+                                   which Word honours anyway; the moment one moves to DXA the
+                                   table breaks. Widths below are the same proportions the
+                                   cells declare, resolved against 9071 twips (16 cm).
+                                   Two equal columns at 50% each. */
+                                columnWidths: [4536, 4535],
                                 layout: "fixed",
                                 rows: [row],
                             })
@@ -1538,6 +1599,16 @@ export async function exportToWord() {
                                     size: 9071, // 16cm in twips
                                     type: WidthType.DXA,
                                 },
+                                /* columnWidths is what docx@7.8.2 builds <w:tblGrid> from —
+                                   and the ONLY thing. Omit it and the grid is written as 100
+                                   twips per column, which under <w:tblLayout w:type="fixed"/>
+                                   outranks every tcW and collapses the table. This one
+                                   survived only because its cells are sized in PERCENTAGE,
+                                   which Word honours anyway; the moment one moves to DXA the
+                                   table breaks. Widths below are the same proportions the
+                                   cells declare, resolved against 9071 twips (16 cm).
+                                   One cell spans both columns, so the grid still declares two. */
+                                columnWidths: [4536, 4535],
                                 layout: "fixed", // Fixed table layout for consistent width
                                 rows: [row],
                             })
@@ -1801,6 +1872,16 @@ export async function exportToWord() {
                                     size: 9071, // 16cm in twips
                                     type: WidthType.DXA,
                                 },
+                                /* columnWidths is what docx@7.8.2 builds <w:tblGrid> from —
+                                   and the ONLY thing. Omit it and the grid is written as 100
+                                   twips per column, which under <w:tblLayout w:type="fixed"/>
+                                   outranks every tcW and collapses the table. This one
+                                   survived only because its cells are sized in PERCENTAGE,
+                                   which Word honours anyway; the moment one moves to DXA the
+                                   table breaks. Widths below are the same proportions the
+                                   cells declare, resolved against 9071 twips (16 cm).
+                                   Five columns: 40% competency, then 15% per level. */
+                                columnWidths: [3629, 1361, 1361, 1360, 1360],
                                 layout: "fixed",
                                 rows: [headerRow, columnHeaderRow, ...competencyRows],
                             })
