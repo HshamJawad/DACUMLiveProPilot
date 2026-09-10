@@ -11,6 +11,8 @@ import { renderLearningOutcomes, renderPCSourceList, renderModules, renderModule
   renderClusters, renderAvailableTasks } from './modules.js';
 import { checkUsageLimit, incrementUsage, showLoadingModal, hideLoadingModal } from './storage.js';
 import { loadDutiesForVerification, syncVerificationTab } from './tasks.js';
+import { syncTaskAnalysisTab, clearAllTaskAnalysis, hasAnyTaskAnalysis,
+         countTaskAnalysisRecords } from './task_analysis.js';
 import { isBatchRun } from './draft_mode.js';
 import { verifyOccupation, needsConfirmation, VERDICT,
          markBypassed, wasBypassed, clearBypass } from './occupation_check.js';
@@ -70,6 +72,11 @@ export function switchTab(tabId) {
     }
     if (tabId === 'verification-tab') {
       syncVerificationTab();
+    }
+    // Same re-render-on-entry rule as setupTabs() in tabs.js — both
+    // entry points must behave identically, see the comment there.
+    if (tabId === 'task-analysis-tab') {
+      syncTaskAnalysisTab();
     }
     if (tabId === 'learning-outcomes-tab') {
       renderPCSourceList();
@@ -279,8 +286,9 @@ function _doClear() {
 // every clear, including the harmless ones, is a warning users learn to
 // click past, which would leave them less protected than before.
 const _DOWNSTREAM_OF = {
-  'duties-tab':            ['verification', 'clustering', 'outcomes', 'modules'],
-  'verification-tab':      ['clustering', 'outcomes', 'modules'],
+  'duties-tab':            ['verification', 'taskAnalysis', 'clustering', 'outcomes', 'modules'],
+  'verification-tab':      ['taskAnalysis', 'clustering', 'outcomes', 'modules'],
+  'task-analysis-tab':     ['clustering', 'outcomes', 'modules'],
   'clustering-tab':        ['outcomes', 'modules'],
   'learning-outcomes-tab': ['modules'],
   'module-mapping-tab':    [],
@@ -297,6 +305,10 @@ function _downstreamWork(stage) {
         return r && (r.importance !== null && r.importance !== undefined);
       }).length + Object.keys(s.workshopResults || {}).length;
       return rated ? `${rated} task rating${rated === 1 ? '' : 's'} in Task Verification` : null;
+    }
+    case 'taskAnalysis': {
+      const n = countTaskAnalysisRecords();
+      return n ? `${n} task analysis record${n === 1 ? '' : 's'}` : null;
     }
     case 'clustering': {
       const n = s.clusteringData?.clusters?.length || 0;
@@ -346,6 +358,9 @@ function _isTabEmpty(tabId) {
       return !Object.keys(s.verificationRatings || {}).length &&
              !Object.keys(s.workshopCounts      || {}).length &&
              !Object.keys(s.workshopResults     || {}).length;
+
+    case 'task-analysis-tab':
+      return !hasAnyTaskAnalysis();
 
     case 'clustering-tab':
       return !(s.clusteringData?.clusters?.length);
@@ -441,6 +456,10 @@ export function clearCurrentTab(tabId) {
     if (btnBP) btnBP.disabled = false;
     if (btnRD) btnRD.style.display = 'none';
     showStatus(_tf('msgTabCleared', { v: _t('tabVerification') }), 'success');
+
+  } else if (tabId === 'task-analysis-tab') {
+    clearAllTaskAnalysis();
+    showStatus(_tf('msgTabCleared', { v: _t('tabTaskAnalysis') }), 'success');
 
   } else if (tabId === 'clustering-tab') {
     appState.clusteringData = { availableTasks: [], clusters: [], clusterCounter: 0 };

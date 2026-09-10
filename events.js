@@ -59,6 +59,7 @@ import { lwFinalizeAndCreateSession, lwCopyLink, lwShowQRCode,
   lwCloseVoting, lwExportVerifiedPDF, lwExportVerifiedDOCX }  from './workshop.js';
 import { markAiGenerated, refineResults,
          clearAiGeneratedFlag }                               from './refine.js';
+import { setupTaskAnalysisEvents }                             from './task_analysis.js';
 
 /* i18n access — window.i18n is installed by a plain <script>, so it is
    read lazily on each call rather than captured at module evaluation. */
@@ -82,6 +83,13 @@ function delegate(container, selector, eventType, handler) {
 // ── Setup all events ──────────────────────────────────────────
 
 export function setupEvents() {
+  // ── Task Analysis tab: all its clicks/inputs are wired inside its
+  // own module (same self-contained pattern as the tab itself) — this
+  // just needs to be called once, after the tab's HTML exists in the
+  // DOM (it does, it's static markup in index.html, unlike the tabs
+  // that render their containers dynamically).
+  setupTaskAnalysisEvents();
+
   // ── Static buttons ────────────────────────────────────────
 
   _on('btnAddDuty', 'click', () => { syncAllFromDOM(); pushHistoryState(); addDuty(); });
@@ -184,6 +192,7 @@ export function setupEvents() {
   _on('loHelpBtn',            'click', () => _showLearningOutcomesHelp());
   _on('mmHelpBtn',            'click', () => _showModuleMappingHelp());
   _on('taskVerifyHelpBtn',    'click', () => _showTaskVerificationHelp());
+  _on('taskAnalysisHelpBtn',  'click', () => _showTaskAnalysisHelp());
 
   // ── Competency Clusters: AI assistance ──────────────────────
   // Two separate actions on purpose — see clustering_ai.js. Both save
@@ -901,6 +910,25 @@ function _showTaskVerificationHelp() {
     ],
     bodyHtml: '<p style="' + P + '">' + _t('helpTVBody') + '</p>',
     note: _t('helpTVNote'),
+  });
+}
+
+// Task Analysis guidance — same pattern as _showTaskVerificationHelp().
+function _showTaskAnalysisHelp() {
+  _showHelpModal({
+    id:    'taskAnalysisHelpModal',
+    icon:  '\u{1F52C}',
+    title: _t('helpTATitle'),
+    maxWidth: '560px',
+    intro: _t('helpTAIntro'),
+    items: [
+      ['\u{1F4CB}', _t('helpTAK1'), _t('helpTAV1')],
+      ['\u{1F9E0}', _t('helpTAK2'), _t('helpTAV2')],
+      ['\u{1F6E0}', _t('helpTAK3'), _t('helpTAV3')],
+      ['\u26A0\uFE0F', _t('helpTAK4'), _t('helpTAV4')],
+      ['\u2705', _t('helpTAK5'), _t('helpTAV5')],
+    ],
+    note: _t('helpTANote'),
   });
 }
 

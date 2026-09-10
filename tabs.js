@@ -11,6 +11,7 @@ import { syncVerificationTab } from './tasks.js';
 import { renderPCSourceList, renderLearningOutcomes,
   renderModuleLoList, renderModules,
   renderAvailableTasks, renderClusters } from './modules.js';
+import { syncTaskAnalysisTab } from './task_analysis.js';
 
 export function setupTabs() {
   document.querySelectorAll('.tab').forEach(tab => {
@@ -50,6 +51,12 @@ export function setupTabs() {
       // it rebuilds only when the duty/task set actually changed.
       if (tabId === 'verification-tab') {
         syncVerificationTab();
+      }
+
+      // Same "rebuild only if the duty/task set changed" rule as
+      // Task Verification above — see syncTaskAnalysisTab().
+      if (tabId === 'task-analysis-tab') {
+        syncTaskAnalysisTab();
       }
 
       if (tabId === 'learning-outcomes-tab') {

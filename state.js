@@ -30,6 +30,26 @@ export const appState = {
   verificationDecisionMade: false,
   clusteringAllowed: false,
 
+  // ── Task Analysis ───────────────────────────────────────────
+  // Flat dictionary keyed by the SAME task inputId used by
+  // verificationRatings/taskMetadata above (e.g. "duty_1_2"), not
+  // nested inside dutiesData[].tasks[] — that array is rebuilt on
+  // every add/remove/reorder, so a flat key survives all of that the
+  // same way verification ratings already do. Records are created
+  // lazily (see task_analysis.js): a task with no analysis simply has
+  // no entry here, so untouched tasks never appear in saved projects.
+  taskAnalysisData: {},
+  /* Shape of each record (see task_analysis.js for the single source
+     of truth on field lists):
+     {
+       performanceSteps: [], requiredKnowledge: [], requiredSkills: [],
+       toolsEquipmentMaterials: [], safetyOSH: [],
+       conditionsWorkEnvironment: '', decisionsCriticalPoints: [],
+       performanceCriteria: [], performanceStandard: '',
+       commonErrorsTroubleshooting: []
+     }
+  */
+
   // ── Workshop Aggregated Counts ─────────────────────────────
   workshopParticipants: 10,
   priorityFormula: 'if',

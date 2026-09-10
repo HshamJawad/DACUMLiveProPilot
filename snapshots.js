@@ -134,6 +134,12 @@ export function saveToJSON() {
     // Skills Level Matrix
     data.skillsLevelMatrix = appState.skillsLevelData;
 
+    // Task Analysis — keyed the same way appState stores it (by task
+    // inputId). importProjectFromData() in dacum_projects.js reads this
+    // back as s.taskAnalysis; absent entirely in files saved before this
+    // feature existed, which is what makes old exports import cleanly.
+    data.taskAnalysis = appState.taskAnalysisData || {};
+
     // Download
     const jsonString = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });

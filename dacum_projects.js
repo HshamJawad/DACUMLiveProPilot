@@ -124,6 +124,9 @@ export function importProjectFromData(data, fileName) {
     skillsLevelData:          s.skillsLevelMatrix || s.skillsLevelData,
     verificationRatings:      s.verification?.ratings        || {},
     taskMetadata:             s.verification?.taskMetadata   || {},
+    // s.taskAnalysis is the key saveToJSON() writes (see snapshots.js).
+    // Absent in files exported before this feature existed — {} then.
+    taskAnalysisData:         s.taskAnalysis                 || {},
     collectionMode:           s.verification?.collectionMode || 'workshop',
     workflowMode:             s.verification?.workflowMode   || 'standard',
     workshopParticipants:     s.verification?.workshopParticipants || 10,
@@ -553,6 +556,10 @@ export function initProjectsSidebar() {
         <span class="dps-nav-icon">🎯</span>
         <span class="dps-nav-text">${_t('tabVerification')}</span>
       </button>
+      <button class="dps-nav-item" data-target-tab="task-analysis-tab" data-tooltip="${_t('tabTaskAnalysis')}">
+        <span class="dps-nav-icon">🔬</span>
+        <span class="dps-nav-text">${_t('tabTaskAnalysis')}</span>
+      </button>
       <button class="dps-nav-item" data-target-tab="clustering-tab" data-tooltip="${_t('tabClustering')}">
         <span class="dps-nav-icon">🧩</span>
         <span class="dps-nav-text">${_t('tabClustering')}</span>
@@ -858,6 +865,7 @@ function _captureState() {
     skillsLevelData:          appState.skillsLevelData,
     verificationRatings:      appState.verificationRatings     || {},
     taskMetadata:             appState.taskMetadata            || {},
+    taskAnalysisData:         appState.taskAnalysisData        || {},
     collectionMode:           appState.collectionMode,
     workflowMode:             appState.workflowMode,
     workshopParticipants:     appState.workshopParticipants,
@@ -899,6 +907,9 @@ function _applyState(s) {
   appState.skillsLevelData          = s.skillsLevelData;
   appState.verificationRatings      = s.verificationRatings      || {};
   appState.taskMetadata             = s.taskMetadata             || {};
+  // Older projects saved before Task Analysis existed simply have no
+  // key here — falling back to {} is what makes them load normally.
+  appState.taskAnalysisData         = s.taskAnalysisData         || {};
   appState.collectionMode           = s.collectionMode           || 'workshop';
   appState.workflowMode             = s.workflowMode             || 'standard';
   appState.workshopParticipants     = s.workshopParticipants     || 10;
@@ -1892,6 +1903,7 @@ window.addEventListener('dacum:langchange', () => {
     'duties-tab':            'tabDuties',
     'additional-info-tab':   'tabAdditionalInfo',
     'verification-tab':      'tabVerification',
+    'task-analysis-tab':     'tabTaskAnalysis',
     'clustering-tab':        'tabClustering',
     'learning-outcomes-tab': 'tabLearningOutcomes',
     'module-mapping-tab':    'tabModuleMapping',

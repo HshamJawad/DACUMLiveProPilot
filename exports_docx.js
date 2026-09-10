@@ -13,6 +13,7 @@ import { showStatus } from './renderer.js';
 import { getTaskCode, getDutyLetter } from './codes.js';
 import { buildVerificationDataset, getVerificationCoverage } from './exports_shared.js';
 import { noteExportExclusion } from './draft_unverified.js';
+import { getTaskAnalysisExportData } from './task_analysis.js';
 import * as ExportSettings from './export_settings.js';
 
 
@@ -2305,6 +2306,96 @@ export async function exportToWord() {
                         rows: verifiedTableRows,
                         width: { size: 100, type: WidthType.PERCENTAGE }
                     }));
+                }
+
+                // ============ TASK ANALYSIS APPENDIX ============
+                // Sits between Task Verification and Competency Clusters,
+                // matching the on-screen tab order. Included whenever any
+                // task has analysis content — independent of tvExportMode,
+                // which only governs the verification RATINGS appendix.
+                {
+                    const taData = getTaskAnalysisExportData();
+                    if (taData.length > 0) {
+                        children.push(new Paragraph({ children: [new PageBreak()], bidirectional: _rtl() }));
+
+                        children.push(new Paragraph({
+                            children: [
+                                new TextRun({ text: _t('expTaskAnalysisAppendix'), bold: true, size: 32 }),
+                            ],
+                            spacing: { before: 400, after: 400 },
+                            alignment: AlignmentType.CENTER,
+                            bidirectional: _rtl(),
+                        }));
+
+                        const _pushList = (labelKey, items) => {
+                            if (!items || !items.length) return;
+                            children.push(new Paragraph({
+                                children: [new TextRun({ text: _t(labelKey), bold: true, size: 22 })],
+                                spacing: { before: 150, after: 60 },
+                                bidirectional: _rtl(),
+                            }));
+                            items.forEach((item, i) => {
+                                children.push(new Paragraph({
+                                    children: [new TextRun({ text: `${i + 1}. ${item}`, size: 20 })],
+                                    spacing: { after: 40 },
+                                    indent: { left: 360 },
+                                    bidirectional: _rtl(),
+                                }));
+                            });
+                        };
+
+                        const _pushText = (labelKey, value) => {
+                            if (!value || !value.trim()) return;
+                            children.push(new Paragraph({
+                                children: [new TextRun({ text: _t(labelKey), bold: true, size: 22 })],
+                                spacing: { before: 150, after: 60 },
+                                bidirectional: _rtl(),
+                            }));
+                            children.push(new Paragraph({
+                                children: [new TextRun({ text: value, size: 20 })],
+                                spacing: { after: 100 },
+                                indent: { left: 360 },
+                                bidirectional: _rtl(),
+                            }));
+                        };
+
+                        taData.forEach((entry, idx) => {
+                            children.push(new Paragraph({
+                                children: [new TextRun({
+                                    text: `${_t('expDutyLabel')}: ${entry.dutyLetter} — ${entry.dutyTitle}`,
+                                    italics: true, size: 18, color: '666666',
+                                })],
+                                spacing: { before: idx > 0 ? 300 : 0, after: 40 },
+                                bidirectional: _rtl(),
+                            }));
+
+                            children.push(new Paragraph({
+                                children: [new TextRun({
+                                    text: `${entry.taskCode}. ${entry.taskText}`, bold: true, size: 26,
+                                })],
+                                spacing: { after: 120 },
+                                bidirectional: _rtl(),
+                            }));
+
+                            const r = entry.record;
+                            _pushList('taLblSteps',      r.performanceSteps);
+                            _pushList('taLblKnowledge',  r.requiredKnowledge);
+                            _pushList('taLblSkills',     r.requiredSkills);
+                            _pushList('taLblTools',      r.toolsEquipmentMaterials);
+                            _pushList('taLblSafety',     r.safetyOSH);
+                            _pushText('taLblConditions', r.conditionsWorkEnvironment);
+                            _pushList('taLblDecisions',  r.decisionsCriticalPoints);
+                            _pushList('taLblCriteria',   r.performanceCriteria);
+                            _pushText('taLblStandard',   r.performanceStandard);
+                            _pushList('taLblErrors',     r.commonErrorsTroubleshooting);
+
+                            children.push(new Paragraph({
+                                children: [new TextRun({ text: '', size: 4 })],
+                                spacing: { after: 200 },
+                                bidirectional: _rtl(),
+                            }));
+                        });
+                    }
                 }
 
                 // ============ COMPETENCY CLUSTERS SECTION ============

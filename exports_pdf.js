@@ -18,6 +18,7 @@ import { noteExportExclusion } from './draft_unverified.js';
    exports verified live-workshop results as a standalone PDF, which is
    why it survived this long. Found by check_imports.js. */
 import { lwExportVerifiedPDF } from './workshop.js';
+import { getTaskAnalysisExportData } from './task_analysis.js';
 import * as ExportSettings from './export_settings.js';
 import {
     ensureArabicFont,
@@ -1776,6 +1777,104 @@ export function exportToPDF() {
             });
         }
         
+        // ============ TASK ANALYSIS APPENDIX ============
+        // Sits between Task Verification and Competency Clusters in the
+        // export, matching the on-screen tab order. Included whenever any
+        // task has analysis content — independent of tvExportMode, since
+        // that setting only governs the verification RATINGS appendix.
+        {
+            const taData = getTaskAnalysisExportData();
+            if (taData.length > 0) {
+                pdf.addPage();
+                yPos = margin + 5;
+
+                pdf.setFontSize(16);
+                pdf.setFont(undefined, 'bold');
+                pdf.text(_t('expTaskAnalysisAppendix'), pageWidth / 2, yPos, { align: 'center' });
+                yPos += 12;
+
+                const _ensureRoom = (need) => {
+                    if (yPos + need > pageHeight - margin) {
+                        pdf.addPage();
+                        yPos = margin + 5;
+                    }
+                };
+
+                const _writeList = (labelKey, items) => {
+                    if (!items || !items.length) return;
+                    _ensureRoom(10);
+                    pdf.setFontSize(11);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(_t(labelKey), margin + 4, yPos);
+                    yPos += 5.5;
+                    pdf.setFontSize(10);
+                    pdf.setFont(undefined, 'normal');
+                    items.forEach((item, i) => {
+                        const lines = pdf.splitTextToSize(`${i + 1}. ${item}`, pageWidth - 2 * margin - 10);
+                        lines.forEach(line => {
+                            _ensureRoom(5);
+                            pdf.text(line, margin + 8, yPos);
+                            yPos += 5;
+                        });
+                    });
+                    yPos += 2;
+                };
+
+                const _writeText = (labelKey, value) => {
+                    if (!value || !value.trim()) return;
+                    _ensureRoom(10);
+                    pdf.setFontSize(11);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.text(_t(labelKey), margin + 4, yPos);
+                    yPos += 5.5;
+                    pdf.setFontSize(10);
+                    pdf.setFont(undefined, 'normal');
+                    const lines = pdf.splitTextToSize(value, pageWidth - 2 * margin - 10);
+                    lines.forEach(line => {
+                        _ensureRoom(5);
+                        pdf.text(line, margin + 8, yPos);
+                        yPos += 5;
+                    });
+                    yPos += 2;
+                };
+
+                taData.forEach((entry, idx) => {
+                    _ensureRoom(18);
+                    if (idx > 0) yPos += 4;
+
+                    pdf.setFontSize(9);
+                    pdf.setFont(undefined, 'bold');
+                    pdf.setTextColor(100, 100, 100);
+                    pdf.text(`${_t('expDutyLabel')}: ${entry.dutyLetter} — ${entry.dutyTitle}`, margin, yPos);
+                    pdf.setTextColor(0, 0, 0);
+                    yPos += 6;
+
+                    pdf.setFontSize(13);
+                    pdf.setFont(undefined, 'bold');
+                    const taskLines = pdf.splitTextToSize(`${entry.taskCode}. ${entry.taskText}`, pageWidth - 2 * margin);
+                    taskLines.forEach(line => { _ensureRoom(7); pdf.text(line, margin, yPos); yPos += 7; });
+                    yPos += 1;
+
+                    const r = entry.record;
+                    _writeList('taLblSteps',      r.performanceSteps);
+                    _writeList('taLblKnowledge',  r.requiredKnowledge);
+                    _writeList('taLblSkills',     r.requiredSkills);
+                    _writeList('taLblTools',      r.toolsEquipmentMaterials);
+                    _writeList('taLblSafety',     r.safetyOSH);
+                    _writeText('taLblConditions', r.conditionsWorkEnvironment);
+                    _writeList('taLblDecisions',  r.decisionsCriticalPoints);
+                    _writeList('taLblCriteria',   r.performanceCriteria);
+                    _writeText('taLblStandard',   r.performanceStandard);
+                    _writeList('taLblErrors',     r.commonErrorsTroubleshooting);
+
+                    _ensureRoom(4);
+                    pdf.setDrawColor(220, 220, 220);
+                    pdf.line(margin, yPos, pageWidth - margin, yPos);
+                    yPos += 4;
+                });
+            }
+        }
+
         // ============ COMPETENCY CLUSTERS SECTION ============
         if (appState.clusteringData.clusters && appState.clusteringData.clusters.length > 0) {
             pdf.addPage();
