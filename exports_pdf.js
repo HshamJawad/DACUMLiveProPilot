@@ -1800,6 +1800,8 @@ export function exportToPDF() {
                     }
                 };
 
+                const _hasMarker = (s) => /^(\d+[.\)]|[•\-\*○●])\s+/.test(s);
+
                 const _writeList = (labelKey, items) => {
                     if (!items || !items.length) return;
                     _ensureRoom(10);
@@ -1809,8 +1811,14 @@ export function exportToPDF() {
                     yPos += 5.5;
                     pdf.setFontSize(10);
                     pdf.setFont(undefined, 'normal');
-                    items.forEach((item, i) => {
-                        const lines = pdf.splitTextToSize(`${i + 1}. ${item}`, pageWidth - 2 * margin - 10);
+                    // Respect whatever the user already chose in the app
+                    // (Number/Bullet buttons bake the marker into the text
+                    // itself) — only auto-number lines that carry no marker
+                    // of their own, so a bulleted list stays bulleted.
+                    let autoNum = 0;
+                    items.forEach((item) => {
+                        const text = _hasMarker(item) ? item : `${++autoNum}. ${item}`;
+                        const lines = pdf.splitTextToSize(text, pageWidth - 2 * margin - 10);
                         lines.forEach(line => {
                             _ensureRoom(5);
                             pdf.text(line, margin + 8, yPos);

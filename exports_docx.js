@@ -2327,6 +2327,8 @@ export async function exportToWord() {
                             bidirectional: _rtl(),
                         }));
 
+                        const _hasMarker = (s) => /^(\d+[.\)]|[•\-\*○●])\s+/.test(s);
+
                         const _pushList = (labelKey, items) => {
                             if (!items || !items.length) return;
                             children.push(new Paragraph({
@@ -2334,9 +2336,16 @@ export async function exportToWord() {
                                 spacing: { before: 150, after: 60 },
                                 bidirectional: _rtl(),
                             }));
-                            items.forEach((item, i) => {
+                            // Respect whatever the user already chose in the
+                            // app (Number/Bullet buttons bake the marker into
+                            // the text itself) — only auto-number lines with
+                            // no marker of their own, so a bulleted list
+                            // stays bulleted instead of being double-numbered.
+                            let autoNum = 0;
+                            items.forEach((item) => {
+                                const text = _hasMarker(item) ? item : `${++autoNum}. ${item}`;
                                 children.push(new Paragraph({
-                                    children: [new TextRun({ text: `${i + 1}. ${item}`, size: 20 })],
+                                    children: [new TextRun({ text, size: 20 })],
                                     spacing: { after: 40 },
                                     indent: { left: 360 },
                                     bidirectional: _rtl(),

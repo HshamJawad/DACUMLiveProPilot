@@ -96,20 +96,6 @@ function _nonBlank(arr) {
   return (arr || []).filter(s => (s || '').trim());
 }
 
-// The Number/Bullet buttons (see 'ta-format-list') bake a "1. " or "• "
-// marker into the stored strings themselves, for in-app editing. The
-// exported report adds its OWN numbering to every list uniformly (see
-// exports_pdf.js / exports_docx.js), so exporting the raw strings would
-// double up — "1. 1. text". Stripping any leading marker here, once,
-// keeps both exporters simple and guarantees exported lists are always
-// cleanly numbered regardless of which format button the user last used.
-function _stripListMarker(s) {
-  return (s || '')
-    .replace(/^[\s]*[•\-\*○●]\s*/, '')
-    .replace(/^[\s]*\d+[\.\)]\s*/, '')
-    .trim();
-}
-
 function _isRecordEmpty(r) {
   if (!r) return true;
   return LIST_FIELDS.every(f => !_nonBlank(r[f.key]).length) &&
@@ -162,7 +148,11 @@ export function getTaskAnalysisExportData() {
     .map(entry => {
       const raw = _record(entry.taskKey);
       const record = { ...raw };
-      LIST_FIELDS.forEach(f => { record[f.key] = _nonBlank(raw[f.key]).map(_stripListMarker); });
+      // Trimmed, non-blank lines — exactly as stored, markers and all.
+      // The exporter (not this function) decides whether to add its own
+      // numbering, based on whether a line already carries one — see
+      // _writeList()/_pushList() in exports_pdf.js / exports_docx.js.
+      LIST_FIELDS.forEach(f => { record[f.key] = _nonBlank(raw[f.key]).map(s => s.trim()); });
       return {
         dutyLetter: getDutyLetter(entry.dutyIndex),
         dutyTitle:  entry.dutyTitle,
