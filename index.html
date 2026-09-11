@@ -1867,30 +1867,11 @@
             .ta-clear-btn{margin-top:10px;background:none;border:1px solid #fca5a5;color:#dc2626;
                 border-radius:7px;padding:6px 12px;font-size:0.8em;cursor:pointer;font-family:inherit;}
             .ta-clear-btn:hover{background:#fef2f2;}
-            .ta-field-block{background:#fff;border:1px solid #e2e8f0;border-radius:10px;
-                padding:14px 16px;margin-bottom:14px;}
-            .ta-field-header{display:flex;justify-content:space-between;align-items:center;
-                margin-bottom:10px;gap:10px;flex-wrap:wrap;}
-            .ta-field-header h4{margin:0;font-size:0.94em;color:#334155;}
-            .ta-add-btn{background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:7px;
-                padding:5px 12px;font-size:0.8em;font-weight:600;cursor:pointer;white-space:nowrap;
-                font-family:inherit;}
-            .ta-add-btn:hover{background:#e0e7ff;}
-            .ta-list-items{display:flex;flex-direction:column;gap:6px;}
-            .ta-list-row{display:flex;align-items:center;gap:6px;}
-            .ta-list-num{flex-shrink:0;min-width:20px;color:#94a3b8;font-size:0.82em;text-align:end;}
-            .ta-list-input{flex:1;min-width:0;padding:7px 10px;border:1px solid #e2e8f0;
-                border-radius:6px;font-size:0.9em;font-family:inherit;}
-            .ta-list-input:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 2px rgba(102,126,234,.15);}
-            .ta-icon-btn{flex-shrink:0;width:26px;height:26px;border:1px solid #e2e8f0;background:#fff;
-                border-radius:6px;cursor:pointer;color:#64748b;font-size:0.82em;line-height:1;}
-            .ta-icon-btn:hover:not(:disabled){background:#f1f5f9;}
-            .ta-icon-btn:disabled{opacity:.35;cursor:default;}
-            .ta-icon-btn-danger:hover:not(:disabled){background:#fef2f2;border-color:#fca5a5;color:#dc2626;}
-            .ta-empty-hint{color:#94a3b8;font-size:0.83em;font-style:italic;margin:2px 0;}
-            .ta-textarea{width:100%;min-height:80px;padding:9px 11px;border:1px solid #e2e8f0;
-                border-radius:7px;font-family:inherit;font-size:0.9em;resize:vertical;box-sizing:border-box;}
-            .ta-textarea:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 2px rgba(102,126,234,.15);}
+            /* Field cards below this point reuse the app's own
+               .section-container / .section-header-editable / .btn-format /
+               .btn-clear-section classes (see dacum-components.css) so they
+               look identical to the Additional Info tab — no field-specific
+               CSS is needed here. */
             @media (max-width:900px){
                 .ta-layout{flex-direction:column;}
                 .ta-nav{position:static;max-width:none;width:100%;max-height:260px;}

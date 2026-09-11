@@ -87,9 +87,18 @@ function _ensureRecord(taskKey) {
   return appState.taskAnalysisData[taskKey];
 }
 
+// A raw list-field array may contain blank-string entries — either
+// from a mid-edit blank line (see the 'ta-edit-list' input handler) or
+// from an old record. Every place that decides whether a field
+// "counts" — emptiness, status, export — reads through this instead
+// of the raw array length.
+function _nonBlank(arr) {
+  return (arr || []).filter(s => (s || '').trim());
+}
+
 function _isRecordEmpty(r) {
   if (!r) return true;
-  return LIST_FIELDS.every(f => !(r[f.key] && r[f.key].length)) &&
+  return LIST_FIELDS.every(f => !_nonBlank(r[f.key]).length) &&
          !(r.conditionsWorkEnvironment || '').trim() &&
          !(r.performanceStandard || '').trim();
 }
@@ -97,7 +106,7 @@ function _isRecordEmpty(r) {
 function _status(taskKey) {
   const r = _record(taskKey);
   if (_isRecordEmpty(r)) return 'not-started';
-  const coreFilled = _CORE_COMPLETE_KEYS.every(k => r[k] && r[k].length > 0) &&
+  const coreFilled = _CORE_COMPLETE_KEYS.every(k => _nonBlank(r[k]).length > 0) &&
                       (r.performanceStandard || '').trim();
   return coreFilled ? 'completed' : 'in-progress';
 }
@@ -130,18 +139,24 @@ export function countTaskAnalysisRecords() {
 
 /** Full export dataset: every task that has ANY analysis content, in
  *  duty/task order, with duty letter + task code already resolved.
- *  Consumed by exports_pdf.js and exports_docx.js. */
+ *  List fields are pre-cleaned of blank lines; consumed as-is by
+ *  exports_pdf.js and exports_docx.js. */
 export function getTaskAnalysisExportData() {
   syncAllFromDOM();
   return _allTasksFlat()
     .filter(entry => !_isRecordEmpty(_record(entry.taskKey)))
-    .map(entry => ({
-      dutyLetter: getDutyLetter(entry.dutyIndex),
-      dutyTitle:  entry.dutyTitle,
-      taskCode:   `${getDutyLetter(entry.dutyIndex)}${entry.taskNum}`,
-      taskText:   entry.task.text,
-      record:     _record(entry.taskKey)
-    }));
+    .map(entry => {
+      const raw = _record(entry.taskKey);
+      const record = { ...raw };
+      LIST_FIELDS.forEach(f => { record[f.key] = _nonBlank(raw[f.key]); });
+      return {
+        dutyLetter: getDutyLetter(entry.dutyIndex),
+        dutyTitle:  entry.dutyTitle,
+        taskCode:   `${getDutyLetter(entry.dutyIndex)}${entry.taskNum}`,
+        taskText:   entry.task.text,
+        record
+      };
+    });
 }
 
 // ── Selection state (module-local, not persisted) ──────────────
@@ -265,41 +280,49 @@ function _touchStatus(taskKey) {
 }
 
 // ── Form panel (right/main panel — selected task's analysis) ───
-function _renderListField(taskKey, field, items) {
-  const rows = (items || []).map((val, idx) => `
-    <div class="ta-list-row">
-      <span class="ta-list-num">${_bdi(String(idx + 1) + '.')}</span>
-      <input type="text" class="ta-list-input" value="${escapeHtml(val)}"
-             data-action="ta-edit-item" data-field="${field.key}" data-index="${idx}"
-             placeholder="${escapeHtml(_t(field.phKey))}">
-      <button type="button" class="ta-icon-btn" data-action="ta-move-up"
-              data-field="${field.key}" data-index="${idx}" ${idx === 0 ? 'disabled' : ''}
-              title="${escapeHtml(_t('ttMoveItemUp'))}">↑</button>
-      <button type="button" class="ta-icon-btn" data-action="ta-move-down"
-              data-field="${field.key}" data-index="${idx}" ${idx === items.length - 1 ? 'disabled' : ''}
-              title="${escapeHtml(_t('ttMoveItemDown'))}">↓</button>
-      <button type="button" class="ta-icon-btn ta-icon-btn-danger" data-action="ta-remove-item"
-              data-field="${field.key}" data-index="${idx}"
-              title="${escapeHtml(_t('ttRemoveItem'))}">✕</button>
-    </div>`).join('');
+// Field cards match the Additional Info tab exactly: one expandable
+// textarea (one entry per line) with Number/Bullet/Clear controls —
+// no per-item add/remove/reorder rows. formatList()/clearSection() in
+// renderer.js can't be reused directly (they target fixed, static
+// element IDs; these fields swap content every time the selected task
+// changes), so the same behaviour is reimplemented here against
+// whichever task is currently selected.
+const ICON_NUMBER = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><text x="0.4" y="5.35" font-size="4.7" font-weight="700" font-family="sans-serif">1</text><text x="0.4" y="9.5" font-size="4.7" font-weight="700" font-family="sans-serif">2</text><text x="0.4" y="13.65" font-size="4.7" font-weight="700" font-family="sans-serif">3</text><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg>';
+const ICON_BULLET = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="1" y="2.6" width="2.8" height="2.8" rx=".6"/><rect x="1" y="6.75" width="2.8" height="2.8" rx=".6"/><rect x="1" y="10.9" width="2.8" height="2.8" rx=".6"/><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg>';
 
+function _renderListField(field, items) {
+  const text = (items || []).join('\n');
   return `
-    <div class="ta-field-block" data-field-block="${field.key}">
-      <div class="ta-field-header">
-        <h4>${_t(field.labelKey)}</h4>
-        <button type="button" class="ta-add-btn" data-action="ta-add-item" data-field="${field.key}">
-          ➕ ${_t('btnTaAddItem')}
-        </button>
+    <div class="section-container" data-field-block="${field.key}">
+      <div class="section-header-editable">
+        <h3>${_t(field.labelKey)}</h3>
+        <div style="display:flex;gap:10px;">
+          <button type="button" class="btn-format btn-icon" data-action="ta-format-list"
+                  data-field="${field.key}" data-format-type="number"
+                  title="${escapeHtml(_t('ttAddNumbering'))}" aria-label="${escapeHtml(_t('ttAddNumbering'))}">${ICON_NUMBER}</button>
+          <button type="button" class="btn-format btn-icon" data-action="ta-format-list"
+                  data-field="${field.key}" data-format-type="bullet"
+                  title="${escapeHtml(_t('ttAddBullets'))}" aria-label="${escapeHtml(_t('ttAddBullets'))}">${ICON_BULLET}</button>
+          <button type="button" class="btn-clear-section" data-action="ta-clear-field" data-field="${field.key}">
+            🗑️ ${_t('btnClear')}
+          </button>
+        </div>
       </div>
-      <div class="ta-list-items">${rows || `<p class="ta-empty-hint">${_t('taEmptyListHint')}</p>`}</div>
+      <textarea data-action="ta-edit-list" data-field="${field.key}"
+                placeholder="${escapeHtml(_t(field.phKey))}">${escapeHtml(text)}</textarea>
     </div>`;
 }
 
 function _renderTextField(field, value) {
   return `
-    <div class="ta-field-block">
-      <div class="ta-field-header"><h4>${_t(field.labelKey)}</h4></div>
-      <textarea class="ta-textarea" data-action="ta-edit-text" data-field="${field.key}"
+    <div class="section-container" data-field-block="${field.key}">
+      <div class="section-header-editable">
+        <h3>${_t(field.labelKey)}</h3>
+        <button type="button" class="btn-clear-section" data-action="ta-clear-field" data-field="${field.key}">
+          🗑️ ${_t('btnClear')}
+        </button>
+      </div>
+      <textarea data-action="ta-edit-text" data-field="${field.key}"
                 placeholder="${escapeHtml(_t(field.phKey))}">${escapeHtml(value || '')}</textarea>
     </div>`;
 }
@@ -338,16 +361,16 @@ function _renderFormPanel() {
       </button>
     </div>
 
-    ${_renderListField(entry.taskKey, byField.performanceSteps,            r.performanceSteps)}
-    ${_renderListField(entry.taskKey, byField.requiredKnowledge,           r.requiredKnowledge)}
-    ${_renderListField(entry.taskKey, byField.requiredSkills,              r.requiredSkills)}
-    ${_renderListField(entry.taskKey, byField.toolsEquipmentMaterials,     r.toolsEquipmentMaterials)}
-    ${_renderListField(entry.taskKey, byField.safetyOSH,                  r.safetyOSH)}
+    ${_renderListField(byField.performanceSteps,            r.performanceSteps)}
+    ${_renderListField(byField.requiredKnowledge,           r.requiredKnowledge)}
+    ${_renderListField(byField.requiredSkills,              r.requiredSkills)}
+    ${_renderListField(byField.toolsEquipmentMaterials,     r.toolsEquipmentMaterials)}
+    ${_renderListField(byField.safetyOSH,                   r.safetyOSH)}
     ${_renderTextField(TEXT_FIELDS[0], r.conditionsWorkEnvironment)}
-    ${_renderListField(entry.taskKey, byField.decisionsCriticalPoints,     r.decisionsCriticalPoints)}
-    ${_renderListField(entry.taskKey, byField.performanceCriteria,         r.performanceCriteria)}
+    ${_renderListField(byField.decisionsCriticalPoints,     r.decisionsCriticalPoints)}
+    ${_renderListField(byField.performanceCriteria,         r.performanceCriteria)}
     ${_renderTextField(TEXT_FIELDS[1], r.performanceStandard)}
-    ${_renderListField(entry.taskKey, byField.commonErrorsTroubleshooting, r.commonErrorsTroubleshooting)}
+    ${_renderListField(byField.commonErrorsTroubleshooting, r.commonErrorsTroubleshooting)}
   `;
 }
 
@@ -393,61 +416,71 @@ export function setupTaskAnalysisEvents() {
       return;
     }
 
-    if (action === 'ta-add-item') {
-      const field = btn.getAttribute('data-field');
-      const r = _ensureRecord(_selectedTaskKey);
-      r[field].push('');
-      _renderFormPanel();
-      _touchStatus(_selectedTaskKey);
-      const inputs = document.querySelectorAll(`[data-field-block="${field}"] .ta-list-input`);
-      const last = inputs[inputs.length - 1];
-      if (last) last.focus();
-      return;
-    }
-
-    if (action === 'ta-remove-item') {
-      const field = btn.getAttribute('data-field');
-      const idx   = parseInt(btn.getAttribute('data-index'), 10);
-      const r = _ensureRecord(_selectedTaskKey);
-      r[field].splice(idx, 1);
-      _renderFormPanel();
-      _touchStatus(_selectedTaskKey);
-      return;
-    }
-
-    if (action === 'ta-move-up' || action === 'ta-move-down') {
-      const field = btn.getAttribute('data-field');
-      const idx   = parseInt(btn.getAttribute('data-index'), 10);
-      const r = _ensureRecord(_selectedTaskKey);
-      const swapWith = action === 'ta-move-up' ? idx - 1 : idx + 1;
-      if (swapWith < 0 || swapWith >= r[field].length) return;
-      const tmp = r[field][idx];
-      r[field][idx] = r[field][swapWith];
-      r[field][swapWith] = tmp;
-      _renderFormPanel();
-      return;
-    }
-
     if (action === 'ta-clear-analysis') {
       _clearOneTaskAnalysis(btn.getAttribute('data-task-key'));
+      return;
+    }
+
+    if (action === 'ta-format-list') {
+      const field = btn.getAttribute('data-field');
+      const formatType = btn.getAttribute('data-format-type');
+      const textarea = btn.closest('.section-container')?.querySelector('textarea');
+      if (!textarea) return;
+      const text = textarea.value.trim();
+      if (!text) { showStatus(_t('msgNothingToFormat'), 'error'); return; }
+
+      let lines = text.split('\n').filter(l => l.trim());
+      lines = lines.map(line => {
+        line = line.replace(/^[\s]*[•\-\*○●]\s*/, '');
+        line = line.replace(/^[\s]*\d+[\.\)]\s*/, '');
+        return line.trim();
+      });
+      const formatted = formatType === 'number'
+        ? lines.map((line, i) => `${i + 1}. ${line}`)
+        : lines.map(line => `• ${line}`);
+
+      textarea.value = formatted.join('\n');
+      const r = _ensureRecord(_selectedTaskKey);
+      r[field] = formatted;
+      showStatus(_t(formatType === 'number' ? 'msgFormattedNumbering' : 'msgFormattedBullets'), 'success');
+      return;
+    }
+
+    if (action === 'ta-clear-field') {
+      const field = btn.getAttribute('data-field');
+      const isList = LIST_FIELDS.some(f => f.key === field);
+      const r = _record(_selectedTaskKey);
+      const current = r ? r[field] : (isList ? [] : '');
+      const isEmpty = isList ? !(current && current.length) : !(current || '').trim();
+      if (isEmpty) { showStatus(_t('msgSectionAlreadyEmpty'), 'success'); return; }
+      if (!confirm(_t('confirmClearSection'))) return;
+      const rec = _ensureRecord(_selectedTaskKey);
+      rec[field] = isList ? [] : '';
+      const textarea = btn.closest('.section-container')?.querySelector('textarea');
+      if (textarea) textarea.value = '';
+      _touchStatus(_selectedTaskKey);
+      showStatus(_t('msgSectionCleared') + ' ✓', 'success');
       return;
     }
   });
 
   // Typing: write into appState immediately but do NOT re-render —
-  // re-rendering on every keystroke would rebuild the input and steal
-  // the caret mid-word, exactly the bug renderer.js's list-editors
-  // avoid elsewhere in this app.
+  // re-rendering on every keystroke would rebuild the textarea and
+  // steal the caret mid-word, exactly the bug renderer.js's own
+  // formatList()-driven sections avoid elsewhere in this app.
   root.addEventListener('input', function (e) {
     const el     = e.target;
     const action = el.getAttribute && el.getAttribute('data-action');
     if (!_selectedTaskKey) return;
 
-    if (action === 'ta-edit-item') {
+    if (action === 'ta-edit-list') {
       const field = el.getAttribute('data-field');
-      const idx   = parseInt(el.getAttribute('data-index'), 10);
       const r = _ensureRecord(_selectedTaskKey);
-      if (Array.isArray(r[field])) r[field][idx] = el.value;
+      // One array entry per line. Blank lines are kept while typing (so
+      // the caret and an in-progress new line behave normally) and are
+      // filtered out only where they matter — status, export, and the
+      // "is this empty" checks (see _isRecordEmpty / getTaskAnalysisExportData).
+      r[field] = el.value.split('\n');
       return;
     }
     if (action === 'ta-edit-text') {
@@ -462,7 +495,7 @@ export function setupTaskAnalysisEvents() {
   // phase is required — blur/focusout on inputs doesn't bubble.
   root.addEventListener('blur', function (e) {
     const el = e.target;
-    if (el.matches && el.matches('.ta-list-input, .ta-textarea') && _selectedTaskKey) {
+    if (el.matches && el.matches('textarea') && _selectedTaskKey) {
       _touchStatus(_selectedTaskKey);
     }
   }, true);
