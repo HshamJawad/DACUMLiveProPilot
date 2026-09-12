@@ -49,6 +49,10 @@ export const appState = {
        commonErrorsTroubleshooting: []
      }
   */
+  // Flat dictionary { taskInputId: true } — tasks the facilitator has
+  // starred as deserving detailed Task Analysis. Same key convention
+  // as taskAnalysisData above.
+  taskAnalysisPriority: {},
 
   // ── Workshop Aggregated Counts ─────────────────────────────
   workshopParticipants: 10,

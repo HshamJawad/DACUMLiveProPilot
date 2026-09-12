@@ -139,6 +139,7 @@ export function saveToJSON() {
     // back as s.taskAnalysis; absent entirely in files saved before this
     // feature existed, which is what makes old exports import cleanly.
     data.taskAnalysis = appState.taskAnalysisData || {};
+    data.taskAnalysisPriority = appState.taskAnalysisPriority || {};
 
     // Download
     const jsonString = JSON.stringify(data, null, 2);

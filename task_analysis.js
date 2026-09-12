@@ -25,6 +25,7 @@ import { syncAllFromDOM }  from './duties.js';
 
 /* i18n access — resolved lazily; see duties.js for why. */
 const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
+const _tf = (k, v) => (window.i18n ? window.i18n.tf(k, v) : k);
 
 /* Duty letters and task codes are Latin and must never be reordered by
    the bidi algorithm inside Arabic text — same convention as
@@ -50,6 +51,21 @@ const TEXT_FIELDS = [
   { key: 'conditionsWorkEnvironment', labelKey: 'taLblConditions', phKey: 'taPhConditions' },
   { key: 'performanceStandard',       labelKey: 'taLblStandard',   phKey: 'taPhStandard' },
 ];
+
+// Additional Info holds general, occupation-wide information; Task
+// Analysis holds what THIS task specifically needs. These three fields
+// are the ones with a direct counterpart in Additional Info, so they
+// get a "pick from Additional Info" button that copies selected lines
+// in as ordinary, independently-editable text — see
+// _openAdditionalInfoPicker(). Nothing here is a live reference: once
+// copied, the line belongs to the task and editing/deleting it never
+// touches the Additional Info source, exactly as duplicating a line by
+// hand would behave.
+const ADDITIONAL_INFO_SOURCES = {
+  requiredKnowledge:       { inputId: 'knowledgeInput', headingId: 'knowledgeHeading', titleKey: 'taLblKnowledge' },
+  requiredSkills:          { inputId: 'skillsInput',    headingId: 'skillsHeading',    titleKey: 'taLblSkills' },
+  toolsEquipmentMaterials: { inputId: 'toolsInput',     headingId: 'toolsHeading',     titleKey: 'taLblTools' },
+};
 
 // Fields that must ALL have at least one entry/value for a task to be
 // considered "Completed" rather than "In Progress" — a heuristic for
@@ -121,6 +137,28 @@ function _statusDot(status) {
   if (status === 'completed')   return '✓';
   if (status === 'in-progress') return '◐';
   return '○';
+}
+
+// ── "Flagged for detailed analysis" (requirement: a simple way to
+// mark tasks that deserve detailed Task Analysis). Kept as its own
+// small flat dictionary — same key convention as taskAnalysisData —
+// and surfaced only here in the Task Analysis navigator rather than
+// inside the Task Verification table: that table has three different
+// column layouts (standard/workshop/extended) built in tasks.js, and
+// adding a column there risks breaking one of the three. A star
+// toggle the facilitator can set while going through this tab's own
+// task list gives the same simple flag with no risk to Verification.
+function _isFlagged(taskKey) {
+  return !!(appState.taskAnalysisPriority || {})[taskKey];
+}
+
+function _toggleFlag(taskKey) {
+  if (!appState.taskAnalysisPriority) appState.taskAnalysisPriority = {};
+  if (appState.taskAnalysisPriority[taskKey]) {
+    delete appState.taskAnalysisPriority[taskKey];
+  } else {
+    appState.taskAnalysisPriority[taskKey] = true;
+  }
 }
 
 /** True when at least one task in the whole chart has any analysis
@@ -245,14 +283,20 @@ function _renderNav() {
     const rows = d.items.map(f => {
       const status = _status(f.taskKey);
       const active = f.taskKey === _selectedTaskKey ? ' ta-nav-task-active' : '';
+      const flagged = _isFlagged(f.taskKey);
       return `
-        <button type="button" class="ta-nav-task${active} ta-status-${status}"
-                data-action="ta-select-task" data-task-key="${f.taskKey}"
-                title="${escapeHtml(f.task.text)}">
-          <span class="ta-nav-dot">${_statusDot(status)}</span>
-          <span class="ta-nav-code">${_bdi(letter + f.taskNum)}</span>
-          <span class="ta-nav-text">${escapeHtml(f.task.text)}</span>
-        </button>`;
+        <div class="ta-nav-row">
+          <button type="button" class="ta-nav-task${active} ta-status-${status}"
+                  data-action="ta-select-task" data-task-key="${f.taskKey}"
+                  title="${escapeHtml(f.task.text)}">
+            <span class="ta-nav-dot">${_statusDot(status)}</span>
+            <span class="ta-nav-code">${_bdi(letter + f.taskNum)}</span>
+            <span class="ta-nav-text">${escapeHtml(f.task.text)}</span>
+          </button>
+          <button type="button" class="ta-nav-flag${flagged ? ' ta-nav-flag-on' : ''}"
+                  data-action="ta-toggle-priority" data-task-key="${f.taskKey}"
+                  title="${escapeHtml(_t('ttFlagForAnalysis'))}" aria-label="${escapeHtml(_t('ttFlagForAnalysis'))}">${flagged ? '★' : '☆'}</button>
+        </div>`;
     }).join('');
     return `
       <div class="ta-nav-duty">
@@ -293,14 +337,21 @@ function _touchStatus(taskKey) {
 // whichever task is currently selected.
 const ICON_NUMBER = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><text x="0.4" y="5.35" font-size="4.7" font-weight="700" font-family="sans-serif">1</text><text x="0.4" y="9.5" font-size="4.7" font-weight="700" font-family="sans-serif">2</text><text x="0.4" y="13.65" font-size="4.7" font-weight="700" font-family="sans-serif">3</text><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg>';
 const ICON_BULLET = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><rect x="1" y="2.6" width="2.8" height="2.8" rx=".6"/><rect x="1" y="6.75" width="2.8" height="2.8" rx=".6"/><rect x="1" y="10.9" width="2.8" height="2.8" rx=".6"/><rect x="5.8" y="3.1" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="7.25" width="9.2" height="1.5" rx=".75"/><rect x="5.8" y="11.4" width="9.2" height="1.5" rx=".75"/></svg>';
+const ICON_IMPORT  = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M4.8 6h6.4M4.8 8.5h6.4M4.8 11h4"/></svg>';
 
 function _renderListField(field, items) {
   const text = (items || []).join('\n');
+  const source = ADDITIONAL_INFO_SOURCES[field.key];
+  const pickBtn = source ? `
+          <button type="button" class="btn-format btn-icon" data-action="ta-pick-from-info"
+                  data-field="${field.key}"
+                  title="${escapeHtml(_tf('ttPickFromAdditionalInfo', { section: _t(source.titleKey) }))}"
+                  aria-label="${escapeHtml(_tf('ttPickFromAdditionalInfo', { section: _t(source.titleKey) }))}">${ICON_IMPORT}</button>` : '';
   return `
     <div class="section-container" data-field-block="${field.key}">
       <div class="section-header-editable">
         <h3>${_t(field.labelKey)}</h3>
-        <div style="display:flex;gap:10px;">
+        <div style="display:flex;gap:10px;">${pickBtn}
           <button type="button" class="btn-format btn-icon" data-action="ta-format-list"
                   data-field="${field.key}" data-format-type="number"
                   title="${escapeHtml(_t('ttAddNumbering'))}" aria-label="${escapeHtml(_t('ttAddNumbering'))}">${ICON_NUMBER}</button>
@@ -400,6 +451,111 @@ export function clearAllTaskAnalysis() {
   renderTaskAnalysisTab();
 }
 
+// ── "Add from Additional Info" picker ───────────────────────────
+// Self-contained modal, styled to match the app's existing dialogs
+// (see _showHelpModal in events.js) without depending on that module.
+// Copies selected lines into the task's own array as plain text —
+// after this, an item is indistinguishable from one typed by hand,
+// and edits/deletes only ever touch the copy, never the Additional
+// Info source (per the spec: reference-at-selection-time, not a live link).
+function _openAdditionalInfoPicker(fieldKey) {
+  const source = ADDITIONAL_INFO_SOURCES[fieldKey];
+  if (!source || !_selectedTaskKey) return;
+
+  const sourceEl = document.getElementById(source.inputId);
+  const rawLines = (sourceEl?.value || '').split('\n')
+    .map(l => l.replace(/^[\s]*[•\-\*○●]\s*/, '').replace(/^[\s]*\d+[\.\)]\s*/, '').trim())
+    .filter(Boolean);
+  // De-duplicate the source list itself (identical lines typed twice
+  // in Additional Info would otherwise show as two identical checkboxes).
+  const uniqueLines = [...new Set(rawLines)];
+
+  if (!uniqueLines.length) {
+    showStatus(_t('taPickNothingToChoose'), 'error');
+    return;
+  }
+
+  const currentItems = new Set(
+    _nonBlank(_view(_selectedTaskKey)[fieldKey])
+      .map(s => s.replace(/^[\s]*[•\-\*○●]\s*/, '').replace(/^[\s]*\d+[\.\)]\s*/, '').trim())
+  );
+
+  const headingEl = document.getElementById(source.headingId);
+  const sectionTitle = (headingEl?.textContent || '').trim() || _t(source.titleKey);
+
+  const existing = document.getElementById('taPickerModal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'taPickerModal';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('dir', (window.i18n && window.i18n.isRTL()) ? 'rtl' : 'ltr');
+  overlay.style.cssText =
+    'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;' +
+    'justify-content:center;padding:20px;background:rgba(0,0,0,0.55);';
+
+  const rows = uniqueLines.map((line, i) => {
+    const already = currentItems.has(line);
+    return `
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:9px 4px;
+             border-bottom:1px solid #f1f5f9;cursor:${already ? 'default' : 'pointer'};
+             opacity:${already ? '0.55' : '1'};">
+        <input type="checkbox" data-ta-pick-item value="${i}" ${already ? 'checked disabled' : ''}
+               style="margin-top:3px;flex-shrink:0;">
+        <span style="font-size:0.88em;line-height:1.55;color:#334155;">
+          ${escapeHtml(line)}${already ? ` <em style="color:#94a3b8;">(${_t('taPickAlreadyAdded')})</em>` : ''}
+        </span>
+      </label>`;
+  }).join('');
+
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;
+         box-shadow:0 24px 60px rgba(0,0,0,0.35);overflow:hidden;
+         font-family:'Segoe UI',system-ui,sans-serif;max-height:82vh;display:flex;flex-direction:column;">
+      <div style="padding:18px 22px 14px;display:flex;align-items:center;gap:12px;
+           background:linear-gradient(135deg,#eef2ff,#e0e7ff);border-bottom:1px solid #c7d2fe;flex-shrink:0;">
+        <span style="font-size:1.4em;line-height:1;">📋</span>
+        <p style="margin:0;font-size:0.98em;font-weight:800;color:#3730a3;">
+          ${escapeHtml(_tf('ttPickFromAdditionalInfo', { section: sectionTitle }))}
+        </p>
+      </div>
+      <div style="padding:14px 22px;overflow-y:auto;flex:1;">
+        <p style="margin:0 0 10px;font-size:0.85em;color:#475569;line-height:1.6;">${_t('taPickModalIntro')}</p>
+        <div>${rows}</div>
+      </div>
+      <div style="padding:14px 22px;border-top:1px solid #eef0f4;display:flex;justify-content:flex-end;gap:10px;flex-shrink:0;">
+        <button data-ta-pick-cancel style="padding:9px 18px;background:#f1f5f9;color:#334155;
+                border:none;border-radius:8px;font-size:0.88em;font-weight:600;cursor:pointer;font-family:inherit;">
+          ${_t('btnCancel')}
+        </button>
+        <button data-ta-pick-confirm style="padding:9px 20px;background:#667eea;color:#fff;
+                border:none;border-radius:8px;font-size:0.88em;font-weight:700;cursor:pointer;font-family:inherit;">
+          ${_t('btnAddSelected')}
+        </button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  overlay.querySelector('[data-ta-pick-cancel]').addEventListener('click', close);
+  overlay.querySelector('[data-ta-pick-confirm]').addEventListener('click', () => {
+    const checked = [...overlay.querySelectorAll('input[data-ta-pick-item]:checked:not(:disabled)')];
+    if (!checked.length) { showStatus(_t('taPickNoneSelected'), 'error'); return; }
+    const r = _ensureRecord(_selectedTaskKey);
+    checked.forEach(cb => r[fieldKey].push(uniqueLines[parseInt(cb.value, 10)]));
+    close();
+    _renderFormPanel();
+    _touchStatus(_selectedTaskKey);
+    showStatus(_tf('msgItemsAddedFromInfo', { n: checked.length }), 'success');
+  });
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
+  });
+}
+
 // ── Event wiring ─────────────────────────────────────────────
 // Scoped to the tab's own container, same delegation pattern events.js
 // uses for every other tab (see e.g. the dutiesCont listener there).
@@ -420,8 +576,22 @@ export function setupTaskAnalysisEvents() {
       return;
     }
 
+    if (action === 'ta-toggle-priority') {
+      const taskKey = btn.getAttribute('data-task-key');
+      _toggleFlag(taskKey);
+      const flagged = _isFlagged(taskKey);
+      btn.textContent = flagged ? '★' : '☆';
+      btn.classList.toggle('ta-nav-flag-on', flagged);
+      return;
+    }
+
     if (action === 'ta-clear-analysis') {
       _clearOneTaskAnalysis(btn.getAttribute('data-task-key'));
+      return;
+    }
+
+    if (action === 'ta-pick-from-info') {
+      _openAdditionalInfoPicker(btn.getAttribute('data-field'));
       return;
     }
 

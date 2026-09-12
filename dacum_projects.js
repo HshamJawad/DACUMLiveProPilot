@@ -127,6 +127,7 @@ export function importProjectFromData(data, fileName) {
     // s.taskAnalysis is the key saveToJSON() writes (see snapshots.js).
     // Absent in files exported before this feature existed — {} then.
     taskAnalysisData:         s.taskAnalysis                 || {},
+    taskAnalysisPriority:     s.taskAnalysisPriority          || {},
     collectionMode:           s.verification?.collectionMode || 'workshop',
     workflowMode:             s.verification?.workflowMode   || 'standard',
     workshopParticipants:     s.verification?.workshopParticipants || 10,
@@ -866,6 +867,7 @@ function _captureState() {
     verificationRatings:      appState.verificationRatings     || {},
     taskMetadata:             appState.taskMetadata            || {},
     taskAnalysisData:         appState.taskAnalysisData        || {},
+    taskAnalysisPriority:     appState.taskAnalysisPriority    || {},
     collectionMode:           appState.collectionMode,
     workflowMode:             appState.workflowMode,
     workshopParticipants:     appState.workshopParticipants,
@@ -910,6 +912,7 @@ function _applyState(s) {
   // Older projects saved before Task Analysis existed simply have no
   // key here — falling back to {} is what makes them load normally.
   appState.taskAnalysisData         = s.taskAnalysisData         || {};
+  appState.taskAnalysisPriority     = s.taskAnalysisPriority     || {};
   appState.collectionMode           = s.collectionMode           || 'workshop';
   appState.workflowMode             = s.workflowMode             || 'standard';
   appState.workshopParticipants     = s.workshopParticipants     || 10;
