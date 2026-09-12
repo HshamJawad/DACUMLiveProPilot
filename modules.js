@@ -211,10 +211,11 @@ export function renderClusters() {
   let html = '';
   cd.clusters.forEach((cluster, clusterIndex) => {
     const clusterNumber = clusterIndex + 1;
+    const taCriteria = _getClusterEffectiveCriteria(cluster, clusterNumber).filter(c => c.source === 'ta');
     let displayValue = '';
     if (cluster.performanceCriteria && cluster.performanceCriteria.length > 0) {
       displayValue = cluster.performanceCriteria
-        .map((criterion, idx) => `${clusterNumber}-${idx + 1} ${criterion}`)
+        .map((criterion, idx) => `${clusterNumber}-${taCriteria.length + idx + 1} ${criterion}`)
         .join('\n');
     }
 
@@ -259,29 +260,26 @@ export function renderClusters() {
             <h4>✅ ${_t('lblPerformanceCriteria')}</h4>
             <button type="button" class="tab-help-btn" data-action="show-pc-range-help" title="${_t('ttPCRangeHelp')}" aria-label="${_t('ttPCRangeHelp')}" aria-haspopup="dialog">?</button>
           </div>
-          ${(() => {
-            const taCriteria = _getClusterEffectiveCriteria(cluster, clusterNumber).filter(c => c.source === 'ta');
-            if (!taCriteria.length) return '';
-            return `
-              <div class="cluster-helper-text" style="margin-bottom:4px;">📥 ${_t('lblFromTaskAnalysis')}</div>
-              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin-bottom:12px;">
-                ${taCriteria.map(c => `
-                  <div style="display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:0.88em;color:#334155;">
-                    <span>${c.text}</span>
-                    <span style="flex-shrink:0;background:#eef2ff;color:#4338ca;border-radius:5px;padding:1px 7px;font-size:0.85em;font-weight:600;">${c.taskCode}</span>
-                  </div>`).join('')}
-              </div>`;
-          })()}
-          <div class="cluster-helper-text">➕ ${_t('lblClusterSpecificCriteria')}</div>
           <div class="cluster-helper-text">${_t('hintCriteria')}</div>
-          <textarea id="criteria_${cluster.id}"
-            data-cluster-number="${clusterNumber}"
-            data-cluster-id="${cluster.id}"
-            data-action-focus="init-criteria-number"
-            data-action-keydown="handle-criteria-keydown"
-            data-action-blur="update-cluster-criteria-numbered"
-            placeholder="${_t('phFirstCriterion')}"
-            style="min-height:120px;">${displayValue}</textarea>
+          <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#fff;">
+            ${taCriteria.length ? `
+              <div style="padding:10px 14px 8px;border-bottom:1px solid #eef0f4;">
+                ${taCriteria.map((c, i) => `
+                  <div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:0.92em;color:#334155;">
+                    <span>${clusterNumber}-${i + 1} ${c.text}</span>
+                    <span style="flex-shrink:0;background:#eef2ff;color:#4338ca;border-radius:5px;padding:1px 7px;font-size:0.82em;font-weight:600;white-space:nowrap;">${c.taskCode}</span>
+                  </div>`).join('')}
+              </div>` : ''}
+            <textarea id="criteria_${cluster.id}"
+              data-cluster-number="${clusterNumber}"
+              data-cluster-id="${cluster.id}"
+              data-ta-count="${taCriteria.length}"
+              data-action-focus="init-criteria-number"
+              data-action-keydown="handle-criteria-keydown"
+              data-action-blur="update-cluster-criteria-numbered"
+              placeholder="${_t('phFirstCriterion')}"
+              style="min-height:100px;border:none;border-radius:0;box-shadow:none;display:block;width:100%;box-sizing:border-box;padding:10px 14px;">${displayValue}</textarea>
+          </div>
         </div>
       </div>`;
   });
@@ -368,10 +366,11 @@ export function handleCriteriaKeydown(event, clusterId) {
   if (event.key === 'Enter') {
     const textarea = event.target;
     const clusterNumber = textarea.getAttribute('data-cluster-number');
+    const taCount = parseInt(textarea.getAttribute('data-ta-count') || '0', 10);
     const cursorPos = textarea.selectionStart;
     const value = textarea.value;
     const lines = value.substring(0, cursorPos).split('\n');
-    const nextNumber = lines.length + 1;
+    const nextNumber = lines.length + 1 + taCount;
     event.preventDefault();
     const before = value.substring(0, cursorPos);
     const after = value.substring(cursorPos);
@@ -385,8 +384,9 @@ export function handleCriteriaKeydown(event, clusterId) {
 export function initCriteriaNumber(event, clusterId) {
   const textarea = event.target;
   const clusterNumber = textarea.getAttribute('data-cluster-number');
+  const taCount = parseInt(textarea.getAttribute('data-ta-count') || '0', 10);
   if (!textarea.value.trim()) {
-    textarea.value = clusterNumber + '-1 ';
+    textarea.value = clusterNumber + '-' + (taCount + 1) + ' ';
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
   }
 }
