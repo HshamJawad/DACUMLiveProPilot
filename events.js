@@ -587,8 +587,8 @@ export function setupEvents() {
       } else if (target.getAttribute('data-action') === 'reassign-pc-to-lo') {
         reassignPCToLO(
           target.getAttribute('data-pc-id'),
-          parseInt(target.getAttribute('data-cluster')),
-          parseInt(target.getAttribute('data-criterion')),
+          null,
+          null,
           target.value
         );
         target.value = '';
@@ -640,6 +640,9 @@ export function setupEvents() {
       const action = target.getAttribute('data-action');
       if (action === 'rename-module')          renameModule(target.getAttribute('data-module-id'));
       else if (action === 'delete-module')     deleteModule(target.getAttribute('data-module-id'));
+      else if (action === 'build-module-in-builder') {
+        openModuleBuilderFromMapping(target.getAttribute('data-module-id'));
+      }
       else if (action === 'remove-lo-from-module') {
         removeLoFromModule(target.getAttribute('data-module-id'), target.getAttribute('data-lo-id'));
       }

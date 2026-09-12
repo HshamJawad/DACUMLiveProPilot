@@ -161,6 +161,31 @@ function _toggleFlag(taskKey) {
   }
 }
 
+/** Clean (marker-stripped, trimmed, non-blank) Performance Criteria for
+ *  one task — the read API other tabs use to pull in Task-Analysis-
+ *  sourced criteria without duplicating storage. Used by Competency
+ *  Clusters to auto-populate a cluster's criteria from its assigned
+ *  tasks; never writes anything back into Task Analysis. */
+export function getTaskPerformanceCriteria(taskKey) {
+  const r = _record(taskKey);
+  if (!r) return [];
+  return _nonBlank(r.performanceCriteria).map(s =>
+    s.replace(/^[\s]*[•\-\*○●]\s*/, '').replace(/^[\s]*\d+[\.\)]\s*/, '').trim()
+  );
+}
+
+/** Full cleaned record for one task, or null if it has no analysis
+ *  content — used by the Module Mapping → Module Builder handoff to
+ *  attach the relevant Task Analysis detail to a transferred module
+ *  without duplicating it into every downstream record. */
+export function getTaskAnalysisRecord(taskKey) {
+  const r = _record(taskKey);
+  if (!r || _isRecordEmpty(r)) return null;
+  const clean = { ...r };
+  LIST_FIELDS.forEach(f => { clean[f.key] = _nonBlank(r[f.key]).map(s => s.trim()); });
+  return clean;
+}
+
 /** True when at least one task in the whole chart has any analysis
  *  content — used by clearCurrentTab/_isTabEmpty (projects.js) and by
  *  the PDF/DOCX export functions to decide whether to include the
@@ -674,3 +699,14 @@ export function setupTaskAnalysisEvents() {
     }
   }, true);
 }
+
+/* ── Re-render on language change ────────────────────────────────
+   Same pattern as modules.js: this tab's HTML is entirely
+   innerHTML-generated from appState, so a language switch never
+   reaches it through applyTranslations()'s [data-i18n] pass alone.
+   Rendering is pure from appState, so a rebuild is lossless. Guarded
+   on the container existing so a language switch never constructs a
+   tab the user has not opened yet. */
+window.addEventListener('dacum:langchange', () => {
+  if (document.getElementById('taskAnalysisNav')) renderTaskAnalysisTab();
+});

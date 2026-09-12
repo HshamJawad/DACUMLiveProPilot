@@ -7,6 +7,7 @@ import { appState } from './state.js';
 import { showStatus } from './renderer.js';
 import { lwExtractDutiesAndTasks } from './workshop.js';
 import { getTaskCode, getDutyLabel } from './codes.js';
+import { getTaskPerformanceCriteria, getTaskAnalysisRecord } from './task_analysis.js';
 
 /* i18n access — resolved lazily; see duties.js for why. */
 const _t  = (k)    => (window.i18n ? window.i18n.t(k)     : k);
@@ -21,6 +22,54 @@ function switchTab(tabId) { window.switchTab(tabId); }
 // (e.g. "duty_3_2" → "Task C2") which was *wrong* after a drag
 // reorder.  The imported version reads the live position from
 // appState.dutiesData and always returns the correct letter.
+
+// ── Task Analysis traceability for clusters ─────────────────────
+// Performance Criteria entered in Task Analysis for a cluster's
+// assigned tasks are surfaced here automatically — never copied INTO
+// cluster.performanceCriteria, which remains exactly what it always
+// was: free-text criteria the facilitator writes specifically for the
+// CLUSTER as a whole, not for one task. This function recomputes the
+// combined list fresh on every call, straight from cluster.tasks +
+// appState.taskAnalysisData, so:
+//   • removing a task from the cluster drops its criteria from this
+//     list on the very next render, with no separate cleanup step;
+//   • nothing here is ever written back into Task Analysis;
+//   • an already-created Learning Outcome is unaffected, because
+//     linkedCriteria stores a text snapshot at selection time (see
+//     createLearningOutcome/reassignPCToLO below), not a live link.
+// IDs for Task-Analysis-sourced criteria embed the source task code
+// (C{n}-T{taskCode}-PC{i}) so they never collide with the pre-existing
+// C{n}-PC{i} scheme used for manually-typed cluster criteria — old
+// projects and old Learning-Outcome links keep working unchanged.
+function _getClusterEffectiveCriteria(cluster, clusterNumber) {
+  const fromTaskAnalysis = [];
+  cluster.tasks.forEach(task => {
+    const taskCode = getTaskCode(task.id);
+    getTaskPerformanceCriteria(task.id).forEach((text, i) => {
+      fromTaskAnalysis.push({
+        id: `C${clusterNumber}-T${taskCode}-PC${i + 1}`,
+        text, taskId: task.id, taskCode, clusterNumber, source: 'ta'
+      });
+    });
+  });
+  const manual = (cluster.performanceCriteria || []).map((text, i) => ({
+    id: `C${clusterNumber}-PC${i + 1}`,
+    text, taskId: null, taskCode: null, clusterNumber, source: 'manual'
+  }));
+  return [...fromTaskAnalysis, ...manual];
+}
+
+// Looks a single effective criterion up by its id across every
+// cluster — used wherever a PC checkbox/dropdown only has the id to
+// go on (createLearningOutcome, reassignPCToLO).
+function _findEffectiveCriterionById(pcId) {
+  const cd = appState.clusteringData;
+  for (let i = 0; i < cd.clusters.length; i++) {
+    const found = _getClusterEffectiveCriteria(cd.clusters[i], i + 1).find(c => c.id === pcId);
+    if (found) return found;
+  }
+  return null;
+}
 
 // ── Clustering ────────────────────────────────────────────────
 
@@ -210,6 +259,20 @@ export function renderClusters() {
             <h4>✅ ${_t('lblPerformanceCriteria')}</h4>
             <button type="button" class="tab-help-btn" data-action="show-pc-range-help" title="${_t('ttPCRangeHelp')}" aria-label="${_t('ttPCRangeHelp')}" aria-haspopup="dialog">?</button>
           </div>
+          ${(() => {
+            const taCriteria = _getClusterEffectiveCriteria(cluster, clusterNumber).filter(c => c.source === 'ta');
+            if (!taCriteria.length) return '';
+            return `
+              <div class="cluster-helper-text" style="margin-bottom:4px;">📥 ${_t('lblFromTaskAnalysis')}</div>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin-bottom:12px;">
+                ${taCriteria.map(c => `
+                  <div style="display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:0.88em;color:#334155;">
+                    <span>${c.text}</span>
+                    <span style="flex-shrink:0;background:#eef2ff;color:#4338ca;border-radius:5px;padding:1px 7px;font-size:0.85em;font-weight:600;">${c.taskCode}</span>
+                  </div>`).join('')}
+              </div>`;
+          })()}
+          <div class="cluster-helper-text">➕ ${_t('lblClusterSpecificCriteria')}</div>
           <div class="cluster-helper-text">${_t('hintCriteria')}</div>
           <textarea id="criteria_${cluster.id}"
             data-cluster-number="${clusterNumber}"
@@ -360,14 +423,15 @@ export function renderPCSourceList() {
 
   cd.clusters.forEach((cluster, clusterIndex) => {
     const clusterNumber = clusterIndex + 1;
-    if (!cluster.performanceCriteria || !Array.isArray(cluster.performanceCriteria) || cluster.performanceCriteria.length === 0) return;
+    const effectiveCriteria = _getClusterEffectiveCriteria(cluster, clusterNumber);
+    if (!effectiveCriteria.length) return;
 
     hasAnyCriteria = true;
     html += `<div class="pc-cluster-group"><h4>${cluster.name}</h4>`;
 
-    cluster.performanceCriteria.forEach((criterion, criterionIndex) => {
-      if (!criterion || !criterion.trim()) return;
-      const pcId = `C${clusterNumber}-PC${criterionIndex + 1}`;
+    effectiveCriteria.forEach(c => {
+      if (!c.text || !c.text.trim()) return;
+      const pcId = c.id;
       const isUsed = usedPCIds.has(pcId);
 
       let loOptions = `<option value="">${_t('optAssignToLO')}</option>`;
@@ -378,17 +442,18 @@ export function renderPCSourceList() {
       html += `
         <div class="pc-checkbox-item ${isUsed ? 'used' : ''}" id="pc_${pcId}">
           <input type="checkbox" id="cb_${pcId}"
-            data-pc-id="${pcId}" data-cluster="${clusterNumber}" data-criterion="${criterionIndex}"
+            data-pc-id="${pcId}"
             ${isUsed ? 'disabled' : ''} data-action="update-lo-button">
           <label for="cb_${pcId}" class="pc-label">
-            <span class="pc-number">${pcId}:</span> ${criterion}
+            <span class="pc-number">${pcId}:</span> ${c.text}
+            ${c.source === 'ta' ? `<span style="background:#eef2ff;color:#4338ca;border-radius:5px;padding:1px 7px;font-size:0.8em;font-weight:600;margin-inline-start:6px;">${c.taskCode}</span>` : ''}
           </label>
           ${isUsed ? `<span class="pc-used-badge">${_t('lblUsed')}</span>` : ''}
           ${lo.outcomes.length > 0 ? `
           <div class="task-dropdown-container" style="margin-left:10px;">
             <select class="task-reassign-dropdown"
               data-action="reassign-pc-to-lo"
-              data-pc-id="${pcId}" data-cluster="${clusterNumber}" data-criterion="${criterionIndex}">
+              data-pc-id="${pcId}">
               ${loOptions}
             </select>
           </div>` : ''}
@@ -420,11 +485,12 @@ export function createLearningOutcome() {
   const linkedCriteria = [];
   checkboxes.forEach(cb => {
     const pcId = cb.getAttribute('data-pc-id');
-    const clusterNum = parseInt(cb.getAttribute('data-cluster'));
-    const criterionIdx = parseInt(cb.getAttribute('data-criterion'));
-    const cluster = appState.clusteringData.clusters[clusterNum - 1];
-    const criterionText = cluster.performanceCriteria[criterionIdx];
-    linkedCriteria.push({ id: pcId, text: criterionText, clusterNumber: clusterNum });
+    const found = _findEffectiveCriterionById(pcId);
+    if (!found) return;
+    linkedCriteria.push({
+      id: found.id, text: found.text, clusterNumber: found.clusterNumber,
+      taskId: found.taskId || null
+    });
   });
 
   const lo = appState.learningOutcomesData;
@@ -473,7 +539,7 @@ export function renderLearningOutcomes() {
           <h5>📎 ${_t('lblMappedPC')}</h5>
           ${outcome.linkedCriteria.map(pc => `
             <div class="lo-linked-item">
-              <div style="flex:1"><strong>${pc.id}:</strong> ${pc.text}</div>
+              <div style="flex:1"><strong>${pc.id}:</strong> ${pc.text}${pc.taskId ? ` <span style="color:#94a3b8;font-size:0.85em;">[${getTaskCode(pc.taskId)}]</span>` : ''}</div>
               <button class="btn-remove-task" data-action="unassign-pc-from-lo"
                 data-lo-id="${outcome.id}" data-pc-id="${pc.id}" style="margin-left:10px;">✕</button>
             </div>`).join('')}
@@ -530,9 +596,13 @@ export function reassignPCToLO(pcId, clusterNumber, criterionIndex, targetLoId) 
       const idx = outcome.linkedCriteria.findIndex(pc => pc.id === pcId);
       if (idx !== -1) outcome.linkedCriteria.splice(idx, 1);
     });
-    const cluster = appState.clusteringData.clusters[clusterNumber - 1];
-    const criterionText = cluster.performanceCriteria[criterionIndex];
-    targetLO.linkedCriteria.push({ id: pcId, text: criterionText, clusterNumber });
+    const found = _findEffectiveCriterionById(pcId);
+    if (found) {
+      targetLO.linkedCriteria.push({
+        id: found.id, text: found.text, clusterNumber: found.clusterNumber,
+        taskId: found.taskId || null
+      });
+    }
   }
 
   renderPCSourceList();
@@ -641,13 +711,17 @@ export function renderModules() {
         <div class="module-header">
           <div class="module-title">${module.title}</div>
           <div class="module-actions">
+            <button class="btn-rename-module" data-action="build-module-in-builder" data-module-id="${module.id}"
+                    title="${_t('ttBuildThisModule')}">🚀 ${_t('btnBuildThisModule')}</button>
             <button class="btn-rename-module" data-action="rename-module" data-module-id="${module.id}">✏️ ${_t('btnRename')}</button>
             <button class="btn-delete-module" data-action="delete-module" data-module-id="${module.id}">🗑️ ${_t('btnDeleteModule')}</button>
           </div>
         </div>
         <div class="module-los-list">
           ${module.learningOutcomes.map(outcome => {
-            const criteriaText = outcome.linkedCriteria.map(pc => `${pc.id}: ${pc.text}`).join(' • ');
+            const criteriaText = outcome.linkedCriteria.map(pc =>
+              `${pc.id}${pc.taskId ? ` [${getTaskCode(pc.taskId)}]` : ''}: ${pc.text}`
+            ).join(' • ');
             return `
               <div class="module-lo-assigned">
                 <div class="module-lo-assigned-content">
@@ -708,29 +782,90 @@ export function addLoToModuleFromDropdown(loId, moduleId) {
   renderModules();
 }
 
-export function openModuleBuilderFromMapping() {
+// Collects the distinct source task IDs referenced by a module's
+// Learning Outcomes, then the Task Analysis record for each — this is
+// what makes the "relevant Task Analysis information" available to
+// Module Builder without duplicating the entire project into the
+// handoff. Tasks with no analysis content are simply absent from the
+// returned dictionary (getTaskAnalysisRecord already returns null for
+// those), so an old project with no Task Analysis data at all still
+// produces a valid, empty-but-harmless taskAnalysis: {}.
+function _collectModuleTaskAnalysis(module) {
+  const taskIds = new Set();
+  module.learningOutcomes.forEach(o =>
+    o.linkedCriteria.forEach(pc => { if (pc.taskId) taskIds.add(pc.taskId); })
+  );
+  const taskAnalysis = {};
+  taskIds.forEach(taskId => {
+    const record = getTaskAnalysisRecord(taskId);
+    if (record) taskAnalysis[taskId] = { taskCode: getTaskCode(taskId), ...record };
+  });
+  return { sourceTaskIds: [...taskIds], taskAnalysis };
+}
+
+function _buildModuleExport(module) {
+  const { sourceTaskIds, taskAnalysis } = _collectModuleTaskAnalysis(module);
+  return {
+    moduleId: module.id,
+    moduleTitle: module.title,
+    learningOutcomes: module.learningOutcomes.map(o => ({
+      number: o.number,
+      statement: o.statement,
+      performanceCriteria: o.linkedCriteria.map(pc => ({ id: pc.id, text: pc.text, taskId: pc.taskId || null }))
+    })),
+    sourceTaskIds,
+    // Present even when empty, so Module Builder can tell "no Task
+    // Analysis available for this module" apart from "field missing" —
+    // relevant for projects created before Task Analysis existed.
+    taskAnalysis
+  };
+}
+
+/**
+ * Hands off to Module Builder. With no argument, transfers every
+ * module (the original, unchanged behaviour, still wired to the
+ * existing "Proceed to Module Builder" banner button). Pass a
+ * moduleId to transfer just that one module instead — used by the
+ * per-module "Build in Module Builder" buttons in renderModules().
+ * Either way the payload now also carries each module's traceable
+ * source tasks and their Task Analysis content (see _buildModuleExport),
+ * not just Learning Outcomes and Performance Criteria text.
+ */
+export function openModuleBuilderFromMapping(moduleId = null) {
   const occupationTitle = document.getElementById('occupationTitle')?.value || '';
   const jobTitle = document.getElementById('jobTitle')?.value || '';
   const occupation = occupationTitle || jobTitle || 'Unknown Occupation';
   const mm = appState.moduleMappingData;
 
+  const modulesToSend = moduleId
+    ? mm.modules.filter(m => m.id === moduleId)
+    : mm.modules;
+
+  if (moduleId && modulesToSend.length === 0) return;
+
   const exportObject = {
     source: 'DACUM Live Pro v1.0',
     exportDate: new Date().toISOString(),
     occupation,
-    modules: mm.modules.map(module => ({
-      moduleId: module.id,
-      moduleTitle: module.title,
-      learningOutcomes: module.learningOutcomes.map(o => ({
-        number: o.number,
-        statement: o.statement,
-        performanceCriteria: o.linkedCriteria.map(pc => ({ id: pc.id, text: pc.text }))
-      }))
-    }))
+    modules: modulesToSend.map(_buildModuleExport)
   };
 
   try {
-    localStorage.setItem('dacum_modules_export', JSON.stringify(exportObject));
+    // Keyed by module so transferring the same module again updates its
+    // entry instead of appending an uncontrolled duplicate — the most
+    // this side of the handoff can do about de-duplication, since the
+    // actual de-dup/merge behaviour on arrival is Module Builder's own.
+    const STORAGE_KEY = 'dacum_modules_export';
+    let payload = exportObject;
+    if (moduleId) {
+      let existing = null;
+      try { existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (_) { existing = null; }
+      if (existing && Array.isArray(existing.modules)) {
+        const others = existing.modules.filter(m => m.moduleId !== moduleId);
+        payload = { ...existing, exportDate: exportObject.exportDate, occupation, modules: [...others, ...exportObject.modules] };
+      }
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     window.open('Module_Builder.html', '_blank');
     showStatus(_t('msgMBExported'), 'success');
   } catch (error) {
