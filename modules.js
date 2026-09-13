@@ -23,6 +23,15 @@ function switchTab(tabId) { window.switchTab(tabId); }
 // reorder.  The imported version reads the live position from
 // appState.dutiesData and always returns the correct letter.
 
+// Canonical short task reference used in every downstream display —
+// "TASK B4" regardless of whatever casing/format getTaskCode() itself
+// returns (some call sites previously built ids like "C1-TTask B3-PC1"
+// by string-concatenating an already-prefixed code; this is the fix).
+function _taskLabel(taskId) {
+  const raw = (getTaskCode(taskId) || '').replace(/^task\s*/i, '').trim();
+  return `TASK ${raw}`;
+}
+
 // ── Task Analysis traceability for clusters ─────────────────────
 // Performance Criteria entered in Task Analysis for a cluster's
 // assigned tasks are surfaced here automatically — never copied INTO
@@ -37,26 +46,29 @@ function switchTab(tabId) { window.switchTab(tabId); }
 //   • an already-created Learning Outcome is unaffected, because
 //     linkedCriteria stores a text snapshot at selection time (see
 //     createLearningOutcome/reassignPCToLO below), not a live link.
-// IDs for Task-Analysis-sourced criteria embed the source task code
-// (C{n}-T{taskCode}-PC{i}) so they never collide with the pre-existing
-// C{n}-PC{i} scheme used for manually-typed cluster criteria — old
-// projects and old Learning-Outcome links keep working unchanged.
+// IDs are the simple "{clusterNumber}-{position}" scheme used
+// throughout the UI (1-1, 1-2, …) — ONE flat sequence per cluster
+// covering both Task-Analysis-sourced and manually-typed criteria, in
+// that order, so the visible numbering always matches what the merged
+// input card in renderClusters() shows. This replaces the old
+// fragmented "C1-PC1" / "C1-Ttaskcode-PC1" schemes; see the note in
+// renderPCSourceList() about what that means for pre-existing projects.
 function _getClusterEffectiveCriteria(cluster, clusterNumber) {
-  const fromTaskAnalysis = [];
+  const items = [];
   cluster.tasks.forEach(task => {
-    const taskCode = getTaskCode(task.id);
-    getTaskPerformanceCriteria(task.id).forEach((text, i) => {
-      fromTaskAnalysis.push({
-        id: `C${clusterNumber}-T${taskCode}-PC${i + 1}`,
-        text, taskId: task.id, taskCode, clusterNumber, source: 'ta'
-      });
+    const taskId = task.id;
+    getTaskPerformanceCriteria(taskId).forEach(text => {
+      items.push({ text, taskId, source: 'ta' });
     });
   });
-  const manual = (cluster.performanceCriteria || []).map((text, i) => ({
-    id: `C${clusterNumber}-PC${i + 1}`,
-    text, taskId: null, taskCode: null, clusterNumber, source: 'manual'
+  (cluster.performanceCriteria || []).forEach(text => {
+    items.push({ text, taskId: null, source: 'manual' });
+  });
+  return items.map((item, i) => ({
+    ...item,
+    id: `${clusterNumber}-${i + 1}`,
+    clusterNumber
   }));
-  return [...fromTaskAnalysis, ...manual];
 }
 
 // Looks a single effective criterion up by its id across every
@@ -139,17 +151,16 @@ export function renderAvailableTasks() {
 
   let html = '';
   cd.availableTasks.forEach((task, index) => {
-    const taskCode = getTaskCode(task.id);
     let clusterOptions = `<option value="">${_t('optSelectCluster')}</option>`;
-    cd.clusters.forEach(cluster => {
-      clusterOptions += `<option value="${cluster.id}">${cluster.name}</option>`;
+    cd.clusters.forEach((cluster, ci) => {
+      clusterOptions += `<option value="${cluster.id}">C${ci + 1} — ${cluster.name}</option>`;
     });
 
     html += `
       <div class="task-checkbox-item">
         <input type="checkbox" id="task_${index}" data-action="update-cluster-button">
         <label for="task_${index}" class="task-checkbox-label">
-          <strong>${taskCode}:</strong> ${task.text}
+          <strong>${_taskLabel(task.id)}:</strong> ${task.text}
         </label>
         ${task.priorityIndex !== null ? `<span class="task-priority-badge">PI: ${task.priorityIndex.toFixed(2)}</span>` : ''}
         ${cd.clusters.length > 0 ? `
@@ -222,7 +233,7 @@ export function renderClusters() {
     html += `
       <div class="cluster-item">
         <div class="cluster-header">
-          <div class="cluster-title">${cluster.name}</div>
+          <div class="cluster-title">C${clusterNumber} — ${cluster.name}</div>
           <div class="cluster-actions">
             <button class="btn-rename-cluster" data-action="regen-cluster-criteria" data-cluster-id="${cluster.id}"
                     title="${_t('ttRegenCriteria')}">🤖 ${_t('btnAICriteria')}</button>
@@ -235,10 +246,9 @@ export function renderClusters() {
           <h4>📋 ${_t('lblRelatedTasks')}</h4>
           <div class="related-tasks-list">
             ${cluster.tasks.map((task, taskIndex) => {
-              const taskCode = getTaskCode(task.id);
               return `
                 <div class="related-task-item" style="display:flex;justify-content:space-between;align-items:center;">
-                  <div style="flex:1"><strong>${taskCode}:</strong> ${task.text}</div>
+                  <div style="flex:1"><strong>${_taskLabel(task.id)}:</strong> ${task.text}</div>
                   <button class="btn-remove-task" data-action="remove-task-from-cluster"
                     data-cluster-id="${cluster.id}" data-task-index="${taskIndex}" style="margin-left:10px;">✕</button>
                 </div>`;
@@ -264,10 +274,9 @@ export function renderClusters() {
           <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#fff;">
             ${taCriteria.length ? `
               <div style="padding:10px 14px 8px;border-bottom:1px solid #eef0f4;">
-                ${taCriteria.map((c, i) => `
+                ${taCriteria.map(c => `
                   <div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:0.92em;color:#334155;">
-                    <span>${clusterNumber}-${i + 1} ${c.text}</span>
-                    <span style="flex-shrink:0;background:#eef2ff;color:#4338ca;border-radius:5px;padding:1px 7px;font-size:0.82em;font-weight:600;white-space:nowrap;">${c.taskCode}</span>
+                    <span>${c.id} ${c.text} <span style="color:#94a3b8;">[${_taskLabel(c.taskId)}]</span></span>
                   </div>`).join('')}
               </div>` : ''}
             <textarea id="criteria_${cluster.id}"
@@ -417,6 +426,16 @@ export function renderPCSourceList() {
   lo.outcomes.forEach(outcome => {
     if (outcome.linkedCriteria) outcome.linkedCriteria.forEach(pc => usedPCIds.add(pc.id));
   });
+  // Note on legacy projects: a Learning Outcome created before this
+  // "{clusterNumber}-{position}" id scheme was introduced stored its
+  // criteria under the older "C1-PC1" / "C1-Ttaskcode-PC1" ids. Those
+  // links still display correctly forever (linkedCriteria keeps its
+  // own text snapshot — see createLearningOutcome), and nothing about
+  // them is deleted or broken; the only effect is that this "already
+  // used" check may not recognize a since-renumbered criterion as
+  // used, so it could in principle be selected into a second Learning
+  // Outcome. That is a minor, non-destructive edge case confined to
+  // projects that existed before this change, not a data-loss risk.
 
   let html = '';
   let hasAnyCriteria = false;
@@ -446,7 +465,7 @@ export function renderPCSourceList() {
             ${isUsed ? 'disabled' : ''} data-action="update-lo-button">
           <label for="cb_${pcId}" class="pc-label">
             <span class="pc-number">${pcId}:</span> ${c.text}
-            ${c.source === 'ta' ? `<span style="background:#eef2ff;color:#4338ca;border-radius:5px;padding:1px 7px;font-size:0.8em;font-weight:600;margin-inline-start:6px;">${c.taskCode}</span>` : ''}
+            ${c.source === 'ta' ? `<span style="color:#94a3b8;font-size:0.9em;margin-inline-start:6px;">[${_taskLabel(c.taskId)}]</span>` : ''}
           </label>
           ${isUsed ? `<span class="pc-used-badge">${_t('lblUsed')}</span>` : ''}
           ${lo.outcomes.length > 0 ? `
@@ -497,7 +516,7 @@ export function createLearningOutcome() {
   lo.outcomeCounter++;
   lo.outcomes.push({
     id: `lo_${lo.outcomeCounter}`,
-    number: `LO-${lo.outcomeCounter}`,
+    number: `LO${lo.outcomeCounter}`,
     statement: '',
     linkedCriteria
   });
@@ -539,7 +558,7 @@ export function renderLearningOutcomes() {
           <h5>📎 ${_t('lblMappedPC')}</h5>
           ${outcome.linkedCriteria.map(pc => `
             <div class="lo-linked-item">
-              <div style="flex:1"><strong>${pc.id}:</strong> ${pc.text}${pc.taskId ? ` <span style="color:#94a3b8;font-size:0.85em;">[${getTaskCode(pc.taskId)}]</span>` : ''}</div>
+              <div style="flex:1"><strong>${pc.id}:</strong> ${pc.text}${pc.taskId ? ` <span style="color:#94a3b8;font-size:0.85em;">[${_taskLabel(pc.taskId)}]</span>` : ''}</div>
               <button class="btn-remove-task" data-action="unassign-pc-from-lo"
                 data-lo-id="${outcome.id}" data-pc-id="${pc.id}" style="margin-left:10px;">✕</button>
             </div>`).join('')}
@@ -645,7 +664,7 @@ export function renderModuleLoList() {
   availableLos.forEach(outcome => {
     const criteriaText = outcome.linkedCriteria.map(pc => pc.id).join(', ');
     let moduleOptions = `<option value="">${_t('optSelectModule')}</option>`;
-    mm.modules.forEach(m => { moduleOptions += `<option value="${m.id}">${m.title}</option>`; });
+    mm.modules.forEach((m, mi) => { moduleOptions += `<option value="${m.id}">M${mi + 1} — ${m.title}</option>`; });
 
     html += `
       <div class="module-lo-item">
@@ -705,11 +724,12 @@ export function renderModules() {
   }
 
   let html = '';
-  mm.modules.forEach(module => {
+  mm.modules.forEach((module, moduleIndex) => {
+    const { sourceTaskIds } = _collectModuleTaskAnalysis(module);
     html += `
       <div class="module-item">
         <div class="module-header">
-          <div class="module-title">${module.title}</div>
+          <div class="module-title">M${moduleIndex + 1} — ${module.title}</div>
           <div class="module-actions">
             <button class="btn-rename-module" data-action="build-module-in-builder" data-module-id="${module.id}"
                     title="${_t('ttBuildThisModule')}">🚀 ${_t('btnBuildThisModule')}</button>
@@ -717,10 +737,14 @@ export function renderModules() {
             <button class="btn-delete-module" data-action="delete-module" data-module-id="${module.id}">🗑️ ${_t('btnDeleteModule')}</button>
           </div>
         </div>
+        ${sourceTaskIds.length ? `
+        <div style="font-size:0.85em;color:#64748b;margin:-4px 0 10px;">
+          ${_t('lblRelatedTasks')}: ${sourceTaskIds.map(id => _taskLabel(id)).join(', ')}
+        </div>` : ''}
         <div class="module-los-list">
           ${module.learningOutcomes.map(outcome => {
             const criteriaText = outcome.linkedCriteria.map(pc =>
-              `${pc.id}${pc.taskId ? ` [${getTaskCode(pc.taskId)}]` : ''}: ${pc.text}`
+              `${pc.id}${pc.taskId ? ` [${_taskLabel(pc.taskId)}]` : ''}: ${pc.text}`
             ).join(' • ');
             return `
               <div class="module-lo-assigned">
@@ -798,21 +822,25 @@ function _collectModuleTaskAnalysis(module) {
   const taskAnalysis = {};
   taskIds.forEach(taskId => {
     const record = getTaskAnalysisRecord(taskId);
-    if (record) taskAnalysis[taskId] = { taskCode: getTaskCode(taskId), ...record };
+    if (record) taskAnalysis[taskId] = { taskCode: _taskLabel(taskId), ...record };
   });
   return { sourceTaskIds: [...taskIds], taskAnalysis };
 }
 
-function _buildModuleExport(module) {
+function _buildModuleExport(module, moduleNumber) {
   const { sourceTaskIds, taskAnalysis } = _collectModuleTaskAnalysis(module);
   return {
     moduleId: module.id,
+    moduleNumber: `M${moduleNumber}`,
     moduleTitle: module.title,
     learningOutcomes: module.learningOutcomes.map(o => ({
       number: o.number,
       statement: o.statement,
       performanceCriteria: o.linkedCriteria.map(pc => ({ id: pc.id, text: pc.text, taskId: pc.taskId || null }))
     })),
+    // Raw task IDs (for Module Builder's own lookups) — the matching
+    // display-ready "TASK B4" label is already on each entry in
+    // taskAnalysis[id].taskCode below.
     sourceTaskIds,
     // Present even when empty, so Module Builder can tell "no Task
     // Analysis available for this module" apart from "field missing" —
@@ -847,7 +875,7 @@ export function openModuleBuilderFromMapping(moduleId = null) {
     source: 'DACUM Live Pro v1.0',
     exportDate: new Date().toISOString(),
     occupation,
-    modules: modulesToSend.map(_buildModuleExport)
+    modules: modulesToSend.map(m => _buildModuleExport(m, mm.modules.indexOf(m) + 1))
   };
 
   try {
