@@ -894,7 +894,12 @@ export function openModuleBuilderFromMapping(moduleId = null) {
       }
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    window.open('Module_Builder.html', '_blank');
+    // Module Builder is a separate tool/repository, not a file shipped
+    // alongside this one — the relative filename this used to open only
+    // ever worked if it happened to sit next to index.html on the same
+    // host. Pointing at the live tool directly is what actually works
+    // regardless of where DACUM Live Pro itself is hosted.
+    window.open('https://hshamjawad.github.io/Module-Builder/', '_blank');
     showStatus(_t('msgMBExported'), 'success');
   } catch (error) {
     console.error('Error exporting to Module Builder:', error);
