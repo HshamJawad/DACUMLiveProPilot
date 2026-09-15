@@ -893,6 +893,12 @@ export function openModuleBuilderFromMapping(moduleId = null) {
         payload = { ...existing, exportDate: exportObject.exportDate, occupation, modules: [...others, ...exportObject.modules] };
       }
     }
+    // Diagnostic only — confirms exactly what left this tab, so a report
+    // of "N modules went in, fewer came out the other side" can be
+    // checked against this line instead of guessed at. Safe to remove
+    // once transfer reliability is fully confirmed.
+    console.log('[DACUM→ModuleBuilder] writing', payload.modules.length, 'module(s):',
+      payload.modules.map(m => m.moduleId));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     // Module Builder is a separate tool/repository, not a file shipped
     // alongside this one — the relative filename this used to open only
@@ -923,14 +929,13 @@ export function exportModuleMappingJSON() {
       toolName: 'DACUM Live Pro', toolVersion: '1.0',
       exportDate: new Date().toISOString(), exportType: 'Module Mapping', occupation
     },
-    modules: mm.modules.map(module => ({
-      moduleId: module.id, moduleTitle: module.title,
-      learningOutcomes: module.learningOutcomes.map(o => ({
-        number: o.number, statement: o.statement,
-        performanceCriteria: o.linkedCriteria.map(pc => ({ id: pc.id, description: pc.text })),
-        sourceTaskIds: o.linkedCriteria.map(pc => pc.taskId).filter(Boolean)
-      }))
-    })),
+    // Same shape _buildModuleExport() uses for the Module Builder handoff
+    // (see openModuleBuilderFromMapping below) — this download used to use
+    // a different, older schema (pc.description instead of pc.text, a
+    // flat duplicated sourceTaskIds with no taskAnalysis at all), which
+    // made this file look inconsistent with what Module Builder actually
+    // received even when nothing was actually lost in the transfer.
+    modules: mm.modules.map((module, i) => _buildModuleExport(module, i + 1)),
     summary: {
       totalModules: mm.modules.length,
       totalLearningOutcomes: mm.modules.reduce((s, m) => s + m.learningOutcomes.length, 0),
